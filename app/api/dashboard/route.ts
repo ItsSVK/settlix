@@ -1,0 +1,53 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getPaymentLinksByWallet } from '@/lib/services/payment-link.service'
+import { handleApi } from '@/lib/api/errors'
+import { PaymentExecution } from '@/lib/generated/prisma/client'
+
+export async function GET(req: NextRequest) {
+  return handleApi(async () => {
+    const wallet = req.nextUrl.searchParams.get('wallet')
+    if (!wallet) {
+      return NextResponse.json({ error: 'Missing wallet parameter' }, { status: 400 })
+    }
+
+    const links = await getPaymentLinksByWallet(wallet)
+
+    const result = links.map((link) => {
+      const executions = link.executions ?? []
+      const paidCount = executions.filter((e: PaymentExecution) => e.status === 'paid').length
+      const totalVolume = executions
+        .filter((e: PaymentExecution) => e.status === 'paid')
+        .reduce((sum: number, e: PaymentExecution) => sum + Number(e.outputAmount), 0)
+
+      return {
+        id: link.id,
+        merchantWallet: link.merchantWallet,
+        token: link.token,
+        amount: link.amount.toString(),
+        type: link.type,
+        active: link.active,
+        createdAt: link.createdAt.toISOString(),
+        stats: {
+          totalExecutions: executions.length,
+          paidCount,
+          failedCount: executions.filter((e: PaymentExecution) => e.status === 'failed').length,
+          pendingCount: executions.filter((e: PaymentExecution) => e.status === 'pending').length,
+          totalVolume: totalVolume.toFixed(2),
+          successRate: executions.length > 0 ? Math.round((paidCount / executions.length) * 100) : null,
+        },
+        recentExecutions: executions.slice(0, 5).map((e: PaymentExecution) => ({
+          id: e.id,
+          userWallet: e.userWallet,
+          inputToken: e.inputToken,
+          inputAmount: e.inputAmount.toString(),
+          outputAmount: e.outputAmount.toString(),
+          txSignature: e.txSignature,
+          status: e.status,
+          createdAt: e.createdAt.toISOString(),
+        })),
+      }
+    })
+
+    return NextResponse.json({ links: result })
+  })
+}
