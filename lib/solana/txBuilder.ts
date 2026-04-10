@@ -6,8 +6,10 @@ import {
   VersionedTransaction,
 } from '@solana/web3.js'
 import {
+  createAssociatedTokenAccountIdempotentInstruction,
   createTransferCheckedInstruction,
   getAssociatedTokenAddressSync,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
   TOKEN_2022_PROGRAM_ID,
 } from '@solana/spl-token'
@@ -50,6 +52,16 @@ export async function appendSettlementTransfer(params: {
   const alts = await loadAddressLookupTableAccounts(connection, lookups)
   const decompiled = TransactionMessage.decompile(vtx.message, { addressLookupTableAccounts: alts })
 
+  // Idempotent: creates the merchant ATA if it doesn't exist yet; no-op if it does.
+  const createMerchantAtaIx = createAssociatedTokenAccountIdempotentInstruction(
+    payer, // fee payer
+    merchantAta, // ATA address to create
+    merchant, // ATA owner
+    settlementMint, // mint
+    tokenProgram,
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+  )
+
   const transferIx = createTransferCheckedInstruction(
     payerAta,
     settlementMint,
@@ -63,6 +75,7 @@ export async function appendSettlementTransfer(params: {
 
   const instructions: TransactionInstruction[] = [
     ...decompiled.instructions.filter((ix) => !ix.programId.equals(MEMO_PROGRAM)),
+    createMerchantAtaIx,
     transferIx,
   ]
 
@@ -91,6 +104,17 @@ export async function buildDirectSettlementPaymentTx(params: {
   const merchantAta = getAssociatedTokenAddressSync(settlementMint, merchant, false, tokenProgram)
 
   const { blockhash } = await connection.getLatestBlockhash(RPC_COMMITMENT)
+
+  // Idempotent: creates the merchant ATA if it doesn't exist yet; no-op if it does.
+  const createMerchantAtaIx = createAssociatedTokenAccountIdempotentInstruction(
+    payer, // fee payer
+    merchantAta, // ATA address to create
+    merchant, // ATA owner
+    settlementMint, // mint
+    tokenProgram,
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+  )
+
   const transferIx = createTransferCheckedInstruction(
     payerAta,
     settlementMint,
@@ -105,7 +129,7 @@ export async function buildDirectSettlementPaymentTx(params: {
   const compiled = new TransactionMessage({
     payerKey: payer,
     recentBlockhash: blockhash,
-    instructions: [transferIx],
+    instructions: [createMerchantAtaIx, transferIx],
   }).compileToV0Message([])
 
   return new VersionedTransaction(compiled)

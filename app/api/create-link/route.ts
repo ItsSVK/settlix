@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js'
-import { NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 
 import { ApiError, handleApi, readJsonBody } from '@/lib/api/errors'
 import { getSolanaCluster } from '@/lib/env/server'
@@ -7,10 +7,14 @@ import { decimalFromCreateLinkAmount } from '@/lib/money'
 import { isAllowedSettlementMint } from '@/lib/solana/constants'
 import { insertPaymentLink } from '@/lib/services/payment-link.service'
 import { createLinkBody } from '@/lib/validation'
-import { INVALID_AMOUNT, INVALID_WALLET, UNSUPPORTED_SETTLEMENT_TOKEN, VALIDATION } from '@/lib/api/constants'
+import { INVALID_AMOUNT, UNSUPPORTED_SETTLEMENT_TOKEN, VALIDATION } from '@/lib/api/constants'
+import { requireAuth } from '@/lib/auth/require-auth'
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   return handleApi(async () => {
+    // Merchant must be authenticated — wallet comes from the JWT session
+    const { wallet: merchantWallet } = await requireAuth(req)
+
     const json = await readJsonBody(req)
     const parsed = createLinkBody.safeParse(json)
     if (!parsed.success) {
@@ -22,11 +26,11 @@ export async function POST(req: Request) {
 
     const cluster = getSolanaCluster()
 
-    let merchantPk: PublicKey
+    // Validate that the session wallet is a valid public key (belt-and-suspenders)
     try {
-      merchantPk = new PublicKey(parsed.data.merchantWallet)
+      new PublicKey(merchantWallet)
     } catch {
-      throw new ApiError(400, 'Invalid merchant wallet', INVALID_WALLET)
+      throw new ApiError(400, 'Session wallet is not a valid public key', 'INVALID_WALLET')
     }
 
     if (!isAllowedSettlementMint(parsed.data.token, cluster)) {
@@ -39,7 +43,7 @@ export async function POST(req: Request) {
     }
 
     const link = await insertPaymentLink({
-      merchantWallet: merchantPk.toBase58(),
+      merchantWallet,
       token: parsed.data.token,
       amount,
     })

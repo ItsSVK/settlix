@@ -10,7 +10,11 @@ import {
 import { apiLogger } from '@/lib/api/logger'
 import { prisma } from '@/lib/db'
 import { Decimal } from '@/lib/generated/prisma/internal/prismaNamespace'
-import { PaymentLink } from '@/lib/generated/prisma/client'
+import { Prisma, PaymentLink } from '@/lib/generated/prisma/client'
+
+type PaymentLinkWithExecutions = Prisma.PaymentLinkGetPayload<{
+  include: { executions: true }
+}>
 
 export async function insertPaymentLink(data: { merchantWallet: string; token: string; amount: Decimal }) {
   try {
@@ -44,7 +48,7 @@ export async function getPaymentLinkById(id: string) {
   }
 }
 
-export async function getPaymentLinksByWallet(merchantWallet: string): Promise<PaymentLink[]> {
+export async function getPaymentLinksByWallet(merchantWallet: string): Promise<PaymentLinkWithExecutions[]> {
   try {
     return await prisma.paymentLink.findMany({
       where: { merchantWallet },

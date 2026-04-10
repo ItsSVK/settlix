@@ -13,3 +13,11 @@ export function getJupiterApiKey(): string {
   }
   return key
 }
+
+export function getAuthSecret(): string {
+  const secret = process.env.AUTH_SECRET?.trim()
+  if (!secret) {
+    throw new ConfigurationError('AUTH_SECRET is not configured')
+  }
+  return secret
+}

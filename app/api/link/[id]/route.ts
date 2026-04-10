@@ -1,13 +1,14 @@
-import { PublicKey } from '@solana/web3.js'
-import { NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 
 import { ApiError, handleApi, readJsonBody } from '@/lib/api/errors'
 import { getPaymentLinkById, updatePaymentLinkActive } from '@/lib/services/payment-link.service'
-import { INVALID_WALLET, NOT_FOUND, VALIDATION } from '@/lib/api/constants'
+import { FORBIDDEN, NOT_FOUND, VALIDATION } from '@/lib/api/constants'
 import { updateLinkActiveBody } from '@/lib/validation'
+import { requireAuth } from '@/lib/auth/require-auth'
 
 type Params = { params: Promise<{ id: string }> }
 
+/** GET /api/link/[id] — public endpoint used by buyers */
 export async function GET(_req: Request, { params }: Params) {
   return handleApi(async () => {
     const { id } = await params
@@ -28,8 +29,12 @@ export async function GET(_req: Request, { params }: Params) {
   })
 }
 
-export async function PATCH(req: Request, { params }: Params) {
+/** PATCH /api/link/[id] — protected, merchant only */
+export async function PATCH(req: NextRequest, { params }: Params) {
   return handleApi(async () => {
+    // Authenticate the merchant
+    const { wallet } = await requireAuth(req)
+
     const { id } = await params
     const json = await readJsonBody(req)
     const parsed = updateLinkActiveBody.safeParse(json)
@@ -40,14 +45,16 @@ export async function PATCH(req: Request, { params }: Params) {
       )
     }
 
-    let merchantPk: PublicKey
-    try {
-      merchantPk = new PublicKey(parsed.data.merchantWallet)
-    } catch {
-      throw new ApiError(400, 'Invalid merchant wallet', INVALID_WALLET)
+    // Ownership check: make sure the authenticated wallet owns this link
+    const link = await getPaymentLinkById(id)
+    if (!link) {
+      return NextResponse.json({ error: 'Not found', code: NOT_FOUND }, { status: 404 })
+    }
+    if (link.merchantWallet !== wallet) {
+      throw new ApiError(403, 'You do not own this payment link', FORBIDDEN)
     }
 
-    const updated = await updatePaymentLinkActive(id, merchantPk.toBase58(), parsed.data.active)
+    const updated = await updatePaymentLinkActive(id, wallet, parsed.data.active)
 
     return NextResponse.json({
       id: updated.id,
