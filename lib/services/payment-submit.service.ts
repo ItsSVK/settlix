@@ -1,4 +1,4 @@
-import { PaymentExecutionStatus, Prisma } from '@/lib/generated/prisma/client'
+import { PaymentExecutionStatus } from '@/lib/generated/prisma/client'
 import { Decimal } from '@/lib/generated/prisma/internal/prismaNamespace'
 import { getMint } from '@solana/spl-token'
 import { PublicKey } from '@solana/web3.js'

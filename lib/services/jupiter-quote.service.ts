@@ -7,14 +7,30 @@ import { decimalToBigIntUSDC } from '@/lib/solana/amount'
 
 export async function executeJupiterQuoteRequest(body: JupiterQuoteBody) {
   try {
-    const pay = await getPaymentLinkByDetails(body.payId) // TODO: change this to get exact out quote if inputMint is not USDC
-    const q = await getExactOutQuote(body.inputMint, pay.token, decimalToBigIntUSDC(pay.amount))
+    const pay = await getPaymentLinkByDetails(body.payId)
+    const rawOut = decimalToBigIntUSDC(pay.amount)
+
+    // Same-mint shortcut — buyer is paying with the exact settlement token.
+    // Jupiter rejects same-mint requests, so return a synthetic 1:1 quote immediately.
+    if (body.inputMint === pay.token) {
+      return {
+        inAmount: rawOut.toString(),
+        outAmount: rawOut.toString(),
+        inputMint: pay.token,
+        outputMint: pay.token,
+        requestId: null, // not needed for direct-transfer path
+        isDirect: true,
+      }
+    }
+
+    const q = await getExactOutQuote(body.inputMint, pay.token, rawOut)
     return {
       inAmount: q.inAmount,
       outAmount: q.outAmount,
       inputMint: q.inputMint,
       outputMint: q.outputMint,
       requestId: q.requestId,
+      isDirect: false,
     }
   } catch (e) {
     if (e instanceof ApiError) throw e

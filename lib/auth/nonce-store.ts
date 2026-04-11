@@ -17,17 +17,14 @@ interface NonceEntry {
 const store = new Map<string, NonceEntry>()
 
 // Evict expired nonces every minute to prevent unbounded memory growth
-setInterval(
-  () => {
-    const now = Date.now()
-    for (const [nonce, entry] of store) {
-      if (entry.expiresAt <= now) {
-        store.delete(nonce)
-      }
+setInterval(() => {
+  const now = Date.now()
+  for (const [nonce, entry] of store) {
+    if (entry.expiresAt <= now) {
+      store.delete(nonce)
     }
-  },
-  60_000,
-).unref() // Do not prevent process exit
+  }
+}, 60_000).unref() // Do not prevent process exit
 
 /**
  * Issue a fresh nonce and register it in the store.

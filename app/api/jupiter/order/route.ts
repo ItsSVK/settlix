@@ -25,6 +25,7 @@ export async function POST(req: Request) {
       inputMint: order.inputMint,
       outputMint: order.outputMint,
       requestId: order.requestId,
+      isDirect: order.isDirect,
     })
   })
 }

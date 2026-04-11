@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "aceternity-ui": {
+      "source": "secondsky/claude-skills",
+      "sourceType": "github",
+      "computedHash": "ec58b85f3668dbfda1b279c7399f85d2c05f0db4474e4ce4de629a4823f651bf"
+    }
+  }
+}

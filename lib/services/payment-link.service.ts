@@ -10,7 +10,7 @@ import {
 import { apiLogger } from '@/lib/api/logger'
 import { prisma } from '@/lib/db'
 import { Decimal } from '@/lib/generated/prisma/internal/prismaNamespace'
-import { Prisma, PaymentLink } from '@/lib/generated/prisma/client'
+import { Prisma } from '@/lib/generated/prisma/client'
 
 type PaymentLinkWithExecutions = Prisma.PaymentLinkGetPayload<{
   include: { executions: true }
