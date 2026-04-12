@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
+import { useRouter } from 'next/navigation'
 
 interface AuthState {
   /** Wallet address from the JWT session — null when not logged in */
@@ -23,6 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [wallet, setWallet] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const { publicKey, signMessage, disconnect } = useWallet()
+  const router = useRouter()
 
   // Check existing session on mount
   useEffect(() => {
@@ -56,12 +58,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!loginRes.ok) throw new Error('Login failed')
     const data = await loginRes.json()
     setWallet(data.wallet)
+    router.push('/dashboard')
   }, [publicKey, signMessage])
 
   const logout = useCallback(async () => {
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
     setWallet(null)
     await disconnect()
+    router.push('/')
   }, [disconnect])
 
   return <AuthContext.Provider value={{ wallet, isLoading, login, logout }}>{children}</AuthContext.Provider>

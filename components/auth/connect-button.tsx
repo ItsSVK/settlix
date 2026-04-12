@@ -6,24 +6,22 @@ import { useWalletModal } from '@solana/wallet-adapter-react-ui'
 import { Loader2 } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-context'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 interface ConnectButtonProps {
   className?: string
   onSuccess?: () => void
 }
 
-type Step = 'idle' | 'connecting' | 'signing' | 'done' | 'error'
+type Step = 'idle' | 'connecting' | 'signing' | 'done'
 
 export function ConnectButton({ className, onSuccess }: ConnectButtonProps) {
   const { connected, publicKey } = useWallet()
   const { setVisible } = useWalletModal()
   const { wallet: sessionWallet, login } = useAuth()
   const [step, setStep] = useState<Step>('idle')
-  const [errorMsg, setErrorMsg] = useState('')
 
   const handleClick = useCallback(async () => {
-    setErrorMsg('')
-
     if (!connected || !publicKey) {
       setStep('connecting')
       setVisible(true)
@@ -37,9 +35,8 @@ export function ConnectButton({ className, onSuccess }: ConnectButtonProps) {
       setStep('done')
       onSuccess?.()
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : 'Sign-in failed')
-      setStep('error')
-      setTimeout(() => setStep('idle'), 3000)
+      toast.error(e instanceof Error ? e.message : 'Sign-in failed')
+      setStep('idle')
     }
   }, [connected, publicKey, login, onSuccess, setVisible])
 
@@ -51,7 +48,6 @@ export function ConnectButton({ className, onSuccess }: ConnectButtonProps) {
     connecting: 'Opening wallet…',
     signing: 'Sign the message…',
     done: 'Signed in!',
-    error: errorMsg || 'Error',
   }
 
   const isLoading = step === 'connecting' || step === 'signing'
@@ -61,9 +57,9 @@ export function ConnectButton({ className, onSuccess }: ConnectButtonProps) {
       onClick={handleClick}
       disabled={isLoading || step === 'done'}
       className={cn(
-        'relative inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-background px-6 py-3 text-sm font-semibold text-foreground',
-        'transition-all duration-200 hover:border-primary hover:bg-primary/10 hover:shadow-[0_0_20px_rgba(109,40,217,0.15)]',
-        'disabled:cursor-not-allowed disabled:opacity-60',
+        'relative inline-flex items-center gap-2 rounded-xl bg-background min-w-25 px-3 py-2 text-sm font-semibold text-foreground',
+        'transition-all duration-200 hover:bg-accent hover:text-foreground',
+        'disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer justify-center',
         className,
       )}
     >

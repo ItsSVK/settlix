@@ -1,14 +1,11 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { motion } from 'motion/react'
 import { ArrowDown } from 'lucide-react'
 import { BackgroundBeams } from '@/components/ui/background-beams'
 import { TypewriterEffect } from '@/components/ui/typewriter-effect'
 import { MovingBorder } from '@/components/ui/moving-border'
 import { ConnectButton } from '@/components/auth/connect-button'
-import { useAuth } from '@/components/auth/auth-context'
 
 const heroWords = [
   { text: 'Accept' },
@@ -19,13 +16,6 @@ const heroWords = [
 ]
 
 export function HeroSection() {
-  const { wallet } = useAuth()
-  const router = useRouter()
-
-  useEffect(() => {
-    if (wallet) router.push('/dashboard')
-  }, [wallet, router])
-
   return (
     <section className='relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background px-6 text-center'>
       <BackgroundBeams />

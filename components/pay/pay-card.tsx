@@ -32,7 +32,7 @@ export function PayCard({ linkId }: { linkId: string }) {
   const [successTx, setSuccessTx] = useState<string | null>(null)
 
   return (
-    <div className='relative flex min-h-screen items-center justify-center bg-background px-4 py-20'>
+    <div className='relative flex flex-1 w-full items-center justify-center bg-background px-4 py-20'>
       <BackgroundBeams className='opacity-40' />
 
       <motion.div

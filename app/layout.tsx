@@ -5,6 +5,9 @@ import { cn } from '@/lib/utils'
 import { ThemeProvider } from '@/components/theme-provider'
 import { SolanaWalletProvider } from '@/components/providers/wallet-provider'
 import { Toaster } from 'sonner'
+import { Navbar } from '@/components/shared/navbar'
+import { Footer } from '@/components/landing/footer'
+import { FloatingThemeToggle } from '@/components/shared/floating-theme-toggle'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 const fontMono = Geist_Mono({ subsets: ['latin'], variable: '--font-mono' })
@@ -21,11 +24,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
       className={cn('h-full antialiased', fontMono.variable, inter.variable, 'font-sans')}
     >
-      <body className='min-h-full flex flex-col bg-background text-foreground'>
+      <body className='flex min-h-full flex-col bg-background text-foreground no-scrollbar overflow-x-hidden'>
         <ThemeProvider attribute='class' defaultTheme='dark' enableSystem disableTransitionOnChange>
           <SolanaWalletProvider>
-            {children}
-            <Toaster richColors position='top-right' />
+            <FloatingThemeToggle />
+            <div className='flex min-h-screen flex-col bg-background'>
+              <Navbar />
+              <main className='flex flex-1 flex-col'>{children}</main>
+              <Footer />
+            </div>
+            <Toaster richColors position='bottom-right' />
           </SolanaWalletProvider>
         </ThemeProvider>
       </body>
