@@ -21,7 +21,6 @@ export function PayCard({ linkId }: { linkId: string }) {
     quote,
     isLoading: quoteLoading,
     isRefreshing,
-    countdown,
     isDirect,
     error: quoteError,
   } = useQuote(
@@ -86,7 +85,6 @@ export function PayCard({ linkId }: { linkId: string }) {
                 <QuoteDisplay
                   isLoading={quoteLoading}
                   isRefreshing={isRefreshing}
-                  countdown={countdown}
                   isDirect={isDirect}
                   quote={quote}
                   error={quoteError}

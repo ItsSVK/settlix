@@ -2,13 +2,13 @@
 
 import { motion, AnimatePresence } from 'motion/react'
 import { RefreshCw } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import type { TokenInfo } from './token-selector'
 import { TextShimmer } from '@/components/ui/text-shimmer'
 
 interface QuoteDisplayProps {
   isLoading: boolean
   isRefreshing: boolean
-  countdown: number
   isDirect: boolean
   quote: { inAmount: string; outAmount: string } | null
   error: string | null
@@ -23,10 +23,23 @@ function formatAmount(raw: string, decimals: number): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 2 })
 }
 
+function RefreshTimer({ isRefreshing }: { isRefreshing: boolean }) {
+  const [countdown, setCountdown] = useState(10)
+
+  useEffect(() => {
+    if (isRefreshing) {
+      setCountdown(10)
+      return
+    }
+    const interval = setInterval(() => setCountdown((c) => Math.max(0, c - 1)), 1000)
+    return () => clearInterval(interval)
+  }, [isRefreshing])
+
+  return <span>{isRefreshing ? 'Refreshing…' : `Refreshes in ${countdown}s`}</span>
+}
 export function QuoteDisplay({
   isLoading,
   isRefreshing,
-  countdown,
   isDirect,
   quote,
   error,
@@ -98,7 +111,7 @@ export function QuoteDisplay({
               ) : (
                 <>
                   <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin text-primary' : ''}`} />
-                  <span>{isRefreshing ? 'Refreshing…' : `Refreshes in ${countdown}s`}</span>
+                  <RefreshTimer isRefreshing={isRefreshing} />
                 </>
               )}
             </div>

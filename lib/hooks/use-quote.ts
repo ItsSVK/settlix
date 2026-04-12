@@ -29,17 +29,6 @@ export function useQuote(payId: string, inputMint: string | null, outputMint: st
   /** True on background re-fetches — keeps existing quote visible. */
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  /** Seconds until next auto-refresh. Not used in same-mint mode. */
-  const [countdown, setCountdown] = useState(REFRESH_INTERVAL_MS / 1000)
-  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  const resetCountdown = useCallback(() => {
-    if (countdownRef.current) clearInterval(countdownRef.current)
-    setCountdown(REFRESH_INTERVAL_MS / 1000)
-    countdownRef.current = setInterval(() => {
-      setCountdown((v) => Math.max(0, v - 1))
-    }, 1000)
-  }, [])
 
   const fetch_ = useCallback(
     async (isBackground = false) => {
@@ -65,8 +54,6 @@ export function useQuote(payId: string, inputMint: string | null, outputMint: st
         }
         setQuote(await res.json())
         setError(null)
-        // Only start the countdown ticker when polling is relevant (i.e. not same-mint)
-        if (!isDirect) resetCountdown()
       } catch (e) {
         if (!isBackground) {
           setError(e instanceof Error ? e.message : 'Failed to get quote')
@@ -78,7 +65,7 @@ export function useQuote(payId: string, inputMint: string | null, outputMint: st
         setIsRefreshing(false)
       }
     },
-    [payId, inputMint, isDirect, resetCountdown],
+    [payId, inputMint, isDirect],
   )
 
   // Initial fetch (debounced 400ms) whenever the selected token changes.
@@ -86,7 +73,6 @@ export function useQuote(payId: string, inputMint: string | null, outputMint: st
   useEffect(() => {
     setQuote(null)
     setError(null)
-    if (countdownRef.current) clearInterval(countdownRef.current)
     if (!inputMint) return
     const t = setTimeout(() => fetch_(false), 400)
     return () => clearTimeout(t)
@@ -99,16 +85,8 @@ export function useQuote(payId: string, inputMint: string | null, outputMint: st
     const interval = setInterval(() => fetch_(true), REFRESH_INTERVAL_MS)
     return () => {
       clearInterval(interval)
-      if (countdownRef.current) clearInterval(countdownRef.current)
     }
   }, [inputMint, isDirect, fetch_])
 
-  // Clean up countdown timer on unmount
-  useEffect(() => {
-    return () => {
-      if (countdownRef.current) clearInterval(countdownRef.current)
-    }
-  }, [])
-
-  return { quote, isLoading, isRefreshing, countdown, isDirect, error, refetch: () => fetch_(true) }
+  return { quote, isLoading, isRefreshing, isDirect, error, refetch: () => fetch_(true) }
 }

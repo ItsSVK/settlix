@@ -10,13 +10,14 @@ import { useWallet } from '@solana/wallet-adapter-react'
 import { motion, AnimatePresence } from 'motion/react'
 import { ConnectButton } from '@/components/auth/connect-button'
 import { Button } from '@/components/ui/button'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
 export function Navbar({ className }: { className?: string }) {
   const { wallet, logout } = useAuth()
   const { connected } = useWallet()
   const router = useRouter()
+  const pathname = usePathname()
   const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
@@ -76,7 +77,7 @@ export function Navbar({ className }: { className?: string }) {
             className='flex items-center gap-2'
           >
             <AnimatePresence>
-              {connected && (
+              {connected && !pathname.startsWith('/pay/') && (
                 <motion.div
                   layout
                   initial={{ opacity: 0, width: 0, scale: 0.8 }}
