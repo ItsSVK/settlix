@@ -2,32 +2,26 @@
 
 import Link from 'next/link'
 import { LayoutDashboard, LogOut } from 'lucide-react'
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
 import { useAuth } from '@/components/auth/auth-context'
-import { cn } from '@/lib/utils'
-import { useWallet } from '@solana/wallet-adapter-react'
-
-import { motion, AnimatePresence } from 'motion/react'
 import { ConnectButton } from '@/components/auth/connect-button'
 import { Button } from '@/components/ui/button'
-import { useRouter, usePathname } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { cn } from '@/lib/utils'
+import { usePathname, useRouter } from 'next/navigation'
+import { AnimatedThemeButton } from '@/components/shared/animated-theme-button'
+import { useTheme } from 'next-themes'
 
 export function Navbar({ className }: { className?: string }) {
-  const { wallet, logout } = useAuth()
-  const { connected } = useWallet()
-  const router = useRouter()
+  const { wallet, logout, isLoading } = useAuth()
   const pathname = usePathname()
-  const [isMounted, setIsMounted] = useState(false)
+  const router = useRouter()
 
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
 
   return (
     <nav
       className={cn(
-        'fixed top-4 left-1/2 z-50 flex w-[80%] max-w-5xl -translate-x-1/2 items-center gap-3 rounded-2xl border border-border/50 bg-background/80 px-5 py-3 shadow-lg backdrop-blur-md',
+        'fixed top-4 left-1/2 z-50 flex w-[80%] max-w-5xl -translate-x-1/2 items-center md:gap-3 rounded-2xl border border-border/50 bg-background/80 px-5 py-3 shadow-lg backdrop-blur-md',
         className,
       )}
     >
@@ -37,78 +31,36 @@ export function Navbar({ className }: { className?: string }) {
 
       <div className='flex-1' />
 
-      {isMounted && wallet && (
+      {pathname.startsWith('/pay/') ? (
+        <AnimatedThemeButton className='md:hidden' isDark={isDark} />
+      ) : isLoading ? (
+        <div className='h-[36px] w-28 rounded-[15px] bg-muted/60' aria-hidden />
+      ) : wallet ? (
         <>
           <Button
+            className='relative inline-flex md:min-w-25 items-center gap-2 rounded-xl bg-background px-3 py-2 text-sm font-semibold text-foreground transition-all duration-200 hover:bg-accent hover:text-foreground'
             onClick={() => router.push('/dashboard')}
-            className={cn(
-              'relative inline-flex items-center gap-2 rounded-xl bg-background min-w-25 px-3 py-2 text-sm font-semibold text-foreground',
-              'transition-all duration-200 hover:bg-accent hover:text-foreground',
-              'disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer',
-              className,
-            )}
           >
             <LayoutDashboard className='h-4 w-4' />
-            Dashboard
+            <span className='hidden md:block'>Dashboard</span>
           </Button>
+
+          <AnimatedThemeButton className='md:hidden' isDark={isDark} />
+
           <Button
             onClick={logout}
-            className={cn(
-              'relative inline-flex items-center gap-2 rounded-xl bg-background min-w-25 px-3 py-2 text-sm font-semibold text-foreground',
-              'transition-all duration-200 hover:bg-accent hover:text-foreground',
-              'disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer',
-              className,
-            )}
+            className='relative inline-flex md:min-w-25 items-center gap-2 rounded-xl bg-background px-3 py-2 text-sm font-semibold text-foreground transition-all duration-200 hover:bg-accent hover:text-foreground'
           >
             <LogOut className='h-4 w-4' />
-            Logout
+            <span className='hidden md:block'>Logout</span>
           </Button>
         </>
+      ) : (
+        <span className='flex items-center gap-2'>
+          <ConnectButton className='h-[36px] rounded-[15px] border-0 bg-white px-5 py-0 text-[13px] text-black hover:bg-neutral-200 hover:shadow-none' />
+          <AnimatedThemeButton className='md:hidden' isDark={isDark} />
+        </span>
       )}
-
-      <AnimatePresence mode='popLayout'>
-        {isMounted && !wallet && (
-          <motion.div
-            layout
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.3 }}
-            className='flex items-center gap-2'
-          >
-            <AnimatePresence>
-              {connected && !pathname.startsWith('/pay/') && (
-                <motion.div
-                  layout
-                  initial={{ opacity: 0, width: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, width: 'auto', scale: 1 }}
-                  exit={{ opacity: 0, width: 0, scale: 0.8 }}
-                  transition={{ type: 'spring', bounce: 0.2, duration: 0.5 }}
-                  className='overflow-hidden whitespace-nowrap'
-                >
-                  <ConnectButton className='h-[36px] rounded-[15px] bg-white text-black px-5 py-0 text-[13px] hover:bg-neutral-200 hover:shadow-none border-0' />
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <motion.div layout transition={{ type: 'spring', bounce: 0.2, duration: 0.5 }}>
-              <WalletMultiButton
-                style={{
-                  height: 36,
-                  fontSize: 13,
-                  borderRadius: '15px',
-                  backgroundColor: '#000',
-                  color: '#fff',
-                  width: '150px',
-                  border: '1px solid #fff',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </nav>
   )
 }

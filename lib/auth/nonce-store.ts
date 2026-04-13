@@ -14,17 +14,28 @@ interface NonceEntry {
   expiresAt: number
 }
 
-const store = new Map<string, NonceEntry>()
+const globalForStore = globalThis as unknown as {
+  store: Map<string, NonceEntry> | undefined
+  intervalId: ReturnType<typeof setInterval> | undefined
+}
+
+const store = globalForStore.store ?? new Map<string, NonceEntry>()
 
 // Evict expired nonces every minute to prevent unbounded memory growth
-setInterval(() => {
-  const now = Date.now()
-  for (const [nonce, entry] of store) {
-    if (entry.expiresAt <= now) {
-      store.delete(nonce)
+if (!globalForStore.intervalId) {
+  globalForStore.intervalId = setInterval(() => {
+    const now = Date.now()
+    for (const [nonce, entry] of store) {
+      if (entry.expiresAt <= now) {
+        store.delete(nonce)
+      }
     }
-  }
-}, 60_000).unref() // Do not prevent process exit
+  }, 60_000).unref() // Do not prevent process exit
+}
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForStore.store = store
+}
 
 /**
  * Issue a fresh nonce and register it in the store.

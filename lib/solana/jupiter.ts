@@ -1,6 +1,15 @@
 import { getJupiterApiKey } from '@/lib/env/server'
+import * as fs from 'fs/promises'
+import { tmpdir } from 'os'
+import { join } from 'path'
 
 const JUPITER_SWAP_V2 = 'https://api.jup.ag/swap/v2'
+const JUPITER_DEBUG_LOG = process.env.JUPITER_DEBUG_LOG === '1'
+const JUPITER_LOG_PATH = join(tmpdir(), 'settlex-jupiter.log')
+
+function preview(value: string, max = 500) {
+  return value.length > max ? `${value.slice(0, max)}...` : value
+}
 
 export type JupiterOrderResponse = {
   requestId: string
@@ -29,18 +38,73 @@ export type JupiterExecuteResponse = {
 export async function jupiterFetch<T>(pathWithQuery: string, init?: RequestInit): Promise<T> {
   const apiKey = getJupiterApiKey()
   const url = `${JUPITER_SWAP_V2}${pathWithQuery}`
-  const res = await fetch(url, {
-    ...init,
-    headers: { 'x-api-key': apiKey, ...init?.headers },
-  })
-  if (res.status === 429) {
-    throw new Error('Jupiter rate limited. Try again shortly.')
+
+  const logEntry = JUPITER_DEBUG_LOG
+    ? {
+        timestamp: new Date().toISOString(),
+        url,
+        method: init?.method ?? 'GET',
+        requestBody: init?.body ? preview(String(init.body)) : undefined,
+        status: 0,
+        responsePreview: undefined as string | undefined,
+        responseKeys: undefined as string[] | undefined,
+        error: undefined as string | undefined,
+      }
+    : null
+
+  try {
+    const res = await fetch(url, {
+      ...init,
+      headers: { 'x-api-key': apiKey, ...init?.headers },
+    })
+
+    if (logEntry) {
+      logEntry.status = res.status
+    }
+
+    if (res.status === 429) {
+      const error = 'Jupiter rate limited. Try again shortly.'
+      if (logEntry) {
+        logEntry.error = error
+      }
+      throw new Error(error)
+    }
+    if (!res.ok) {
+      const text = await res.text()
+
+      let errorMsg = text.slice(0, 500)
+      try {
+        const parsed = JSON.parse(text)
+        errorMsg = parsed.error || parsed.errorMessage || errorMsg
+      } catch {}
+
+      if (logEntry) {
+        logEntry.responsePreview = preview(text)
+        logEntry.error = errorMsg
+      }
+      throw new Error(errorMsg)
+    }
+
+    const data = await res.json()
+    if (logEntry) {
+      if (Array.isArray(data)) {
+        logEntry.responsePreview = `array(${data.length})`
+      } else if (data && typeof data === 'object') {
+        logEntry.responseKeys = Object.keys(data as Record<string, unknown>).slice(0, 20)
+      }
+    }
+
+    return data as T
+  } catch (e: unknown) {
+    if (logEntry && !logEntry.error) {
+      logEntry.error = e instanceof Error ? e.message : 'Unknown Jupiter fetch error'
+    }
+    throw e
+  } finally {
+    if (logEntry) {
+      fs.appendFile(JUPITER_LOG_PATH, JSON.stringify(logEntry) + '\n', 'utf-8').catch(() => {})
+    }
   }
-  if (!res.ok) {
-    const text = await res.text()
-    throw new Error(`Jupiter ${res.status}: ${text.slice(0, 500)}`)
-  }
-  return res.json() as Promise<T>
 }
 
 /**

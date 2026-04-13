@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useWalletModal } from '@solana/wallet-adapter-react-ui'
 import { VersionedTransaction } from '@solana/web3.js'
@@ -30,14 +30,38 @@ const stepLabels: Record<PayStep, string> = {
 }
 
 export function PayButton({ linkId, selectedToken, quoteReady, onSuccess, className }: PayButtonProps) {
-  const { publicKey, signTransaction, connected } = useWallet()
-  const { setVisible } = useWalletModal()
+  const { wallet, publicKey, signTransaction, connected, connecting, connect } = useWallet()
+  const { visible, setVisible } = useWalletModal()
   const [step, setStep] = useState<PayStep>('idle')
   const [errorMsg, setErrorMsg] = useState('')
+  const [connectRequested, setConnectRequested] = useState(false)
+
+  const showConnectError = useCallback((message: string) => {
+    setErrorMsg(message)
+    setStep('error')
+    setConnectRequested(false)
+    setTimeout(() => setStep('idle'), 4000)
+  }, [])
+
+  const requestWalletConnection = useCallback(async () => {
+    setErrorMsg('')
+    setConnectRequested(true)
+
+    if (!wallet) {
+      setVisible(true)
+      return
+    }
+
+    try {
+      await connect()
+    } catch (e) {
+      showConnectError(e instanceof Error ? e.message : 'Wallet connection failed')
+    }
+  }, [wallet, setVisible, connect, showConnectError])
 
   const pay = useCallback(async () => {
     if (!connected || !publicKey) {
-      setVisible(true)
+      requestWalletConnection()
       return
     }
     if (!selectedToken || !quoteReady || !signTransaction) return
@@ -121,7 +145,27 @@ export function PayButton({ linkId, selectedToken, quoteReady, onSuccess, classN
       setStep('error')
       setTimeout(() => setStep('idle'), 4000)
     }
-  }, [connected, publicKey, selectedToken, quoteReady, signTransaction, linkId, onSuccess, setVisible])
+  }, [connected, publicKey, selectedToken, quoteReady, signTransaction, linkId, onSuccess, requestWalletConnection])
+
+  useEffect(() => {
+    if (!connectRequested || connected) return
+
+    if (!visible && !wallet && !connecting) {
+      queueMicrotask(() => {
+        setConnectRequested(false)
+        setStep('idle')
+      })
+    }
+  }, [connectRequested, connected, visible, wallet, connecting])
+
+  useEffect(() => {
+    if (!connectRequested || !connected) return
+
+    queueMicrotask(() => {
+      setConnectRequested(false)
+      setStep('idle')
+    })
+  }, [connectRequested, connected])
 
   const isLoading = ['building', 'signing', 'executing', 'recording'].includes(step)
   const isDisabled = isLoading || step === 'done' || (!connected && false) || !selectedToken || !quoteReady
@@ -129,7 +173,7 @@ export function PayButton({ linkId, selectedToken, quoteReady, onSuccess, classN
   if (!connected) {
     return (
       <button
-        onClick={() => setVisible(true)}
+        onClick={requestWalletConnection}
         className={cn(
           'flex w-full items-center justify-center gap-2 rounded-xl border border-primary/40 py-3.5 text-sm font-semibold text-primary transition-all hover:border-primary hover:bg-primary/5',
           className,

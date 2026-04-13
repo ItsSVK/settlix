@@ -59,14 +59,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const data = await loginRes.json()
     setWallet(data.wallet)
     router.push('/dashboard')
-  }, [publicKey, signMessage])
+  }, [publicKey, signMessage, router])
 
   const logout = useCallback(async () => {
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
     setWallet(null)
     await disconnect()
     router.push('/')
-  }, [disconnect])
+  }, [disconnect, router])
 
   return <AuthContext.Provider value={{ wallet, isLoading, login, logout }}>{children}</AuthContext.Provider>
 }

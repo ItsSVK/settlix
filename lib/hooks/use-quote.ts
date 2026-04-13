@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 
-const REFRESH_INTERVAL_MS = 10_000 // 10 s — fresh enough, gentle on Jupiter's rate limits
+export const REFRESH_INTERVAL_MS = process.env.NODE_ENV === 'development' ? 30_000 : 10_000
 
 interface QuoteResult {
   inAmount: string
@@ -29,10 +29,31 @@ export function useQuote(payId: string, inputMint: string | null, outputMint: st
   /** True on background re-fetches — keeps existing quote visible. */
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isPageVisible, setIsPageVisible] = useState(() =>
+    typeof document === 'undefined' ? true : document.visibilityState === 'visible',
+  )
+  const requestSeq = useRef(0)
+  const activeController = useRef<AbortController | null>(null)
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+
+    const handleVisibilityChange = () => {
+      setIsPageVisible(document.visibilityState === 'visible')
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [])
 
   const fetch_ = useCallback(
     async (isBackground = false) => {
       if (!inputMint || !payId) return
+      activeController.current?.abort()
+
+      const currentRequest = ++requestSeq.current
+      const controller = new AbortController()
+      activeController.current = controller
 
       if (isBackground) {
         setIsRefreshing(true)
@@ -47,25 +68,37 @@ export function useQuote(payId: string, inputMint: string | null, outputMint: st
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ inputMint, payId }),
+          signal: controller.signal,
         })
         if (!res.ok) {
           const data = await res.json().catch(() => ({}))
           throw new Error(data.error ?? 'Quote failed')
         }
-        setQuote(await res.json())
-        setError(null)
+        const data = await res.json()
+        if (currentRequest === requestSeq.current) {
+          setQuote(data)
+          setError(null)
+        }
       } catch (e) {
+        if (e instanceof DOMException && e.name === 'AbortError') {
+          return
+        }
         if (!isBackground) {
           setError(e instanceof Error ? e.message : 'Failed to get quote')
           setQuote(null)
         }
         // Background refresh errors are silent — keep the last good quote visible
       } finally {
-        setIsLoading(false)
-        setIsRefreshing(false)
+        if (activeController.current === controller) {
+          activeController.current = null
+        }
+        if (currentRequest === requestSeq.current) {
+          setIsLoading(false)
+          setIsRefreshing(false)
+        }
       }
     },
-    [payId, inputMint, isDirect],
+    [payId, inputMint],
   )
 
   // Initial fetch (debounced 400ms) whenever the selected token changes.
@@ -81,12 +114,18 @@ export function useQuote(payId: string, inputMint: string | null, outputMint: st
   // Auto-refresh every REFRESH_INTERVAL_MS — SKIPPED entirely for same-mint payments.
   // The rate is always 1:1, so there is nothing to refresh.
   useEffect(() => {
-    if (!inputMint || isDirect) return
+    if (!inputMint || isDirect || !isPageVisible) return
     const interval = setInterval(() => fetch_(true), REFRESH_INTERVAL_MS)
     return () => {
       clearInterval(interval)
     }
-  }, [inputMint, isDirect, fetch_])
+  }, [inputMint, isDirect, isPageVisible, fetch_])
+
+  useEffect(() => {
+    return () => {
+      activeController.current?.abort()
+    }
+  }, [])
 
   return { quote, isLoading, isRefreshing, isDirect, error, refetch: () => fetch_(true) }
 }

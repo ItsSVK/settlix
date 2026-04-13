@@ -21,7 +21,18 @@ export function createBrowserConnection(): Connection {
   return new Connection(url, RPC_COMMITMENT)
 }
 
+const globalForConnection = globalThis as unknown as {
+  serverConnection: Connection | undefined
+}
+
 /** Use only from Server Components, Route Handlers, and server-only modules. */
 export function createServerConnection(): Connection {
-  return new Connection(resolveServerRpcUrl(), RPC_COMMITMENT)
+  if (globalForConnection.serverConnection) {
+    return globalForConnection.serverConnection
+  }
+  const conn = new Connection(resolveServerRpcUrl(), RPC_COMMITMENT)
+  if (process.env.NODE_ENV !== 'production') {
+    globalForConnection.serverConnection = conn
+  }
+  return conn
 }

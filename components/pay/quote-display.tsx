@@ -5,6 +5,7 @@ import { RefreshCw } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import type { TokenInfo } from './token-selector'
 import { TextShimmer } from '@/components/ui/text-shimmer'
+import { REFRESH_INTERVAL_MS } from '@/lib/hooks/use-quote'
 
 interface QuoteDisplayProps {
   isLoading: boolean
@@ -24,11 +25,12 @@ function formatAmount(raw: string, decimals: number): string {
 }
 
 function RefreshTimer({ isRefreshing }: { isRefreshing: boolean }) {
-  const [countdown, setCountdown] = useState(10)
+  const [countdown, setCountdown] = useState(REFRESH_INTERVAL_MS / 1000)
 
   useEffect(() => {
     if (isRefreshing) {
-      setCountdown(10)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCountdown(REFRESH_INTERVAL_MS / 1000)
       return
     }
     const interval = setInterval(() => setCountdown((c) => Math.max(0, c - 1)), 1000)

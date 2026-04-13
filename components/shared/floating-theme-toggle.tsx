@@ -1,17 +1,10 @@
 'use client'
 
 import { useSyncExternalStore } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-
-const iconTransition = {
-  duration: 0.28,
-  ease: [0.4, 0, 0.2, 1] as const,
-}
+import { AnimatedThemeButton } from '@/components/shared/animated-theme-button'
 
 /** Hydration-safe “client mounted” without setState-in-effect (next-themes needs client before showing theme). */
 function useIsClient() {
@@ -41,7 +34,7 @@ function KbdD() {
  */
 export function FloatingThemeToggle() {
   const mounted = useIsClient()
-  const { resolvedTheme, setTheme } = useTheme()
+  const { resolvedTheme } = useTheme()
 
   if (!mounted) {
     return (
@@ -58,50 +51,20 @@ export function FloatingThemeToggle() {
   return (
     <div
       className={cn(
-        'fixed top-4 right-4 z-110 flex items-center gap-2 rounded-full border border-border/90 py-1 pr-1 pl-2.5 shadow-md',
+        'fixed top-4 right-4 z-110 flex items-center gap-2 rounded-full border border-border/90 2xl:py-1 2xl:pr-1 2xl:pl-2.5 shadow-md',
         'bg-background/95 backdrop-blur-md supports-backdrop-filter:bg-background/80',
         'dark:border-border dark:bg-card/95 dark:supports-backdrop-filter:bg-card/85',
+        'hidden md:flex',
       )}
       role='group'
       aria-label={`${modeLabel}. Keyboard: D.`}
     >
-      <span className='pointer-events-none hidden items-center gap-2 text-[11px] leading-none text-muted-foreground sm:flex'>
+      <span className='pointer-events-none hidden items-center gap-2 text-[11px] leading-none text-muted-foreground 2xl:flex'>
         <span className='whitespace-nowrap'>Press</span>
         <KbdD />
       </span>
 
-      <span className='pointer-events-none flex items-center sm:hidden'>
-        <KbdD />
-      </span>
-
-      <Button
-        type='button'
-        variant='ghost'
-        size='icon'
-        className={cn(
-          'size-9 shrink-0 rounded-full',
-          'text-foreground hover:bg-muted/90',
-          'transition-[color,background-color] duration-300 ease-out',
-        )}
-        onClick={() => setTheme(isDark ? 'light' : 'dark')}
-        aria-label={`${modeLabel} (keyboard shortcut: D)`}
-        title={`${modeLabel} — or press D`}
-      >
-        <span className='relative grid h-4 w-4 place-items-center overflow-visible'>
-          <AnimatePresence mode='popLayout' initial={false}>
-            <motion.span
-              key={isDark ? 'sun' : 'moon'}
-              initial={{ opacity: 0, scale: 0.5, rotate: -60 }}
-              animate={{ opacity: 1, scale: 1, rotate: 0 }}
-              exit={{ opacity: 0, scale: 0.5, rotate: 60 }}
-              transition={iconTransition}
-              className='col-start-1 row-start-1 flex items-center justify-center'
-            >
-              {isDark ? <Sun className='size-4' /> : <Moon className='size-4' />}
-            </motion.span>
-          </AnimatePresence>
-        </span>
-      </Button>
+      <AnimatedThemeButton isDark={isDark} />
     </div>
   )
 }

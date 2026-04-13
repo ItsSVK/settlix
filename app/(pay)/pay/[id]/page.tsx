@@ -1,4 +1,6 @@
+import { notFound } from 'next/navigation'
 import { PayCard } from '@/components/pay/pay-card'
+import { paymentLinkId } from '@/lib/validation'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -6,7 +8,13 @@ interface Props {
 
 export default async function PayPage({ params }: Props) {
   const { id } = await params
-  return <PayCard linkId={id} />
+  const parsedId = paymentLinkId.safeParse(id)
+
+  if (!parsedId.success) {
+    notFound()
+  }
+
+  return <PayCard linkId={parsedId.data} />
 }
 
 export async function generateMetadata({ params }: Props) {

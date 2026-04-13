@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+export const paymentLinkId = z.string().cuid()
+
 export const createLinkBody = z.object({
   token: z.string().min(32).max(64),
   amount: z.union([z.number().positive(), z.string()]),
@@ -20,7 +22,7 @@ export const walletLoginBody = z.object({
 export const submitTxBody = z.object({
   executionId: z.uuid(),
   txSignature: z.string().min(80).max(128),
-  linkId: z.string().min(1),
+  linkId: paymentLinkId,
   userWallet: z.string().min(32).max(64).optional(),
   inputToken: z.string().min(32).max(64).optional(),
   inputAmount: z.string().optional(),
@@ -30,7 +32,7 @@ export const submitTxBody = z.object({
 export const jupiterOrderBody = z.object({
   inputMint: z.string().min(32).max(64),
   taker: z.string().min(32).max(64),
-  payId: z.string().min(1),
+  payId: paymentLinkId,
 })
 
 /** Quote-only: no wallet / taker. */

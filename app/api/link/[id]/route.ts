@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { ApiError, handleApi, readJsonBody } from '@/lib/api/errors'
 import { getPaymentLinkById, updatePaymentLinkActive } from '@/lib/services/payment-link.service'
 import { FORBIDDEN, NOT_FOUND, VALIDATION } from '@/lib/api/constants'
-import { updateLinkActiveBody } from '@/lib/validation'
+import { paymentLinkId, updateLinkActiveBody } from '@/lib/validation'
 import { requireAuth } from '@/lib/auth/require-auth'
 
 type Params = { params: Promise<{ id: string }> }
@@ -12,7 +12,13 @@ type Params = { params: Promise<{ id: string }> }
 export async function GET(_req: Request, { params }: Params) {
   return handleApi(async () => {
     const { id } = await params
-    const link = await getPaymentLinkById(id)
+    const parsedId = paymentLinkId.safeParse(id)
+
+    if (!parsedId.success) {
+      return NextResponse.json({ error: 'Not found', code: NOT_FOUND }, { status: 404 })
+    }
+
+    const link = await getPaymentLinkById(parsedId.data)
 
     if (!link || !link.active) {
       return NextResponse.json({ error: 'Not found', code: NOT_FOUND }, { status: 404 })
@@ -36,6 +42,11 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const { wallet } = await requireAuth(req)
 
     const { id } = await params
+    const parsedId = paymentLinkId.safeParse(id)
+    if (!parsedId.success) {
+      return NextResponse.json({ error: 'Not found', code: NOT_FOUND }, { status: 404 })
+    }
+
     const json = await readJsonBody(req)
     const parsed = updateLinkActiveBody.safeParse(json)
     if (!parsed.success) {
@@ -46,7 +57,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
 
     // Ownership check: make sure the authenticated wallet owns this link
-    const link = await getPaymentLinkById(id)
+    const link = await getPaymentLinkById(parsedId.data)
     if (!link) {
       return NextResponse.json({ error: 'Not found', code: NOT_FOUND }, { status: 404 })
     }
@@ -54,7 +65,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       throw new ApiError(403, 'You do not own this payment link', FORBIDDEN)
     }
 
-    const updated = await updatePaymentLinkActive(id, wallet, parsed.data.active)
+    const updated = await updatePaymentLinkActive(parsedId.data, wallet, parsed.data.active)
 
     return NextResponse.json({
       id: updated.id,
