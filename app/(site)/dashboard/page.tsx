@@ -10,7 +10,7 @@ import { useAuth } from '@/components/auth/auth-context'
 
 export default function DashboardPage() {
   const { wallet } = useAuth()
-  const { data, isLoading, refresh } = useDashboard()
+  const { data, isLoading, refresh, toggleLinkActive } = useDashboard()
 
   const links = data?.links ?? []
 
@@ -49,7 +49,7 @@ export default function DashboardPage() {
             Payment Links {!isLoading && `(${links.length})`}
           </h2>
         </div>
-        <LinksTable links={links} isLoading={isLoading} onRefresh={refresh} />
+        <LinksTable links={links} isLoading={isLoading} onRefresh={refresh} onToggle={toggleLinkActive} />
       </motion.div>
     </main>
   )

@@ -10,6 +10,7 @@ interface LinksTableProps {
   links: DashboardLink[]
   isLoading: boolean
   onRefresh: () => void
+  onToggle: (id: string, active: boolean) => Promise<void>
 }
 
 function SkeletonRow() {
@@ -22,16 +23,7 @@ function SkeletonRow() {
   )
 }
 
-export function LinksTable({ links, isLoading, onRefresh }: LinksTableProps) {
-  const toggleActive = async (id: string, active: boolean) => {
-    await fetch(`/api/link/${id}`, {
-      method: 'PATCH',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ active }),
-    })
-    onRefresh()
-  }
+export function LinksTable({ links, isLoading, onRefresh, onToggle }: LinksTableProps) {
 
   if (isLoading) {
     return (
@@ -67,7 +59,7 @@ export function LinksTable({ links, isLoading, onRefresh }: LinksTableProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: i * 0.05 }}
         >
-          <LinkRow link={link} onToggle={toggleActive} />
+          <LinkRow link={link} onToggle={onToggle} />
         </motion.div>
       ))}
     </div>
