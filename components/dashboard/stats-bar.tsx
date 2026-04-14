@@ -28,12 +28,14 @@ function CountCard({ label, value }: { label: string; value: number }) {
 export function StatsBar({ links }: StatsBarProps) {
   const totalLinks = links.length
   const totalPaid = links.reduce((s, l) => s + l.stats.paidCount, 0)
-  const totalRevenue = links.reduce((s, l) => s + parseFloat(l.stats.totalVolume), 0)
+  const totalFailed = links.reduce((s, l) => s + l.stats.failedCount, 0)
+  const totalRevenue = links.reduce((s, l) => s + parseFloat(l.stats.totalVolume), 0) / 1_000_000
 
   return (
-    <div className='grid grid-cols-2 gap-4 sm:grid-cols-3'>
+    <div className='grid grid-cols-2 gap-4 sm:grid-cols-4'>
       <CountCard label='Total links' value={totalLinks} />
-      <CountCard label='Total payments' value={totalPaid} />
+      <CountCard label='Total successful payments' value={totalPaid} />
+      <CountCard label='Total failed payments' value={totalFailed} />
       <div className='col-span-2 sm:col-span-1 rounded-2xl border border-border/40 bg-card p-5'>
         <p className='text-xs font-medium text-muted-foreground'>Revenue (USDC)</p>
         <p className='mt-1 text-3xl font-bold tracking-tight text-foreground'>

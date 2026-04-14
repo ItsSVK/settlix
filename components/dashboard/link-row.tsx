@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { ChevronDown, Copy, Check, ExternalLink, ToggleLeft, ToggleRight } from 'lucide-react'
 import type { DashboardLink } from '@/lib/hooks/use-dashboard'
+import { Button } from '@/components/ui/button'
 
 function shorten(s: string, start = 6, end = 4) {
   return `${s.slice(0, start)}…${s.slice(-end)}`
@@ -54,6 +55,9 @@ export function LinkRow({ link, onToggle }: LinkRowProps) {
           <span className='text-xs text-muted-foreground'>
             <span className='font-semibold text-foreground'>{link.stats.paidCount}</span> paid
           </span>
+          <span className='text-xs text-muted-foreground'>
+            <span className='font-semibold text-foreground'>{link.stats.failedCount}</span> failed
+          </span>
           {link.stats.successRate !== null && (
             <span className='text-xs text-muted-foreground'>
               <span className='font-semibold text-foreground'>{link.stats.successRate}%</span> success
@@ -62,35 +66,42 @@ export function LinkRow({ link, onToggle }: LinkRowProps) {
         </div>
 
         {/* Actions */}
-        <div className='flex items-center gap-1' onClick={(e) => e.stopPropagation()}>
+        <div className='flex items-center' onClick={(e) => e.stopPropagation()}>
           {/* Copy */}
-          <button
+          <Button
             onClick={copyLink}
             title='Copy pay URL'
-            className='rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground'
+            variant='ghost'
+            size='xs'
+            className='text-muted-foreground transition-colors hover:bg-accent hover:text-foreground'
           >
-            {copied ? <Check className='h-3.5 w-3.5 text-green-500' /> : <Copy className='h-3.5 w-3.5' />}
-          </button>
+            {copied ? <Check className='text-green-500' /> : <Copy />}
+          </Button>
 
           {/* Open pay page */}
-          <a
-            href={payUrl}
-            target='_blank'
-            rel='noopener noreferrer'
-            className='rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground'
+          <Button
+            onClick={() => {
+              window.open(payUrl, '_blank')
+            }}
+            title='Open pay page'
+            variant='ghost'
+            size='xs'
+            className='text-muted-foreground transition-colors hover:bg-accent hover:text-foreground'
           >
-            <ExternalLink className='h-3.5 w-3.5' />
-          </a>
+            <ExternalLink />
+          </Button>
 
           {/* Toggle active */}
-          <button
+          <Button
             onClick={handleToggle}
             disabled={toggling}
             title={link.active ? 'Deactivate' : 'Activate'}
-            className='rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50'
+            variant='ghost'
+            size='xs'
+            className='text-muted-foreground transition-colors hover:bg-accent hover:text-foreground'
           >
-            {link.active ? <ToggleRight className='h-4 w-4 text-green-500' /> : <ToggleLeft className='h-4 w-4' />}
-          </button>
+            {link.active ? <ToggleRight className='text-green-500' /> : <ToggleLeft />}
+          </Button>
         </div>
 
         <ChevronDown

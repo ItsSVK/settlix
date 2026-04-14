@@ -26,68 +26,6 @@ async function mintTokenProgram(connection: Connection, mint: PublicKey): Promis
   return TOKEN_PROGRAM_ID
 }
 
-/**
- * Append merchant settlement `transferChecked` after Jupiter's swap. Strips memo instructions
- * so the tx does not rely on the memo program.
- */
-export async function appendSettlementTransfer(params: {
-  connection: Connection
-  jupiterTxBase64: string
-  payer: PublicKey
-  merchant: PublicKey
-  settlementMint: PublicKey
-  transferAmountRaw: bigint
-  mintDecimals: number
-}): Promise<VersionedTransaction> {
-  const { connection, jupiterTxBase64, payer, merchant, settlementMint, transferAmountRaw, mintDecimals } = params
-
-  const tokenProgram = await mintTokenProgram(connection, settlementMint)
-
-  const payerAta = getAssociatedTokenAddressSync(settlementMint, payer, false, tokenProgram)
-  const merchantAta = getAssociatedTokenAddressSync(settlementMint, merchant, false, tokenProgram)
-
-  const vtx = VersionedTransaction.deserialize(Buffer.from(jupiterTxBase64, 'base64'))
-
-  const lookups = getAddressTableLookupsFromMessage(vtx.message)
-  const alts = await loadAddressLookupTableAccounts(connection, lookups)
-  const decompiled = TransactionMessage.decompile(vtx.message, { addressLookupTableAccounts: alts })
-
-  // Idempotent: creates the merchant ATA if it doesn't exist yet; no-op if it does.
-  const createMerchantAtaIx = createAssociatedTokenAccountIdempotentInstruction(
-    payer, // fee payer
-    merchantAta, // ATA address to create
-    merchant, // ATA owner
-    settlementMint, // mint
-    tokenProgram,
-    ASSOCIATED_TOKEN_PROGRAM_ID,
-  )
-
-  const transferIx = createTransferCheckedInstruction(
-    payerAta,
-    settlementMint,
-    merchantAta,
-    payer,
-    transferAmountRaw,
-    mintDecimals,
-    [],
-    tokenProgram,
-  )
-
-  const instructions: TransactionInstruction[] = [
-    ...decompiled.instructions.filter((ix) => !ix.programId.equals(MEMO_PROGRAM)),
-    createMerchantAtaIx,
-    transferIx,
-  ]
-
-  const rebuilt = new TransactionMessage({
-    payerKey: decompiled.payerKey,
-    recentBlockhash: decompiled.recentBlockhash,
-    instructions,
-  }).compileToV0Message(alts)
-
-  return new VersionedTransaction(rebuilt)
-}
-
 /** Same-mint checkout: transfer settlement token to merchant only (no Jupiter). */
 export async function buildDirectSettlementPaymentTx(params: {
   connection: Connection

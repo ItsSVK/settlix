@@ -47,7 +47,7 @@ export async function executeJupiterOrderRequest(body: JupiterOrderBody) {
     }
 
     // ── Normal Jupiter swap ────────────────────────────────────────────────────
-    const order = await getExactOutOrder(body.inputMint, pay.token, rawOut, body.taker)
+    const order = await getExactOutOrder(body.inputMint, pay.token, rawOut, body.taker, pay.merchantWallet)
     return {
       transaction: order.transaction,
       inAmount: order.inAmount,

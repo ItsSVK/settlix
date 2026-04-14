@@ -111,7 +111,13 @@ export async function jupiterFetch<T>(pathWithQuery: string, init?: RequestInit)
  * GET /order with swapMode=ExactOut — `amount` is the exact output you want.
  * Omit `taker` for a quote-only call; include `taker` to receive an assembled transaction.
  */
-function buildOrderUrl(inputMint: string, outputMint: string, exactOutRaw: string, taker?: string): string {
+function buildOrderUrl(
+  inputMint: string,
+  outputMint: string,
+  exactOutRaw: string,
+  taker?: string,
+  receiver?: string,
+): string {
   const p = new URLSearchParams({
     inputMint,
     outputMint,
@@ -119,6 +125,7 @@ function buildOrderUrl(inputMint: string, outputMint: string, exactOutRaw: strin
     swapMode: 'ExactOut',
   })
   if (taker) p.set('taker', taker)
+  if (receiver) p.set('receiver', receiver)
   return `/order?${p.toString()}`
 }
 
@@ -149,8 +156,9 @@ export async function getExactOutOrder(
   outputMint: string,
   exactOutRaw: bigint,
   taker: string,
+  receiver?: string,
 ): Promise<JupiterOrderResponse> {
-  const url = buildOrderUrl(inputMint, outputMint, exactOutRaw.toString(), taker)
+  const url = buildOrderUrl(inputMint, outputMint, exactOutRaw.toString(), taker, receiver)
   const response = await jupiterFetch<JupiterOrderResponse>(url)
   if (response.error || response.errorMessage) {
     throw new Error(response.errorMessage ?? response.error ?? 'Jupiter order failed')
