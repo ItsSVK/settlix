@@ -1,10 +1,4 @@
-import {
-  Connection,
-  PublicKey,
-  TransactionInstruction,
-  TransactionMessage,
-  VersionedTransaction,
-} from '@solana/web3.js'
+import { Connection, PublicKey, TransactionMessage, VersionedTransaction } from '@solana/web3.js'
 import {
   createAssociatedTokenAccountIdempotentInstruction,
   createTransferCheckedInstruction,
@@ -14,10 +8,7 @@ import {
   TOKEN_2022_PROGRAM_ID,
 } from '@solana/spl-token'
 
-import { getAddressTableLookupsFromMessage, loadAddressLookupTableAccounts } from '@/lib/solana/address-lookup'
-import { MEMO_PROGRAM_ID, RPC_COMMITMENT } from '@/lib/solana/constants'
-
-const MEMO_PROGRAM = new PublicKey(MEMO_PROGRAM_ID)
+import { RPC_COMMITMENT } from '@/lib/solana/constants'
 
 async function mintTokenProgram(connection: Connection, mint: PublicKey): Promise<PublicKey> {
   const info = await connection.getAccountInfo(mint)

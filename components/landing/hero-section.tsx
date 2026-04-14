@@ -4,8 +4,6 @@ import { motion } from 'motion/react'
 import { ArrowDown } from 'lucide-react'
 import { BackgroundBeams } from '@/components/ui/background-beams'
 import { TypewriterEffect } from '@/components/ui/typewriter-effect'
-import { MovingBorder } from '@/components/ui/moving-border'
-import { ConnectButton } from '@/components/auth/connect-button'
 
 const heroWords = [
   { text: 'Accept' },
@@ -59,17 +57,17 @@ export function HeroSection() {
           transition={{ duration: 0.5, delay: 0.6 }}
           className='flex flex-col items-center gap-4 sm:flex-row'
         >
-          <MovingBorder
+          {/* <MovingBorder
             containerClassName='rounded-xl'
             className='px-8 py-3 text-sm font-semibold text-foreground'
             duration={2500}
             as='div'
           >
             <ConnectButton className='border-0 bg-transparent hover:bg-transparent hover:shadow-none p-0 text-foreground font-semibold' />
-          </MovingBorder>
+          </MovingBorder> */}
 
           <a
-            href='#features'
+            href='#'
             className='text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline'
           >
             Learn how it works ↓
