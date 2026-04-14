@@ -4,11 +4,9 @@ import { useState } from 'react'
 import { motion } from 'motion/react'
 import { Plus, Loader2, X } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-context'
-
-// USDC mainnet — currently the only allowed settlement token.
-// To let merchants choose a token in the future, replace this with
-// a <TokenSelector> component and remove the hardcoded constant.
-const USDC_MAINNET = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+import { Button } from '@/components/ui/button'
+import { copyText } from '@/lib/utils'
+import { getDefaultUsdcMint } from '@/lib/solana/constants'
 
 interface CreateLinkDialogProps {
   onCreated: () => void
@@ -20,6 +18,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
   const [amount, setAmount] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [copied, setCopied] = useState(false)
   const [result, setResult] = useState<{ id: string; payPath: string } | null>(null)
 
   const reset = () => {
@@ -39,7 +38,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: USDC_MAINNET, amount }),
+        body: JSON.stringify({ token: getDefaultUsdcMint(), amount }),
       })
       if (!res.ok) {
         const d = await res.json().catch(() => ({}))
@@ -59,13 +58,13 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
 
   return (
     <>
-      <button
+      <Button
         onClick={() => setOpen(true)}
-        className='flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90 active:scale-[0.98]'
+        className='flex items-center rounded-xl bg-primary sm:px-4 sm:py-2 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90 active:scale-[0.98]'
       >
         <Plus className='h-4 w-4' />
-        Create Link
-      </button>
+        <span className='hidden sm:inline-block'>Create Link</span>
+      </Button>
 
       {open && (
         <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4'>
@@ -87,12 +86,17 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                 <p className='text-sm text-muted-foreground'>Your link is ready to share:</p>
                 <div className='flex items-center gap-2 rounded-xl border border-border/50 bg-muted/30 p-3'>
                   <span className='flex-1 truncate font-mono text-xs text-foreground'>{payUrl}</span>
-                  <button
-                    onClick={() => navigator.clipboard.writeText(payUrl)}
-                    className='rounded-lg border border-border/50 px-2 py-1 text-xs text-muted-foreground hover:bg-muted'
-                  >
-                    Copy
-                  </button>
+                  <span className='w-15 flex items-center justify-center'>
+                    <Button
+                      onClick={() => copyText(payUrl, setCopied)}
+                      title='Copy pay URL'
+                      variant='ghost'
+                      size='xs'
+                      className={`rounded-lg border border-border px-2 py-1 text-xs text-muted-foreground hover:bg-muted ${copied ? 'bg-muted' : ''}`}
+                    >
+                      {copied ? 'Copied' : 'Copy'}
+                    </Button>
+                  </span>
                 </div>
                 <button
                   onClick={reset}

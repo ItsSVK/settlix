@@ -24,7 +24,6 @@ function SkeletonRow() {
 }
 
 export function LinksTable({ links, isLoading, onRefresh, onToggle }: LinksTableProps) {
-
   if (isLoading) {
     return (
       <div className='space-y-3'>

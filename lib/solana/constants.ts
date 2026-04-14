@@ -11,7 +11,7 @@ const USDC_BY_CLUSTER: Record<SolanaCluster, string> = {
   devnet: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
 }
 
-export function getDefaultUsdcMint(cluster: SolanaCluster): string {
+export function getDefaultUsdcMint(cluster: SolanaCluster = 'mainnet-beta'): string {
   return USDC_BY_CLUSTER[cluster]
 }
 

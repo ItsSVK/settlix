@@ -18,7 +18,7 @@ function CountCard({ label, value }: { label: string; value: number }) {
   }, [value, count])
 
   return (
-    <div className='rounded-2xl border border-border/40 bg-card p-5'>
+    <div className='rounded-2xl border border-border/40 bg-card p-5 shadow-[0_6px_16px_rgba(15,23,42,0.06)] dark:shadow-none transition-all hover:scale-[1.02] hover:shadow-[0_10px_24px_rgba(15,23,42,0.1)] dark:hover:shadow-none'>
       <p className='text-xs font-medium text-muted-foreground'>{label}</p>
       <motion.p className='mt-1 text-3xl font-bold tracking-tight text-foreground'>{rounded}</motion.p>
     </div>
@@ -36,7 +36,7 @@ export function StatsBar({ links }: StatsBarProps) {
       <CountCard label='Total links' value={totalLinks} />
       <CountCard label='Total successful payments' value={totalPaid} />
       <CountCard label='Total failed payments' value={totalFailed} />
-      <div className='col-span-2 sm:col-span-1 rounded-2xl border border-border/40 bg-card p-5'>
+      <div className='col-span-1 sm:col-span-1 rounded-2xl border border-border/40 bg-card p-5 shadow-[0_6px_16px_rgba(15,23,42,0.06)] dark:shadow-none transition-all hover:scale-[1.02] hover:shadow-[0_10px_24px_rgba(15,23,42,0.1)] dark:hover:shadow-none'>
         <p className='text-xs font-medium text-muted-foreground'>Revenue (USDC)</p>
         <p className='mt-1 text-3xl font-bold tracking-tight text-foreground'>
           {totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

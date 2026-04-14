@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import { ChevronDown, Copy, Check, ExternalLink, ToggleLeft, ToggleRight } from 'lucide-react'
 import type { DashboardLink } from '@/lib/hooks/use-dashboard'
 import { Button } from '@/components/ui/button'
+import { copyText } from '@/lib/utils'
 
 function shorten(s: string, start = 6, end = 4) {
   return `${s.slice(0, start)}…${s.slice(-end)}`
@@ -22,12 +23,6 @@ export function LinkRow({ link, onToggle }: LinkRowProps) {
 
   const payUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/pay/${link.id}`
 
-  const copyLink = () => {
-    navigator.clipboard.writeText(payUrl)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
   const handleToggle = async () => {
     setToggling(true)
     try {
@@ -38,7 +33,7 @@ export function LinkRow({ link, onToggle }: LinkRowProps) {
   }
 
   return (
-    <div className='rounded-xl border border-border/40 bg-card transition-all hover:border-border/70'>
+    <div className='rounded-xl border border-border/40 bg-card shadow-[0_6px_16px_rgba(15,23,42,0.06)] dark:shadow-none transition-all hover:border-border/70 hover:shadow-[0_10px_24px_rgba(15,23,42,0.1)] dark:hover:shadow-none'>
       {/* Main row */}
       <div className='flex cursor-pointer items-center gap-3 p-4' onClick={() => setExpanded((v) => !v)}>
         {/* Status dot */}
@@ -69,10 +64,10 @@ export function LinkRow({ link, onToggle }: LinkRowProps) {
         <div className='flex items-center' onClick={(e) => e.stopPropagation()}>
           {/* Copy */}
           <Button
-            onClick={copyLink}
+            onClick={() => copyText(payUrl, setCopied)}
             title='Copy pay URL'
             variant='ghost'
-            size='xs'
+            size='xss'
             className='text-muted-foreground transition-colors hover:bg-accent hover:text-foreground'
           >
             {copied ? <Check className='text-green-500' /> : <Copy />}
@@ -85,7 +80,7 @@ export function LinkRow({ link, onToggle }: LinkRowProps) {
             }}
             title='Open pay page'
             variant='ghost'
-            size='xs'
+            size='xss'
             className='text-muted-foreground transition-colors hover:bg-accent hover:text-foreground'
           >
             <ExternalLink />
@@ -97,7 +92,7 @@ export function LinkRow({ link, onToggle }: LinkRowProps) {
             disabled={toggling}
             title={link.active ? 'Deactivate' : 'Activate'}
             variant='ghost'
-            size='xs'
+            size='xss'
             className='text-muted-foreground transition-colors hover:bg-accent hover:text-foreground'
           >
             {link.active ? <ToggleRight className='text-green-500' /> : <ToggleLeft />}
