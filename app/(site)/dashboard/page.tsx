@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'motion/react'
 import { WalletAvatar } from '@/components/shared/wallet-avatar'
 import { StatsBar } from '@/components/dashboard/stats-bar'
@@ -7,12 +8,15 @@ import { LinksTable } from '@/components/dashboard/links-table'
 import { CreateLinkDialog } from '@/components/dashboard/create-link-dialog'
 import { useDashboard } from '@/lib/hooks/use-dashboard'
 import { useAuth } from '@/components/auth/auth-context'
+import { Switch } from '@/components/ui/switch'
 
 export default function DashboardPage() {
   const { wallet } = useAuth()
   const { data, isLoading, refresh, toggleLinkActive } = useDashboard()
+  const [activeOnly, setActiveOnly] = useState(false)
 
   const links = data?.links ?? []
+  const filteredLinks = activeOnly ? links.filter((link) => link.active) : links
 
   return (
     <main className='flex-1 bg-muted/60 dark:bg-background'>
@@ -47,10 +51,17 @@ export default function DashboardPage() {
         <motion.div initial={false} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 0.2 }}>
           <div className='mb-4 flex items-center justify-between'>
             <h2 className='text-sm font-semibold text-muted-foreground uppercase tracking-wider'>
-              Payment Links {!isLoading && `(${links.length})`}
+              Payment Links {!isLoading && `(${filteredLinks.length})`}
             </h2>
+
+            {links.length > 0 && (
+              <div className='flex items-center gap-2'>
+                <span className='text-xs font-medium text-muted-foreground'>Active only</span>
+                <Switch checked={activeOnly} onCheckedChange={setActiveOnly} size='sm' />
+              </div>
+            )}
           </div>
-          <LinksTable links={links} isLoading={isLoading} onRefresh={refresh} onToggle={toggleLinkActive} />
+          <LinksTable links={filteredLinks} isLoading={isLoading} onRefresh={refresh} onToggle={toggleLinkActive} />
         </motion.div>
       </div>
     </main>
