@@ -105,6 +105,14 @@ export function ConnectButton({ className, onSuccess }: ConnectButtonProps) {
     done: 'Signed in!',
   }
 
+  const mobileLabels: Record<Step, string> = {
+    idle: connected ? 'Sign' : 'Connect',
+    selecting: 'Choose…',
+    connecting: 'Opening…',
+    signing: 'Signing…',
+    done: 'Done!',
+  }
+
   const isLoading = resolvedStep === 'selecting' || resolvedStep === 'connecting' || resolvedStep === 'signing'
 
   return (
@@ -119,7 +127,8 @@ export function ConnectButton({ className, onSuccess }: ConnectButtonProps) {
       )}
     >
       {isLoading && <Loader2 className='h-4 w-4 animate-spin' />}
-      {labels[resolvedStep]}
+      <span className='hidden sm:inline'>{labels[resolvedStep]}</span>
+      <span className='sm:hidden'>{mobileLabels[resolvedStep]}</span>
     </button>
   )
 }
