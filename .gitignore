@@ -42,6 +42,5 @@ jupiter.log
 *.tsbuildinfo
 next-env.d.ts
 
-/lib/generated/prisma
 /scripts/
 settlex.postman_collection.json
