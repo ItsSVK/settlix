@@ -1,11 +1,12 @@
 'use client'
 
 import { motion, AnimatePresence } from 'motion/react'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, ArrowRight } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import type { TokenInfo } from './token-selector'
 import { TextShimmer } from '@/components/ui/text-shimmer'
 import { REFRESH_INTERVAL_MS } from '@/lib/hooks/use-quote'
+import { JupiterLogo } from '@/components/shared/jupiter-logo'
 
 interface QuoteDisplayProps {
   isLoading: boolean
@@ -39,6 +40,7 @@ function RefreshTimer({ isRefreshing }: { isRefreshing: boolean }) {
 
   return <span>{isRefreshing ? 'Refreshing…' : `Refreshes in ${countdown}s`}</span>
 }
+
 export function QuoteDisplay({
   isLoading,
   isRefreshing,
@@ -77,44 +79,81 @@ export function QuoteDisplay({
             exit={{ opacity: 0 }}
             className='rounded-xl border border-primary/20 bg-primary/5 p-4'
           >
-            <div className='flex items-center justify-between'>
-              <span className='text-sm text-muted-foreground'>You pay</span>
-              {isLoading || !quote ? (
-                <TextShimmer className='text-md font-bold tracking-wide' duration={1.5}>
-                  Refreshing
-                </TextShimmer>
-              ) : (
-                <motion.span
-                  key={quote.inAmount} // re-animate when value changes on refresh
-                  initial={{ opacity: 0.4, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25 }}
-                  className='text-md font-bold text-foreground'
-                >
-                  {formatAmount(quote.inAmount, selectedToken.decimals)}&nbsp;{selectedToken.symbol}
-                </motion.span>
-              )}
+            {/* Swap direction row: YOU PAY → THEY RECEIVE */}
+            <div className='flex items-center gap-3'>
+              {/* Input side — amount on one line, symbol below */}
+              <div className='flex min-w-0 flex-1 flex-col items-start gap-0.5'>
+                <span className='text-[10px] font-medium uppercase tracking-widest text-muted-foreground'>You pay</span>
+                {isLoading || !quote ? (
+                  <TextShimmer className='text-lg font-bold tracking-tight' duration={1.5}>
+                    Loading…
+                  </TextShimmer>
+                ) : (
+                  <motion.div
+                    key={quote.inAmount}
+                    initial={{ opacity: 0.4, y: -3 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className='flex w-full flex-col'
+                  >
+                    <span className='truncate text-xl font-bold leading-tight text-foreground'>
+                      {formatAmount(quote.inAmount, selectedToken.decimals)}
+                    </span>
+                    <span className='text-xs font-semibold text-muted-foreground'>{selectedToken.symbol}</span>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Arrow connector — fixed size, never shrinks */}
+              <div className='flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-500/15'>
+                <ArrowRight className='h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400' />
+              </div>
+
+              {/* Output side — amount on one line, USDC below */}
+              <div className='flex min-w-0 flex-1 flex-col items-end gap-0.5'>
+                <span className='text-[10px] font-medium uppercase tracking-widest text-muted-foreground'>
+                  They receive
+                </span>
+                <div className='flex flex-col items-end'>
+                  <span className='text-xl font-bold leading-tight text-foreground'>{outputAmountUSDC}</span>
+                  <span className='text-xs font-semibold text-green-500'>USDC</span>
+                </div>
+              </div>
             </div>
 
-            <div className='mt-2 flex items-center justify-between border-t border-border/30 pt-2'>
-              <span className='text-sm text-muted-foreground'>Merchant receives</span>
-              <span className='text-sm font-semibold text-foreground'>{outputAmountUSDC}&nbsp;USDC</span>
-            </div>
+            {/* Footer: source label + refresh status */}
+            <div className='mt-3 flex items-center justify-between border-t border-border/30 pt-2.5 text-[10px] text-muted-foreground'>
+              {/* Left: swap source badge */}
+              <span
+                className={
+                  isDirect ? 'flex items-center gap-1' : 'flex items-center gap-1 text-indigo-500 dark:text-indigo-400'
+                }
+              >
+                {isDirect ? (
+                  <>
+                    <span className='inline-block h-1.5 w-1.5 rounded-full bg-green-500' />
+                    Direct transfer · 1:1
+                  </>
+                ) : (
+                  <>
+                    <JupiterLogo className='h-3 w-3' />
+                    via Jupiter swap
+                  </>
+                )}
+              </span>
 
-            {/* Footer row — inline loader when loading, otherwise fixed/refresh status */}
-            <div className='mt-2 flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground'>
-              {isLoading || !quote ? (
-                <TextShimmer duration={2}>Loading live prices...</TextShimmer>
-              ) : isDirect ? (
-                <>
-                  <span className='inline-block h-1.5 w-1.5 rounded-full bg-green-500' />
-                  Fixed rate · 1:1 direct transfer
-                </>
-              ) : (
-                <>
-                  <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin text-primary' : ''}`} />
-                  <RefreshTimer isRefreshing={isRefreshing} />
-                </>
+              {/* Right: refresh countdown */}
+              {!isDirect && (
+                <span className='flex items-center gap-1'>
+                  <RefreshCw
+                    className={`h-2.5 w-2.5 ${isRefreshing || isLoading ? 'animate-spin text-primary' : ''}`}
+                  />
+                  {isLoading || !quote ? (
+                    <TextShimmer duration={2}>Loading live prices…</TextShimmer>
+                  ) : (
+                    <RefreshTimer isRefreshing={isRefreshing} />
+                  )}
+                </span>
               )}
             </div>
           </motion.div>

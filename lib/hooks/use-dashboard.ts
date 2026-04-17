@@ -124,6 +124,12 @@ export function useDashboard() {
       }
     }
 
+    eventSource.onerror = () => {
+      // EventSource will auto-reconnect. Silently re-fetch so the
+      // dashboard isn't stale if a payment landed while disconnected.
+      void load({ silent: true })
+    }
+
     return () => {
       eventSource.close()
     }
