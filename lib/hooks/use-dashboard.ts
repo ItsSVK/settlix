@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { getNameByMint } from '@/lib/tokens/tokens'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { toast } from 'sonner'
 
 interface DashboardLink {
@@ -39,8 +40,9 @@ export function useDashboard() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const seenPaidExecutionIds = useRef<Set<string>>(new Set<string>())
 
-  const load = async ({ silent = false }: { silent?: boolean } = {}) => {
+  const load = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
     if (!silent) setIsLoading(true)
     try {
       const res = await fetch('/api/dashboard', { credentials: 'include' })
@@ -52,9 +54,9 @@ export function useDashboard() {
     } finally {
       if (!silent) setIsLoading(false)
     }
-  }
+  }, [])
 
-  const refresh = () => load({ silent: true })
+  const refresh = useCallback(() => load({ silent: true }), [load])
 
   const toggleLinkActive = async (id: string, active: boolean) => {
     const previousActive = data?.links.find((link) => link.id === id)?.active
@@ -93,7 +95,39 @@ export function useDashboard() {
 
   useEffect(() => {
     load()
-  }, [])
+  }, [load])
+
+  useEffect(() => {
+    const eventSource = new EventSource('/api/dashboard/stream', { withCredentials: true })
+
+    eventSource.onmessage = (message) => {
+      try {
+        const payload = JSON.parse(message.data) as {
+          type?: string
+          executionId?: string
+          outputAmount?: string
+          settlementToken?: string
+        }
+        if (payload.type !== 'payment_paid' || !payload.executionId) return
+
+        if (seenPaidExecutionIds.current.has(payload.executionId)) return
+        seenPaidExecutionIds.current.add(payload.executionId)
+
+        void load({ silent: true })
+
+        const amount = Number(payload.outputAmount ?? 0)
+        const token = payload.settlementToken ?? 'token'
+        const amountLabel = Number.isFinite(amount) ? amount.toFixed(2) : (payload.outputAmount ?? '0')
+        toast.success(`Payment received — ${amountLabel} ${getNameByMint(token)}`)
+      } catch {
+        // Ignore malformed stream payloads and keep listening.
+      }
+    }
+
+    return () => {
+      eventSource.close()
+    }
+  }, [load])
 
   return { data, isLoading, error, refresh, toggleLinkActive }
 }

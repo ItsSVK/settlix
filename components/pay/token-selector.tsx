@@ -3,9 +3,9 @@
 /**
  * Token selector with virtualization-ready architecture.
  *
- * HOW TO ADD THE FULL JUPITER TOKEN LIST:
- * 1. Fetch https://token.jup.ag/strict and save the output as public/tokens.json
- * 2. That's it — this component fetches and renders from that file via API.
+ * Token data source:
+ * - `lib/tokens/tokens.ts` re-exports `lib/tokens/tokens.json` as `TOKENS`.
+ * - Update `tokens.json` to change the available list.
  *
  * For large lists (1000+ tokens), add @tanstack/virtual:
  * bun add @tanstack/react-virtual
@@ -15,6 +15,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Search, ChevronDown, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { TOKENS } from '@/lib/tokens/tokens'
 
 export interface TokenInfo {
   symbol: string
@@ -48,17 +49,9 @@ function TokenLogo({ token }: { token: TokenInfo }) {
 export function TokenSelector({ selected, onChange, className }: TokenSelectorProps) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
-  const [tokens, setTokens] = useState<TokenInfo[]>([])
   const searchRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-
-  // Load token list from public/tokens.json
-  useEffect(() => {
-    fetch('/tokens.json')
-      .then((r) => r.json())
-      .then(setTokens)
-      .catch(() => setTokens([]))
-  }, [])
+  const tokens: TokenInfo[] = TOKENS
 
   // Close on outside click
   useEffect(() => {

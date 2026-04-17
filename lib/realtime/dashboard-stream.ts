@@ -1,0 +1,56 @@
+export interface DashboardPaymentPaidEvent {
+  type: 'payment_paid'
+  merchantWallet: string
+  linkId: string
+  executionId: string
+  txSignature: string
+  outputAmount: string
+  settlementToken: string
+  createdAt: string
+}
+
+type DashboardStreamEvent = DashboardPaymentPaidEvent
+type Listener = (event: DashboardStreamEvent) => void
+
+type StreamRegistry = Map<string, Set<Listener>>
+
+declare global {
+  // Persist subscribers across module reloads during local development.
+  var __settlexDashboardStreamRegistry: StreamRegistry | undefined
+}
+
+function getRegistry(): StreamRegistry {
+  if (!globalThis.__settlexDashboardStreamRegistry) {
+    globalThis.__settlexDashboardStreamRegistry = new Map<string, Set<Listener>>()
+  }
+  return globalThis.__settlexDashboardStreamRegistry
+}
+
+export function subscribeDashboardStream(merchantWallet: string, listener: Listener): () => void {
+  const registry = getRegistry()
+  const listeners = registry.get(merchantWallet) ?? new Set<Listener>()
+  listeners.add(listener)
+  registry.set(merchantWallet, listeners)
+
+  return () => {
+    const current = registry.get(merchantWallet)
+    if (!current) return
+    current.delete(listener)
+    if (current.size === 0) {
+      registry.delete(merchantWallet)
+    }
+  }
+}
+
+export function publishDashboardPaymentPaid(event: DashboardPaymentPaidEvent) {
+  const listeners = getRegistry().get(event.merchantWallet)
+  if (!listeners || listeners.size === 0) return
+
+  for (const listener of [...listeners]) {
+    try {
+      listener(event)
+    } catch {
+      // Ignore a broken subscriber and continue fan-out.
+    }
+  }
+}

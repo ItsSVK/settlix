@@ -1,12 +1,6 @@
 import { Connection, PublicKey } from '@solana/web3.js'
-import {
-  decodeTransferCheckedInstruction,
-  getAssociatedTokenAddressSync,
-  TOKEN_PROGRAM_ID,
-  TOKEN_2022_PROGRAM_ID,
-} from '@solana/spl-token'
+import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token'
 
-import { decompileVersionedTransactionMessage } from '@/lib/solana/address-lookup'
 import { RPC_COMMITMENT } from '@/lib/solana/constants'
 
 async function settlementTokenProgram(connection: Connection, mint: PublicKey): Promise<PublicKey> {
@@ -17,6 +11,30 @@ async function settlementTokenProgram(connection: Connection, mint: PublicKey): 
 }
 
 export type VerifyResult = { ok: true } | { ok: false; reason: string }
+
+type UiTokenBalance = {
+  owner?: string
+  mint: string
+  uiTokenAmount: {
+    amount: string
+  }
+}
+
+function sumTokenBalancesForOwnerAndMint(
+  balances: UiTokenBalance[] | undefined | null,
+  owner: string,
+  mint: string,
+): bigint {
+  if (!balances || balances.length === 0) return BigInt(0)
+
+  let total = BigInt(0)
+  for (const row of balances) {
+    if (row.owner !== owner) continue
+    if (row.mint !== mint) continue
+    total += BigInt(row.uiTokenAmount.amount)
+  }
+  return total
+}
 
 export async function verifyPaymentTransaction(params: {
   connection: Connection
@@ -42,25 +60,18 @@ export async function verifyPaymentTransaction(params: {
   const settlementPk = new PublicKey(settlementMint)
   const merchantPk = new PublicKey(merchantWallet)
   const tokenProgram = await settlementTokenProgram(connection, settlementPk)
-  const merchantAta = getAssociatedTokenAddressSync(settlementPk, merchantPk, false, tokenProgram)
+  getAssociatedTokenAddressSync(settlementPk, merchantPk, false, tokenProgram)
 
-  const decompiled = await decompileVersionedTransactionMessage(connection, tx.transaction.message)
+  const preOwned = sumTokenBalancesForOwnerAndMint(tx.meta?.preTokenBalances, merchantWallet, settlementMint)
+  const postOwned = sumTokenBalancesForOwnerAndMint(tx.meta?.postTokenBalances, merchantWallet, settlementMint)
+  const received = postOwned - preOwned
 
-  for (const ix of decompiled.instructions) {
-    if (ix.programId.equals(TOKEN_PROGRAM_ID) || ix.programId.equals(TOKEN_2022_PROGRAM_ID)) {
-      try {
-        const decoded = decodeTransferCheckedInstruction(ix)
-        const destOk = decoded.keys.destination.pubkey.equals(merchantAta)
-        const mintOk = decoded.keys.mint.pubkey.equals(settlementPk)
-        const amountOk = BigInt(decoded.data.amount) >= expectedRaw
-        if (destOk && mintOk && amountOk) {
-          return { ok: true }
-        }
-      } catch {
-        /* not transfer-checked */
-      }
-    }
+  if (received >= expectedRaw) {
+    return { ok: true }
   }
 
-  return { ok: false, reason: 'Settlement transfer to merchant not found or insufficient amount' }
+  return {
+    ok: false,
+    reason: `Settlement transfer insufficient: received ${received.toString()} raw, expected at least ${expectedRaw.toString()} raw`,
+  }
 }

@@ -22,6 +22,7 @@ import { createServerConnection } from '@/lib/solana/connection'
 import { RPC_COMMITMENT } from '@/lib/solana/constants'
 import { verifyPaymentTransaction } from '@/lib/solana/verify'
 import type { SubmitTxBody } from '@/lib/validation'
+import { publishDashboardPaymentPaid } from '@/lib/realtime/dashboard-stream'
 
 import { getPaymentLinkById } from './payment-link.service'
 
@@ -47,12 +48,14 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
     await upsertPaymentExecution({
       executionId: body.executionId,
       linkId: body.linkId,
+      merchantWallet: link.merchantWallet,
       txSignature: body.txSignature,
       userWallet: body.userWallet ?? UNKNOWN_PAYER_WALLET,
       inputToken: body.inputToken ?? link.token,
       inputAmount: decimalFromOptionalString(body.inputAmount, new Decimal(0)),
       outputAmount: decimalFromOptionalString(body.outputAmount, new Decimal(0)),
       status: PaymentExecutionStatus.failed,
+      settlementToken: link.token,
     })
     return {
       ok: false,
@@ -82,12 +85,14 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
   await upsertPaymentExecution({
     executionId: body.executionId,
     linkId: body.linkId,
+    merchantWallet: link.merchantWallet,
     txSignature: body.txSignature,
     userWallet,
     inputToken,
     inputAmount: inputAmountDec,
     outputAmount: outputAmountDec,
     status,
+    settlementToken: link.token,
   })
 
   if (!verify.ok) {
@@ -100,15 +105,22 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
 async function upsertPaymentExecution(data: {
   executionId: string
   linkId: string
+  merchantWallet: string
   txSignature: string
   userWallet: string
   inputToken: string
   inputAmount: Decimal
   outputAmount: Decimal
   status: PaymentExecutionStatus
+  settlementToken: string
 }) {
   try {
-    await prisma.paymentExecution.upsert({
+    const existing = await prisma.paymentExecution.findUnique({
+      where: { clientExecutionId: data.executionId },
+      select: { status: true },
+    })
+
+    const saved = await prisma.paymentExecution.upsert({
       where: { clientExecutionId: data.executionId },
       create: {
         clientExecutionId: data.executionId,
@@ -129,6 +141,19 @@ async function upsertPaymentExecution(data: {
         outputAmount: data.outputAmount,
       },
     })
+
+    if (data.status === PaymentExecutionStatus.paid && existing?.status !== PaymentExecutionStatus.paid) {
+      publishDashboardPaymentPaid({
+        type: 'payment_paid',
+        merchantWallet: data.merchantWallet,
+        linkId: data.linkId,
+        executionId: saved.id,
+        txSignature: data.txSignature,
+        outputAmount: data.outputAmount.toString(),
+        settlementToken: data.settlementToken,
+        createdAt: saved.createdAt.toISOString(),
+      })
+    }
   } catch (e) {
     apiLogger.error('PaymentExecution upsert failed', e, { clientExecutionId: data.executionId })
     if (e instanceof Error && 'code' in e) {
