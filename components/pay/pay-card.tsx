@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { usePaymentLink } from '@/lib/hooks/use-payment-link'
 import { useQuote } from '@/lib/hooks/use-quote'
@@ -8,10 +8,9 @@ import { TokenSelector, type TokenInfo } from './token-selector'
 import { QuoteDisplay } from './quote-display'
 import { PayButton } from './pay-button'
 import { SuccessOverlay } from './success-overlay'
+import { PhantomQrModal } from './phantom-qr-modal'
 import { BackgroundBeams } from '@/components/ui/background-beams'
-import { QRCodeCanvas } from 'qrcode.react'
-import { QrCode, Download, ChevronDown } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ScanLine } from 'lucide-react'
 import { JupiterCallout } from './jupiter-callout'
 
 function shorten(addr: string) {
@@ -30,22 +29,10 @@ export function PayCard({ linkId }: { linkId: string }) {
   } = useQuote(
     linkId,
     selectedToken?.mint ?? null,
-    link?.token ?? null, // outputMint — used to detect same-mint and skip polling
+    link?.token ?? null,
   )
   const [successTx, setSuccessTx] = useState<string | null>(null)
-  const [qrExpanded, setQrExpanded] = useState(false)
-  const qrWrapperRef = useRef<HTMLDivElement>(null)
-
-  const payUrl = typeof window !== 'undefined' ? `${window.location.origin}/pay/${linkId}` : ''
-
-  const handleDownloadQr = useCallback(() => {
-    const canvas = qrWrapperRef.current?.querySelector('canvas')
-    if (!canvas) return
-    const link = document.createElement('a')
-    link.download = `settlex-qr-${Date.now()}.png`
-    link.href = canvas.toDataURL('image/png')
-    link.click()
-  }, [])
+  const [showPhantomQr, setShowPhantomQr] = useState(false)
 
   return (
     <div className='relative flex flex-1 w-full items-center justify-center bg-background px-4 py-20'>
@@ -113,7 +100,7 @@ export function PayCard({ linkId }: { linkId: string }) {
                   outputAmountUSDC={Number(link.amount).toFixed(2)}
                 />
 
-                {/* Pay button */}
+                {/* Pay with wallet */}
                 <PayButton
                   linkId={linkId}
                   selectedToken={selectedToken}
@@ -121,72 +108,35 @@ export function PayCard({ linkId }: { linkId: string }) {
                   onSuccess={(sig) => setSuccessTx(sig)}
                 />
 
-                {/* QR Code — scan from another device */}
-                <div className='mt-2 rounded-xl border border-border/30 bg-muted/10'>
-                  <button
-                    type='button'
-                    onClick={() => setQrExpanded((v) => !v)}
-                    className='flex w-full items-center justify-between px-4 py-3 text-left'
-                  >
-                    <span className='flex items-center gap-2 text-xs font-medium text-muted-foreground'>
-                      <QrCode className='h-3.5 w-3.5' />
-                      Scan to pay from another device
-                    </span>
-                    <ChevronDown
-                      className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${
-                        qrExpanded ? 'rotate-180' : ''
-                      }`}
-                    />
-                  </button>
-
-                  <AnimatePresence>
-                    {qrExpanded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className='overflow-hidden'
-                      >
-                        <div className='flex flex-col items-center gap-3 px-4 pb-4'>
-                          <div
-                            ref={qrWrapperRef}
-                            className='rounded-xl border border-border/30 bg-white p-3 shadow-inner'
-                          >
-                            <QRCodeCanvas
-                              value={payUrl}
-                              size={180}
-                              bgColor='#ffffff'
-                              fgColor='#0f172a'
-                              level='M'
-                              imageSettings={{
-                                src: '/favicon.ico',
-                                height: 24,
-                                width: 24,
-                                excavate: true,
-                              }}
-                            />
-                          </div>
-                          <Button
-                            variant='outline'
-                            size='xs'
-                            className='gap-1.5 border-border/40 text-xs'
-                            onClick={handleDownloadQr}
-                          >
-                            <Download className='h-3 w-3' />
-                            Download QR
-                          </Button>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                {/* Pay with Phantom QR */}
+                <button
+                  type='button'
+                  disabled={!selectedToken}
+                  onClick={() => setShowPhantomQr(true)}
+                  className='flex w-full items-center justify-center gap-2 rounded-xl border border-border/50 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40'
+                >
+                  <ScanLine className='h-4 w-4' />
+                  {selectedToken ? 'Pay with Phantom QR' : 'Select a token to use QR'}
+                </button>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
         </motion.div>
       </div>
+
+      {/* Phantom QR modal — rendered outside the card so it overlays the full page */}
+      {showPhantomQr && selectedToken && (
+        <PhantomQrModal
+          linkId={linkId}
+          selectedToken={selectedToken}
+          onClose={() => setShowPhantomQr(false)}
+          onSuccess={(sig) => {
+            setShowPhantomQr(false)
+            setSuccessTx(sig)
+          }}
+        />
+      )}
     </div>
   )
 }
