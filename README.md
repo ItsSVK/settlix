@@ -2,7 +2,7 @@
 
 **Non-custodial Solana checkout and payment links.**
 
-SettleX is a modern, decentralized payment platform built on the Solana blockchain. It enables merchants, creators, and freelancers to generate payment links and seamlessly accept cryptocurrency payments directly into their own wallets. 
+SettleX is a modern, decentralized payment platform built on the Solana blockchain. It enables merchants, creators, and freelancers to generate payment links and seamlessly accept cryptocurrency payments directly into their own wallets.
 
 Built with Next.js, Prisma, and the Jupiter Aggregator, SettleX provides a premium, "Web2-like" checkout experience powered by Web3 rails.
 
@@ -11,6 +11,7 @@ Built with Next.js, Prisma, and the Jupiter Aggregator, SettleX provides a premi
 ## 🛑 The Problem
 
 Traditional payment gateways (like Stripe or PayPal) and even some centralized crypto payment processors suffer from significant drawbacks:
+
 1. **High Fees:** Taking 2-3% + fixed fees per transaction.
 2. **Custodial Risk & Holds:** Processors hold your funds and can freeze accounts or delay payouts.
 3. **Friction for Buyers:** If a merchant wants USDC, but the buyer only has SOL or BONK, the buyer typically has to leave the checkout, go to an exchange, swap tokens, and come back. This causes massive drop-off rates.
@@ -21,7 +22,7 @@ SettleX completely reimagines the checkout flow by leveraging the speed of Solan
 
 1. **100% Non-Custodial:** SettleX never touches your funds. Payments go directly from the buyer's wallet to the merchant's wallet in a single on-chain transaction.
 2. **Instant Settlement:** Thanks to Solana, funds arrive in your wallet in less than a second. Zero payout delays.
-3. **Seamless Swaps via Jupiter:** A buyer can pay with *any* token in their wallet. SettleX automatically routes the transaction through Jupiter under the hood, swapping the buyer's token for the merchant's requested token (e.g., USDC) in real-time. The merchant always gets exactly what they asked for.
+3. **Seamless Swaps via Jupiter:** A buyer can pay with _any_ token in their wallet. SettleX automatically routes the transaction through Jupiter under the hood, swapping the buyer's token for the merchant's requested token (e.g., USDC) in real-time. The merchant always gets exactly what they asked for.
 
 ### 🏗 Architecture & Payment Flow
 

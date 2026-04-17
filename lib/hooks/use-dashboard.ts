@@ -1,6 +1,6 @@
 'use client'
 
-import { getNameByMint } from '@/lib/tokens/tokens'
+import { getNameByMint, getDecimalsByMint } from '@/lib/tokens/tokens'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { toast } from 'sonner'
 
@@ -115,8 +115,8 @@ export function useDashboard() {
 
         void load({ silent: true })
 
-        const amount = Number(payload.outputAmount ?? 0)
         const token = payload.settlementToken ?? 'token'
+        const amount = Number(payload.outputAmount) / 10 ** getDecimalsByMint(token) || 0
         const amountLabel = Number.isFinite(amount) ? amount.toFixed(2) : (payload.outputAmount ?? '0')
         toast.success(`Payment received — ${amountLabel} ${getNameByMint(token)}`)
       } catch {

@@ -16,3 +16,8 @@ export function getNameByMint(mint: string) {
   const token = TOKENS.find((t) => t.mint === mint)
   return token?.name ?? mint
 }
+
+export function getDecimalsByMint(mint: string) {
+  const token = TOKENS.find((t) => t.mint === mint)
+  return token?.decimals ?? 6
+}
