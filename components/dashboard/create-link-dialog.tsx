@@ -16,6 +16,8 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
   const { wallet } = useAuth()
   const [open, setOpen] = useState(false)
   const [amount, setAmount] = useState('')
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
@@ -23,6 +25,8 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
 
   const reset = () => {
     setAmount('')
+    setTitle('')
+    setDescription('')
     setError('')
     setResult(null)
     setOpen(false)
@@ -38,7 +42,12 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: getDefaultUsdcMint(), amount }),
+        body: JSON.stringify({
+          token: getDefaultUsdcMint(),
+          amount,
+          title: title.trim() || undefined,
+          description: description.trim() || undefined,
+        }),
       })
       if (!res.ok) {
         const d = await res.json().catch(() => ({}))
@@ -127,6 +136,34 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder='10.00'
                     className='w-full rounded-xl border border-border/50 bg-muted/30 px-3 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/50 focus:ring-1 focus:ring-primary/30'
+                  />
+                </div>
+
+                <div>
+                  <label className='mb-1.5 block text-xs font-medium text-muted-foreground'>
+                    Title <span className='text-muted-foreground/50'>(optional)</span>
+                  </label>
+                  <input
+                    type='text'
+                    maxLength={80}
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder='e.g. Design invoice #12'
+                    className='w-full rounded-xl border border-border/50 bg-muted/30 px-3 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/50 focus:ring-1 focus:ring-primary/30'
+                  />
+                </div>
+
+                <div>
+                  <label className='mb-1.5 block text-xs font-medium text-muted-foreground'>
+                    Description <span className='text-muted-foreground/50'>(optional)</span>
+                  </label>
+                  <textarea
+                    maxLength={300}
+                    rows={2}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder='What is this payment for?'
+                    className='w-full resize-none rounded-xl border border-border/50 bg-muted/30 px-3 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/50 focus:ring-1 focus:ring-primary/30'
                   />
                 </div>
 

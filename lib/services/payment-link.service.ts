@@ -16,7 +16,13 @@ type PaymentLinkWithExecutions = Prisma.PaymentLinkGetPayload<{
   include: { executions: true }
 }>
 
-export async function insertPaymentLink(data: { merchantWallet: string; token: string; amount: Decimal }) {
+export async function insertPaymentLink(data: {
+  merchantWallet: string
+  token: string
+  amount: Decimal
+  title?: string
+  description?: string
+}) {
   try {
     return await prisma.paymentLink.create({
       data: {
@@ -25,6 +31,8 @@ export async function insertPaymentLink(data: { merchantWallet: string; token: s
         amount: data.amount,
         type: 'fixed',
         active: true,
+        title: data.title ?? null,
+        description: data.description ?? null,
       },
     })
   } catch (e) {

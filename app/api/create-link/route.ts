@@ -46,6 +46,8 @@ export async function POST(req: NextRequest) {
       merchantWallet,
       token: parsed.data.token,
       amount,
+      title: parsed.data.title,
+      description: parsed.data.description,
     })
 
     return NextResponse.json({

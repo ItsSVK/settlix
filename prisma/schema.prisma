@@ -14,6 +14,8 @@ model PaymentLink {
   amount         Decimal            @db.Decimal(20, 6)
   type           String             @default("fixed")
   active         Boolean            @default(true)
+  title          String?
+  description    String?
   createdAt      DateTime           @default(now())
   executions     PaymentExecution[]
 }

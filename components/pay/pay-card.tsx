@@ -49,11 +49,30 @@ export function PayCard({ linkId }: { linkId: string }) {
         >
           <div className='rounded-2xl border border-border/50 bg-card/80 p-6 shadow-2xl backdrop-blur-sm'>
             {/* Header */}
-            <div className='mb-6 text-center'>
-              <h1 className='text-xl font-bold text-foreground'>Payment Request</h1>
-              {link && (
-                <p className='mt-1 font-mono text-xs text-muted-foreground'>from {shorten(link.merchantWallet)}</p>
+            <div className='mb-6 flex flex-col items-center text-center'>
+              <div className='mb-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1'>
+                <p className='text-[10px] font-medium uppercase tracking-widest text-indigo-500 dark:text-indigo-400'>
+                  Payment Request
+                </p>
+              </div>
+
+              <h1 className='mt-2 text-2xl font-bold tracking-tight text-foreground'>
+                {link?.title ?? 'Untitled Payment'}
+              </h1>
+
+              {link?.description && (
+                <p className='mt-2 max-w-[280px] text-sm text-muted-foreground leading-relaxed'>{link.description}</p>
               )}
+
+              {link && (
+                <div className='mt-4 flex items-center gap-2 rounded-lg bg-muted/40 px-3 py-1.5 border border-border/40'>
+                  <div className='h-1.5 w-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' />
+                  <p className='font-mono text-xs font-medium text-muted-foreground'>{shorten(link.merchantWallet)}</p>
+                </div>
+              )}
+
+              {/* Short Separator */}
+              <div className='mx-auto mt-2 h-px w-48 bg-linear-to-r from-transparent via-border to-transparent' />
             </div>
 
             <AnimatePresence mode='wait'>

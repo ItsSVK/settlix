@@ -5,6 +5,8 @@ export const paymentLinkId = z.string().cuid()
 export const createLinkBody = z.object({
   token: z.string().min(32).max(64),
   amount: z.union([z.number().positive(), z.string()]),
+  title: z.string().max(80).optional(),
+  description: z.string().max(300).optional(),
 })
 
 export const updateLinkActiveBody = z.object({

@@ -8,6 +8,8 @@ interface PaymentLinkData {
   token: string
   amount: string
   type: string
+  title: string | null
+  description: string | null
   createdAt: string
 }
 
