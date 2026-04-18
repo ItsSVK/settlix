@@ -7,11 +7,7 @@ import { getPaymentLinkByDetails } from '@/lib/solana/database-lookup'
 import { executeJupiterOrderRequest } from '@/lib/services/jupiter-order.service'
 import { processSubmitTx } from '@/lib/services/payment-submit.service'
 import { createServerConnection } from '@/lib/solana/connection'
-import {
-  createPhantomSession,
-  updatePhantomSession,
-  type PhantomSession,
-} from '@/lib/realtime/phantom-session-store'
+import { createPhantomSession, updatePhantomSession, type PhantomSession } from '@/lib/realtime/phantom-session-store'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -43,10 +39,7 @@ export async function GET(req: NextRequest, { params }: Params) {
     await getPaymentLinkByDetails(id)
 
     const origin = req.nextUrl.origin
-    return NextResponse.json(
-      { label: 'SettleX Payment', icon: `${origin}/icon.png` },
-      { headers: CORS },
-    )
+    return NextResponse.json({ label: 'SettleX Payment', icon: `${origin}/icon.png` }, { headers: CORS })
   })
 }
 

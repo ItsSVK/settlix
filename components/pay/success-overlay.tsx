@@ -76,8 +76,7 @@ export function SuccessOverlay({ txSignature, amount, swap }: SuccessOverlayProp
           <div className='flex items-center justify-between px-4 py-2.5'>
             <span className='text-xs text-muted-foreground'>Merchant received</span>
             <span className='text-sm font-semibold text-foreground'>
-              {outHuman.toFixed(2)}{' '}
-              <span className='text-green-500 font-normal'>USDC</span>
+              {outHuman.toFixed(2)} <span className='text-green-500 font-normal'>USDC</span>
             </span>
           </div>
 
@@ -86,8 +85,7 @@ export function SuccessOverlay({ txSignature, amount, swap }: SuccessOverlayProp
             <div className='flex items-center justify-between px-4 py-2.5'>
               <span className='text-xs text-muted-foreground'>Rate</span>
               <span className='flex items-center gap-1.5 text-xs text-muted-foreground'>
-                <JupiterLogo className='h-3 w-3 shrink-0' />
-                1 {swap.inputSymbol} = {rate.toFixed(4)} USDC
+                <JupiterLogo className='h-3 w-3 shrink-0' />1 {swap.inputSymbol} = {rate.toFixed(4)} USDC
               </span>
             </div>
           )}

@@ -30,12 +30,7 @@ export function PayCard({ linkId }: { linkId: string }) {
     isRefreshing,
     isDirect,
     error: quoteError,
-  } = useQuote(
-    linkId,
-    selectedToken?.mint ?? null,
-    link?.token ?? null,
-    { disabled: !!successResult },
-  )
+  } = useQuote(linkId, selectedToken?.mint ?? null, link?.token ?? null, { disabled: !!successResult })
   const [showPhantomQr, setShowPhantomQr] = useState(false)
 
   return (
@@ -52,84 +47,84 @@ export function PayCard({ linkId }: { linkId: string }) {
           transition={{ duration: 0.5, delay: 0.1 }}
           className='w-full'
         >
-        <div className='rounded-2xl border border-border/50 bg-card/80 p-6 shadow-2xl backdrop-blur-sm'>
-          {/* Header */}
-          <div className='mb-6 text-center'>
-            <h1 className='text-xl font-bold text-foreground'>Payment Request</h1>
-            {link && (
-              <p className='mt-1 font-mono text-xs text-muted-foreground'>from {shorten(link.merchantWallet)}</p>
-            )}
+          <div className='rounded-2xl border border-border/50 bg-card/80 p-6 shadow-2xl backdrop-blur-sm'>
+            {/* Header */}
+            <div className='mb-6 text-center'>
+              <h1 className='text-xl font-bold text-foreground'>Payment Request</h1>
+              {link && (
+                <p className='mt-1 font-mono text-xs text-muted-foreground'>from {shorten(link.merchantWallet)}</p>
+              )}
+            </div>
+
+            <AnimatePresence mode='wait'>
+              {successResult ? (
+                <motion.div key='success' initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                  <SuccessOverlay
+                    txSignature={successResult.sig}
+                    amount={link?.amount ?? ''}
+                    swap={successResult.swap}
+                  />
+                </motion.div>
+              ) : linkLoading ? (
+                <motion.div key='loading' className='space-y-3'>
+                  {[40, 28, 20].map((h, i) => (
+                    <div key={i} className={`h-${h > 30 ? 12 : h > 24 ? 8 : 5} animate-pulse rounded-xl bg-muted`} />
+                  ))}
+                </motion.div>
+              ) : linkError || !link ? (
+                <motion.div key='error' className='py-10 text-center'>
+                  <p className='text-sm text-muted-foreground'>This payment link is not available.</p>
+                </motion.div>
+              ) : (
+                <motion.div key='form' className='space-y-4'>
+                  {/* Amount due */}
+                  <div className='rounded-xl border border-border/30 bg-muted/20 p-4 text-center'>
+                    <p className='text-xs text-muted-foreground'>Amount due</p>
+                    <p className='mt-1 text-4xl font-bold tracking-tight text-foreground'>
+                      {Number(link.amount).toFixed(2)}
+                    </p>
+                    <p className='text-sm text-muted-foreground'>USDC</p>
+                  </div>
+
+                  {/* Token selector */}
+                  <div>
+                    <p className='mb-2 text-xs font-medium text-muted-foreground'>Pay with</p>
+                    <TokenSelector selected={selectedToken} onChange={setSelectedToken} />
+                  </div>
+
+                  {/* Quote */}
+                  <QuoteDisplay
+                    isLoading={quoteLoading}
+                    isRefreshing={isRefreshing}
+                    isDirect={isDirect}
+                    quote={quote}
+                    error={quoteError}
+                    selectedToken={selectedToken}
+                    outputAmountUSDC={Number(link.amount).toFixed(2)}
+                  />
+
+                  {/* Pay with wallet */}
+                  <PayButton
+                    linkId={linkId}
+                    selectedToken={selectedToken}
+                    quoteReady={!!quote && !quoteLoading && !isRefreshing}
+                    onSuccess={(sig, swap) => setSuccessResult({ sig, swap })}
+                  />
+
+                  {/* Pay with Phantom QR */}
+                  <button
+                    type='button'
+                    disabled={!selectedToken}
+                    onClick={() => setShowPhantomQr(true)}
+                    className='flex w-full items-center justify-center gap-2 rounded-xl border border-border/50 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40'
+                  >
+                    <ScanLine className='h-4 w-4' />
+                    {selectedToken ? 'Pay with Phantom QR' : 'Select a token to use QR'}
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-
-          <AnimatePresence mode='wait'>
-            {successResult ? (
-              <motion.div key='success' initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <SuccessOverlay
-                  txSignature={successResult.sig}
-                  amount={link?.amount ?? ''}
-                  swap={successResult.swap}
-                />
-              </motion.div>
-            ) : linkLoading ? (
-              <motion.div key='loading' className='space-y-3'>
-                {[40, 28, 20].map((h, i) => (
-                  <div key={i} className={`h-${h > 30 ? 12 : h > 24 ? 8 : 5} animate-pulse rounded-xl bg-muted`} />
-                ))}
-              </motion.div>
-            ) : linkError || !link ? (
-              <motion.div key='error' className='py-10 text-center'>
-                <p className='text-sm text-muted-foreground'>This payment link is not available.</p>
-              </motion.div>
-            ) : (
-              <motion.div key='form' className='space-y-4'>
-                {/* Amount due */}
-                <div className='rounded-xl border border-border/30 bg-muted/20 p-4 text-center'>
-                  <p className='text-xs text-muted-foreground'>Amount due</p>
-                  <p className='mt-1 text-4xl font-bold tracking-tight text-foreground'>
-                    {Number(link.amount).toFixed(2)}
-                  </p>
-                  <p className='text-sm text-muted-foreground'>USDC</p>
-                </div>
-
-                {/* Token selector */}
-                <div>
-                  <p className='mb-2 text-xs font-medium text-muted-foreground'>Pay with</p>
-                  <TokenSelector selected={selectedToken} onChange={setSelectedToken} />
-                </div>
-
-                {/* Quote */}
-                <QuoteDisplay
-                  isLoading={quoteLoading}
-                  isRefreshing={isRefreshing}
-                  isDirect={isDirect}
-                  quote={quote}
-                  error={quoteError}
-                  selectedToken={selectedToken}
-                  outputAmountUSDC={Number(link.amount).toFixed(2)}
-                />
-
-                {/* Pay with wallet */}
-                <PayButton
-                  linkId={linkId}
-                  selectedToken={selectedToken}
-                  quoteReady={!!quote && !quoteLoading && !isRefreshing}
-                  onSuccess={(sig, swap) => setSuccessResult({ sig, swap })}
-                />
-
-                {/* Pay with Phantom QR */}
-                <button
-                  type='button'
-                  disabled={!selectedToken}
-                  onClick={() => setShowPhantomQr(true)}
-                  className='flex w-full items-center justify-center gap-2 rounded-xl border border-border/50 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40'
-                >
-                  <ScanLine className='h-4 w-4' />
-                  {selectedToken ? 'Pay with Phantom QR' : 'Select a token to use QR'}
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
         </motion.div>
       </div>
 

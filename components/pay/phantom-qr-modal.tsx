@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { CheckCircle, ExternalLink, Loader2, X, XCircle } from 'lucide-react'
@@ -20,7 +20,7 @@ const CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK === 'devnet' ? '?cluster=
 
 export function PhantomQrModal({ linkId, selectedToken, onClose, onSuccess }: PhantomQrModalProps) {
   // sessionId is stable for the lifetime of this modal.
-  const sessionId = useRef(crypto.randomUUID()).current
+  const [sessionId] = useState(() => crypto.randomUUID())
   const [status, setStatus] = useState<ModalStatus>('waiting')
   const [txSignature, setTxSignature] = useState<string | null>(null)
 
@@ -110,9 +110,7 @@ export function PhantomQrModal({ linkId, selectedToken, onClose, onSuccess }: Ph
           <div className='mb-5 flex items-start justify-between'>
             <div>
               <h2 className='text-base font-bold text-foreground'>Pay with Phantom</h2>
-              <p className='mt-0.5 text-xs text-muted-foreground'>
-                Open Phantom → tap QR scanner → scan
-              </p>
+              <p className='mt-0.5 text-xs text-muted-foreground'>Open Phantom → tap QR scanner → scan</p>
             </div>
             <button
               onClick={onClose}
@@ -166,8 +164,7 @@ export function PhantomQrModal({ linkId, selectedToken, onClose, onSuccess }: Ph
                     />
                   )}
                   <span className='text-xs text-muted-foreground'>
-                    Paying with{' '}
-                    <span className='font-semibold text-foreground'>{selectedToken.symbol}</span>
+                    Paying with <span className='font-semibold text-foreground'>{selectedToken.symbol}</span>
                     {' → merchant receives USDC'}
                   </span>
                 </div>
@@ -224,9 +221,7 @@ export function PhantomQrModal({ linkId, selectedToken, onClose, onSuccess }: Ph
                     {status === 'timeout' ? 'Session timed out' : 'Something went wrong'}
                   </p>
                   <p className='mt-1 text-xs text-muted-foreground'>
-                    {status === 'timeout'
-                      ? 'The QR code expired. Close and try again.'
-                      : 'Close and try again.'}
+                    {status === 'timeout' ? 'The QR code expired. Close and try again.' : 'Close and try again.'}
                   </p>
                 </div>
                 <button

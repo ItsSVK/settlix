@@ -72,7 +72,7 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
 
   const verify = await verifyPaymentTransaction({
     connection,
-    tx,           // pre-fetched — no second getTransaction call inside verify
+    tx, // pre-fetched — no second getTransaction call inside verify
     merchantWallet: link.merchantWallet,
     settlementMint: link.token,
     expectedRaw,

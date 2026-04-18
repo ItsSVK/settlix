@@ -48,14 +48,47 @@ const paymentRecordContext = z.object({
   inAmount: z.string(),
 })
 
-export const jupiterExecuteBody = z.object({
+export const jupiterExecuteBody = z
+  .object({
+    signedTransaction: z.string().min(1),
+    requestId: z.string().min(1),
+  })
+  .merge(paymentRecordContext)
+
+export const sendTxBody = z
+  .object({
+    signedTransaction: z.string().min(1),
+  })
+  .merge(paymentRecordContext)
+
+// ── Direct Pay (pay any address, no payment link required) ──────────────────
+export const directPayQuoteBody = z.object({
+  inputMint: z.string().min(32).max(64),
+  receiverWallet: z.string().min(32).max(64),
+  /** Human-decimal USDC amount the receiver should get, e.g. "10.50" */
+  amount: z.string().regex(/^\d+(\.\d{0,6})?$/, 'Invalid amount'),
+})
+
+export const directPayOrderBody = z.object({
+  inputMint: z.string().min(32).max(64),
+  taker: z.string().min(32).max(64),
+  receiverWallet: z.string().min(32).max(64),
+  amount: z.string().regex(/^\d+(\.\d{0,6})?$/, 'Invalid amount'),
+})
+
+export const directPayExecuteBody = z.object({
   signedTransaction: z.string().min(1),
   requestId: z.string().min(1),
-}).merge(paymentRecordContext)
+})
 
-export const sendTxBody = z.object({
+export const directPaySendBody = z.object({
   signedTransaction: z.string().min(1),
-}).merge(paymentRecordContext)
+})
+
+export type DirectPayQuoteBody = z.infer<typeof directPayQuoteBody>
+export type DirectPayOrderBody = z.infer<typeof directPayOrderBody>
+export type DirectPayExecuteBody = z.infer<typeof directPayExecuteBody>
+export type DirectPaySendBody = z.infer<typeof directPaySendBody>
 
 export type CreateLinkBody = z.infer<typeof createLinkBody>
 export type UpdateLinkActiveBody = z.infer<typeof updateLinkActiveBody>
