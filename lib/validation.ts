@@ -38,10 +38,24 @@ export const jupiterOrderBody = z.object({
 /** Quote-only: no wallet / taker. */
 export const jupiterQuoteBody = jupiterOrderBody.omit({ taker: true })
 
+// Payment recording context shared by execute and send routes so they can call
+// processSubmitTx server-side, eliminating the separate /api/submit-tx round-trip.
+const paymentRecordContext = z.object({
+  executionId: z.uuid(),
+  linkId: paymentLinkId,
+  userWallet: z.string().min(32).max(64),
+  inputToken: z.string().min(32).max(64),
+  inAmount: z.string(),
+})
+
 export const jupiterExecuteBody = z.object({
   signedTransaction: z.string().min(1),
   requestId: z.string().min(1),
-})
+}).merge(paymentRecordContext)
+
+export const sendTxBody = z.object({
+  signedTransaction: z.string().min(1),
+}).merge(paymentRecordContext)
 
 export type CreateLinkBody = z.infer<typeof createLinkBody>
 export type UpdateLinkActiveBody = z.infer<typeof updateLinkActiveBody>
@@ -50,3 +64,4 @@ export type SubmitTxBody = z.infer<typeof submitTxBody>
 export type JupiterOrderBody = z.infer<typeof jupiterOrderBody>
 export type JupiterQuoteBody = z.infer<typeof jupiterQuoteBody>
 export type JupiterExecuteBody = z.infer<typeof jupiterExecuteBody>
+export type SendTxBody = z.infer<typeof sendTxBody>

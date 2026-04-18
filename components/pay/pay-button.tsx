@@ -9,22 +9,27 @@ import { AlertCircle, Loader2, Zap } from 'lucide-react'
 import type { TokenInfo } from './token-selector'
 import { cn } from '@/lib/utils'
 
+interface SwapReceipt {
+  inputAmount: string
+  inputDecimals: number
+  inputSymbol: string
+}
+
 interface PayButtonProps {
   linkId: string
   selectedToken: TokenInfo | null
   quoteReady: boolean
-  onSuccess: (txSignature: string) => void
+  onSuccess: (txSignature: string, swap: SwapReceipt) => void
   className?: string
 }
 
-type PayStep = 'idle' | 'building' | 'signing' | 'executing' | 'recording' | 'done' | 'error'
+type PayStep = 'idle' | 'building' | 'signing' | 'executing' | 'done' | 'error'
 
 const stepLabels: Record<PayStep, string> = {
   idle: 'Pay Now',
   building: 'Building transaction…',
   signing: 'Waiting for signature…',
   executing: 'Submitting to network…',
-  recording: 'Recording payment…',
   done: 'Payment complete!',
   error: 'Transaction failed',
 }
@@ -91,6 +96,18 @@ export function PayButton({ linkId, selectedToken, quoteReady, onSuccess, classN
       const signedTx = await signTransaction(vTx)
       const signedBase64 = Buffer.from(signedTx.serialize()).toString('base64')
 
+      // Payment context sent with execute/send so the server records atomically.
+      // No separate /api/submit-tx call — eliminates the race where a closed tab
+      // leaves a confirmed on-chain tx unrecorded.
+      const executionId = crypto.randomUUID()
+      const paymentContext = {
+        executionId,
+        linkId,
+        userWallet: publicKey.toBase58(),
+        inputToken: selectedToken.mint,
+        inAmount,
+      }
+
       // 3. Execute:
       //    isDirect = true  → same-mint payment, submit straight to Solana RPC (no Jupiter swap needed)
       //    isDirect = false → Jupiter swap, go through Jupiter's /execute
@@ -101,7 +118,7 @@ export function PayButton({ linkId, selectedToken, quoteReady, onSuccess, classN
         const res = await fetch('/api/solana/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ signedTransaction: signedBase64 }),
+          body: JSON.stringify({ signedTransaction: signedBase64, ...paymentContext }),
         })
         const body = await res.json()
         if (!res.ok || body.status !== 'Success') throw new Error(body.error || 'Direct transfer failed')
@@ -115,31 +132,19 @@ export function PayButton({ linkId, selectedToken, quoteReady, onSuccess, classN
         const res = await fetch('/api/jupiter/execute', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ signedTransaction: signedBase64, requestId }),
+          body: JSON.stringify({ signedTransaction: signedBase64, requestId, ...paymentContext }),
         })
         if (!res.ok) throw new Error('Execution failed')
         execData = await res.json()
         if (execData.status !== 'Success') throw new Error('Transaction did not succeed')
       }
 
-      // 4. Record in DB
-      setStep('recording')
-      await fetch('/api/submit-tx', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          executionId: crypto.randomUUID(),
-          txSignature: execData.signature,
-          linkId,
-          userWallet: publicKey.toBase58(),
-          inputToken: selectedToken.mint,
-          inputAmount: execData.inputAmountResult,
-          outputAmount: execData.outputAmountResult,
-        }),
-      })
-
       setStep('done')
-      onSuccess(execData.signature)
+      onSuccess(execData.signature, {
+        inputAmount: execData.inputAmountResult ?? inAmount,
+        inputDecimals: selectedToken.decimals,
+        inputSymbol: selectedToken.symbol,
+      })
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : 'Something went wrong')
       setStep('error')
@@ -167,7 +172,7 @@ export function PayButton({ linkId, selectedToken, quoteReady, onSuccess, classN
     })
   }, [connectRequested, connected])
 
-  const isLoading = ['building', 'signing', 'executing', 'recording'].includes(step)
+  const isLoading = ['building', 'signing', 'executing'].includes(step)
   const isDisabled = isLoading || step === 'done' || (!connected && false) || !selectedToken || !quoteReady
 
   if (!connected) {

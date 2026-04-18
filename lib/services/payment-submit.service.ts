@@ -39,6 +39,8 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
   const mintInfo = await getMint(connection, mintPk, RPC_COMMITMENT)
   const expectedRaw = humanToRawAmount(link.amount, mintInfo.decimals)
 
+  // Single RPC fetch — passed directly into verifyPaymentTransaction so there
+  // is no second round-trip for the same signature.
   const tx = await connection.getTransaction(body.txSignature, {
     commitment: RPC_COMMITMENT,
     maxSupportedTransactionVersion: 0,
@@ -70,7 +72,7 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
 
   const verify = await verifyPaymentTransaction({
     connection,
-    signature: body.txSignature,
+    tx,           // pre-fetched — no second getTransaction call inside verify
     merchantWallet: link.merchantWallet,
     settlementMint: link.token,
     expectedRaw,
@@ -82,7 +84,7 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
 
   const status = verify.ok ? PaymentExecutionStatus.paid : PaymentExecutionStatus.failed
 
-  await upsertPaymentExecution({
+  const upsertResult = await upsertPaymentExecution({
     executionId: body.executionId,
     linkId: body.linkId,
     merchantWallet: link.merchantWallet,
@@ -95,12 +97,20 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
     settlementToken: link.token,
   })
 
+  // txSignature was already recorded (different executionId, same on-chain tx).
+  // This is idempotent — treat as success so the UI can proceed normally.
+  if (upsertResult === 'already_recorded') {
+    return { ok: true }
+  }
+
   if (!verify.ok) {
     return { ok: false, reason: verify.reason, httpStatus: 400, code: VERIFY_FAILED }
   }
 
   return { ok: true }
 }
+
+type UpsertResult = 'ok' | 'already_recorded'
 
 async function upsertPaymentExecution(data: {
   executionId: string
@@ -113,7 +123,7 @@ async function upsertPaymentExecution(data: {
   outputAmount: Decimal
   status: PaymentExecutionStatus
   settlementToken: string
-}) {
+}): Promise<UpsertResult> {
   try {
     const existing = await prisma.paymentExecution.findUnique({
       where: { clientExecutionId: data.executionId },
@@ -154,7 +164,27 @@ async function upsertPaymentExecution(data: {
         createdAt: saved.createdAt.toISOString(),
       })
     }
+
+    return 'ok'
   } catch (e) {
+    // P2002 = unique constraint violation. If it's on txSignature, another
+    // execution record already exists for this on-chain tx (different clientExecutionId).
+    // Treat as idempotent — the payment was recorded, no double-counting.
+    if (
+      e instanceof Error &&
+      'code' in e &&
+      (e as { code: string }).code === 'P2002' &&
+      'meta' in e &&
+      Array.isArray((e as { meta: { target?: unknown } }).meta?.target) &&
+      ((e as { meta: { target: string[] } }).meta.target as string[]).includes('txSignature')
+    ) {
+      apiLogger.warn('txSignature already recorded — idempotent duplicate skipped', {
+        txSignature: data.txSignature,
+        executionId: data.executionId,
+      })
+      return 'already_recorded'
+    }
+
     apiLogger.error('PaymentExecution upsert failed', e, { clientExecutionId: data.executionId })
     if (e instanceof Error && 'code' in e) {
       throw new ApiError(500, 'Could not record execution', DB_UPSERT_FAILED, { prismaCode: e.message })

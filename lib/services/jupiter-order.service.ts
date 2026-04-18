@@ -33,6 +33,7 @@ export async function executeJupiterOrderRequest(body: JupiterOrderBody) {
         settlementMint: mint,
         transferAmountRaw: rawOut,
         mintDecimals,
+        linkId: body.payId,
       })
 
       return {

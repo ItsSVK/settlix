@@ -1,5 +1,7 @@
 'use client'
 
+const SOLSCAN_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK === 'devnet' ? '?cluster=devnet' : ''
+
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { ChevronDown, Copy, Check, ExternalLink, ToggleLeft, ToggleRight, QrCode } from 'lucide-react'
@@ -140,15 +142,27 @@ export function LinkRow({ link, onToggle }: LinkRowProps) {
                       <span
                         className={`h-1.5 w-1.5 rounded-full shrink-0 ${ex.status === 'paid' ? 'bg-green-500' : 'bg-destructive'}`}
                       />
-                      <span className='flex-1 font-mono text-muted-foreground'>{shorten(ex.userWallet ?? '???')}</span>
+                      {ex.userWallet ? (
+                        <a
+                          href={`https://solscan.io/account/${ex.userWallet}${SOLSCAN_CLUSTER}`}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className='flex-1 font-mono text-muted-foreground hover:text-foreground transition-colors'
+                        >
+                          {shorten(ex.userWallet)}
+                        </a>
+                      ) : (
+                        <span className='flex-1 font-mono text-muted-foreground'>???</span>
+                      )}
                       <span className='font-semibold text-foreground'>{Number(ex.outputAmount) / 1e6} USDC</span>
                       <a
-                        href={`https://solscan.io/tx/${ex.txSignature}`}
+                        href={`https://solscan.io/tx/${ex.txSignature}${SOLSCAN_CLUSTER}`}
                         target='_blank'
                         rel='noopener noreferrer'
-                        className='text-muted-foreground hover:text-foreground'
+                        className='flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors'
                       >
-                        <ExternalLink className='h-3 w-3' />
+                        <span className='font-mono'>{shorten(ex.txSignature, 4, 4)}</span>
+                        <ExternalLink className='h-3 w-3 shrink-0' />
                       </a>
                     </div>
                   ))}

@@ -19,7 +19,12 @@ interface QuoteResult {
  * When inputMint === outputMint the rate is permanently 1:1 — polling is skipped entirely.
  * One initial API call is still made to get the confirmed raw amount from the backend.
  */
-export function useQuote(payId: string, inputMint: string | null, outputMint: string | null) {
+export function useQuote(
+  payId: string,
+  inputMint: string | null,
+  outputMint: string | null,
+  options: { disabled?: boolean } = {},
+) {
   /** True when inputMint and outputMint are the same (direct transfer, no swap). */
   const isDirect = !!inputMint && !!outputMint && inputMint === outputMint
 
@@ -106,20 +111,20 @@ export function useQuote(payId: string, inputMint: string | null, outputMint: st
   useEffect(() => {
     setQuote(null)
     setError(null)
-    if (!inputMint) return
+    if (!inputMint || options.disabled) return
     const t = setTimeout(() => fetch_(false), 400)
     return () => clearTimeout(t)
-  }, [inputMint]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [inputMint, options.disabled]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-refresh every REFRESH_INTERVAL_MS — SKIPPED entirely for same-mint payments.
   // The rate is always 1:1, so there is nothing to refresh.
   useEffect(() => {
-    if (!inputMint || isDirect || !isPageVisible) return
+    if (!inputMint || isDirect || !isPageVisible || options.disabled) return
     const interval = setInterval(() => fetch_(true), REFRESH_INTERVAL_MS)
     return () => {
       clearInterval(interval)
     }
-  }, [inputMint, isDirect, isPageVisible, fetch_])
+  }, [inputMint, isDirect, isPageVisible, fetch_, options.disabled])
 
   useEffect(() => {
     return () => {

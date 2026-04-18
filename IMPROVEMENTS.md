@@ -10,140 +10,139 @@ A prioritized list of features to build, updated with Colosseum Copilot data (5,
 
 ### ✅ 1. Real-time Payment Notifications (SSE)
 
+**Status: Done and reviewed.**
+
+Stream registry (`lib/realtime/dashboard-stream.ts`), SSE route (`/api/dashboard/stream`), and `useDashboard` hook are all correctly wired. Heartbeat keepalive every 20s, dedup via `seenPaidExecutionIds` ref, toast fires on `payment_paid` event with formatted amount.
+
+---
+
+### ✅ 2. QR Code on Every Payment Link
+
+**Status: Done — two separate QR flows.**
+
+- **Dashboard QR** (`components/dashboard/qr-modal.tsx` + `link-row.tsx`): Each link row has a QR button that opens a modal with the pay-page URL, Download PNG, and Copy URL. Solid.
+- **Phantom QR on pay page** (`components/pay/phantom-qr-modal.tsx`): Implements the full Solana Pay Transaction Request protocol. Buyer selects token, clicks "Pay with Phantom QR", modal shows a `solana:` URL with `inputMint` and `sessionId` encoded in the path. Phantom scans → POSTs buyer wallet → server builds Jupiter swap tx → Phantom signs and broadcasts → background watcher detects on-chain confirmation → records in DB → fires SSE to merchant dashboard.
+
+**One small thing to watch:** The dashboard QR (`qr-modal.tsx`) currently shows the HTTPS pay-page URL (for scanning with any browser/wallet). The Phantom QR on the pay page is the native Transaction Request flow. These are two different things serving different purposes — both are correct and intentional.
+
+---
+
+### ✅ 3. "Pay With Any Token" — Make Jupiter Visible
+
+**Status: Done and well done.**
+
+- `JupiterCallout` component renders above the pay card with rotating token showcase (12 random tokens cycling at 3.5s), "Pay with any asset → Settled instantly in USDC", and Jupiter attribution.
+- `QuoteDisplay` shows the live "You pay X [TOKEN] → They receive Y USDC" row with Jupiter swap attribution, refresh countdown, and direct-transfer detection.
+- Token selector dropdown is in place.
+
+This is your visible moat. It's working.
+
+---
+
+### ✅ 4. Swap Receipt on the Confirmation Page
+
 **Status: Done.**
 
-Both browser windows update live the instant a payment lands. Toast fires: "Payment received — 10 USDC". The stream registry, SSE route, and `useDashboard` hook are all wired correctly.
+`SuccessOverlay` now renders a full receipt card for the web-wallet flow:
+- "You paid: X TOKEN" (raw integer formatted via `formatInput`)
+- "Merchant received: Y USDC"
+- "Rate: 1 TOKEN = Z USDC" with Jupiter logo (hidden for direct USDC transfers)
+- Solscan link with correct `?cluster=devnet` suffix on devnet
 
----
-
-### 2. QR Code on Every Payment Link
-
-**Why (Colosseum-validated):** QR codes appeared in two separate $5k–$15k winning payment projects (LocalPay, Gaian). It's a 30-minute build that bridges physical-world demos and lets you scan from a phone during a live pitch.
-
-**What to build:**
-
-- Install `qrcode.react` (or `qrcode` for server-side)
-- Add a QR code modal/popover to each row in `LinksTable` — clicking "QR" generates the QR for that link's `/pay/{id}` URL
-- Also render the QR code on the pay page itself so mobile users can scan from another device
-- Add a "Download QR" button that exports it as a PNG
-
-**Demo move:** Show a QR code on screen, scan it with your phone, and complete the payment from mobile. No narration needed.
-
----
-
-### 3. "Pay With Any Token" — Make Jupiter Visible
-
-**Why (gap found via Colosseum):** This is your actual moat. Jpay, ChainPay, and every other payment project that lost required buyers to already hold the right stablecoin. You don't — the buyer pays in SOL, BONK, JTO, anything, and the merchant gets USDC. Judges won't know this unless you show it explicitly.
-
-**What to build:**
-
-- On the pay page, above the payment card, add a callout: *"Pay with any Solana token — your merchant always receives USDC"*
-- Show a row of token icons (SOL, USDC, BONK, JTO, etc.) as chips/pills — visual shorthand for "any token"
-- Add a token selector dropdown on the pay page so buyers can choose their input token (if not already present)
-- The line *"You pay X SOL → Merchant receives Y USDC"* should be live-updated as the buyer types or selects a token (use the Jupiter quote)
-
-**Demo move:** Pick BONK in the token selector. Watch the quote update live. Pay. Merchant gets USDC. No other Solana payment product does this.
-
----
-
-### 4. Swap Receipt on the Confirmation Page
-
-**Why (Decal pattern — won $20k):** After payment, buyers currently see a generic success screen. Decal won partly because they made the on-chain mechanics visible and trustworthy. A receipt that shows the swap route makes SettleX feel like real infrastructure, not a demo.
-
-**What to build:**
-
-- After a successful payment, render a receipt card showing:
-  - *"You paid: 2.3 SOL"*
-  - *"Merchant received: 47.82 USDC"*
-  - Exchange rate: *"1 SOL = 20.79 USDC (via Jupiter)"*
-  - Transaction: `Ab3x...9Qr ↗` linked to Solscan
-- Add a "Save receipt" button (screenshot the card or download as PNG)
-- Show the Jupiter logo/attribution — it signals you're using real swap infrastructure
+`PayButton.onSuccess` now passes `(txSignature, { inputAmount, inputDecimals, inputSymbol })`. The Phantom QR flow calls `onSuccess(sig)` with no swap data — `SuccessOverlay` degrades gracefully (no receipt card shown).
 
 ---
 
 ## Tier 2 — Product Depth
 
-### 5. Open / Variable Amount Links
+### ❌ 5. Open / Variable Amount Links
 
-**Why:** Your schema already has a `type` field defaulting to `"fixed"` — the groundwork is there. Adding `"open"` type doubles your addressable market: tip jars, donations, freelance invoices.
+**Status: Not started.**
+
+The Prisma schema has `type String @default("fixed")` — the field exists, the groundwork is there. `amount` is currently non-nullable (`Decimal @db.Decimal(20,6)`), so it needs a schema migration.
 
 **What to build:**
 
+- Make `amount` nullable in the Prisma schema + migrate
 - Update `createLinkBody` validation to accept `type: "open"` with no required `amount`
-- Update `insertPaymentLink` service and Prisma schema to allow `amount` to be null for open links
-- In `CreateLinkDialog`, add a toggle — "Fixed amount" vs "Open amount" — that hides the amount input when open is selected
-- On the pay page (`pay-card.tsx`), if link type is `"open"`, render an amount input field for the buyer to fill in
-- Pass the buyer-entered amount into the Jupiter quote flow
+- In `CreateLinkDialog`, toggle between "Fixed" and "Open" — hides the amount input when open
+- On the pay page, if `link.type === "open"`, show a buyer-facing amount input field
+- Pass buyer-entered amount into the Jupiter quote flow
 
 ---
 
-### 6. Customizable Pay Page (Merchant Branding)
+### ❌ 6. Customizable Pay Page (Merchant Branding)
 
-**Why:** Right now the pay page shows amount and token. If it shows "Pay Aryan for Logo Design" with a description, it feels like a real product — not a demo. 30 minutes of work with huge UX payoff.
+**Status: Not started.**
+
+No `title` or `description` fields exist on `PaymentLink` in the schema.
 
 **What to build:**
 
-- Add `title` (optional, max 80 chars) and `description` (optional, max 300 chars) fields to the `PaymentLink` Prisma model
-- Update `createLinkBody` validation and `insertPaymentLink` service to accept these fields
-- Add the fields to `CreateLinkDialog` as optional inputs
-- Render `title` and `description` on the pay page above the payment card
-- Update `generateMetadata` in `pay/[id]/page.tsx` to use the link title as the page `<title>` — this makes shared links look good on WhatsApp/Twitter
+- Add `title String?` (max 80 chars) and `description String?` (max 300 chars) to `PaymentLink` + migrate
+- Update `createLinkBody` and `insertPaymentLink` to accept them
+- Add optional inputs to `CreateLinkDialog`
+- Render `title` and `description` on the pay page above the card
+- Use `title` in `generateMetadata` in `pay/[id]/page.tsx` so WhatsApp/Twitter link previews are meaningful
 
 ---
 
 ## Tier 3 — Credibility Signals
 
-### 7. Protocol Fee (0.1% on Swaps)
+### ❌ 7. Protocol Fee (0.1% on Swaps)
 
-**Why (Colosseum-validated):** Judges always ask "how do you make money?" Have the answer in the code, not just the pitch. Capital efficiency / revenue model was overindexed by winners in the gap analysis.
+**Status: Not started.**
+
+No `PROTOCOL_FEE_BPS` constant exists. Jupiter's `buildOrderUrl` in `lib/solana/jupiter.ts` doesn't pass `platformFeeBps`.
 
 **What to build:**
 
-- Add a `PROTOCOL_FEE_BPS` constant (e.g., `10` = 0.1%) in `lib/solana/constants.ts`
-- When building the Jupiter swap quote in `lib/solana/jupiter.ts`, add the protocol wallet address as a `feeAccount` in the quote params (Jupiter supports `platformFeeBps`)
-- Create a dedicated protocol fee wallet (a new Solana keypair) and store the public key in env
-- Display "0.1% network fee" in small text on the pay page so buyers see it — transparency builds trust
+- Add `PROTOCOL_FEE_BPS = 10` (= 0.1%) to `lib/solana/constants.ts`
+- Add a `NEXT_PUBLIC_PROTOCOL_FEE_WALLET` env var for the fee recipient public key
+- Pass `platformFeeBps` in `buildOrderUrl` in `lib/solana/jupiter.ts`
+- Show "0.1% network fee" in small text on the pay page
 
 ---
 
-### 8. Solana Explorer Deep Links
+### ✅ 8. Solana Explorer Deep Links
 
-**Why:** 10 minutes of work. Every `txSignature` in your dashboard becomes a clickable link to Solscan. Makes the product feel on-chain and trustworthy to crypto-native judges.
+**Status: Done.**
 
-**What to build:**
+All three missing pieces are now in `link-row.tsx`:
+- `SOLSCAN_CLUSTER` constant added — `?cluster=devnet` appended on devnet, empty string on mainnet
+- Wallet addresses are now `<a href="https://solscan.io/account/{wallet}{SOLSCAN_CLUSTER}">` links
+- Tx signatures show as `Ab3x…9Qr ↗` (truncated text + ExternalLink icon) linking to Solscan with cluster suffix
 
-- In `link-row.tsx` and anywhere `txSignature` is displayed, wrap it in an `<a>` tag pointing to `https://solscan.io/tx/{txSignature}`
-- Use `?cluster=devnet` suffix when `NEXT_PUBLIC_SOLANA_CLUSTER === "devnet"` so the link works in both environments
-- Add a small external link icon next to the truncated signature (e.g., `Ab3x...9Qr ↗`)
-- Apply the same treatment to wallet addresses — link them to `https://solscan.io/account/{address}`
+`SuccessOverlay` already had the cluster suffix via its own `SOLSCAN_CLUSTER` constant.
 
 ---
 
-### 9. Webhook / Email Notification on Payment
+### ❌ 9. Webhook / Email Notification on Payment
 
-**Why:** This is the integration story. When a payment lands, POST the event data to the merchant's URL — suddenly SettleX plugs into Shopify, Notion, Zapier, anything.
+**Status: Not started.**
+
+No `webhookUrl` field on `PaymentLink` schema. No webhook firing in the submit-tx flow.
 
 **What to build:**
 
-- Add a `webhookUrl` (optional) field to the `PaymentLink` Prisma model
-- In `CreateLinkDialog`, add an optional "Webhook URL" input with a placeholder like `https://yoursite.com/api/settlex-webhook`
-- After a payment execution is confirmed in the submit-tx flow, fire a background `fetch` POST to the webhook URL with payload: `{ linkId, txSignature, inputToken, inputAmount, outputAmount, status, timestamp }`
-- Add a `webhookSecret` field so merchants can verify the payload with an HMAC header (`X-SettleX-Signature`)
-- Show last webhook delivery status in the dashboard (success/failed)
+- Add `webhookUrl String?` and `webhookSecret String?` to `PaymentLink` + migrate
+- In `CreateLinkDialog`, add optional "Webhook URL" input
+- After `publishDashboardPaymentPaid` fires in `payment-submit.service.ts`, fire a background `fetch` POST to the webhook URL with `{ linkId, txSignature, inputToken, inputAmount, outputAmount, status, timestamp }`
+- Sign the payload with HMAC-SHA256 using `webhookSecret`, send as `X-SettleX-Signature` header
+- Show last delivery status in the dashboard
 
 ---
 
 ## Build Order
 
-| #   | Feature                            | Effort | Demo Impact | Colosseum signal              |
-| --- | ---------------------------------- | ------ | ----------- | ----------------------------- |
-| ✅  | Real-time notifications (SSE)      | Done   | Highest     | Core demo requirement         |
-| 2   | QR code generation                 | Low    | High        | Used by 2 payment winners     |
-| 3   | "Pay with any token" UI            | Low    | Highest     | Your moat — currently hidden  |
-| 4   | Swap receipt on confirmation       | Low    | High        | Decal $20k winner pattern     |
-| 6   | Pay page customization             | Low    | High        | Polished product feel         |
-| 5   | Open amount links                  | Medium | High        | Schema already has type field |
-| 7   | Protocol fee                       | Low    | Medium      | Answers "how do you make money?" |
-| 8   | Explorer deep links                | Lowest | Medium      | 10 min, high credibility      |
-| 9   | Webhook notifications              | High   | Medium      | Enterprise integration story  |
+| #   | Feature                            | Status       | Effort  | Demo Impact | Next action |
+| --- | ---------------------------------- | ------------ | ------- | ----------- | ----------- |
+| ✅  | Real-time notifications (SSE)      | Done         | —       | Highest     | —           |
+| ✅  | QR code (dashboard + Phantom)      | Done         | —       | High        | —           |
+| ✅  | "Pay with any token" UI            | Done         | —       | Highest     | —           |
+| ✅  | Swap receipt on confirmation       | Done         | —       | High        | —           |
+| ✅  | Explorer deep links                | Done         | —       | Medium      | —           |
+| ❌  | Pay page customization             | Not started  | Low     | High        | Schema migration + CreateLinkDialog fields |
+| ❌  | Open amount links                  | Not started  | Medium  | High        | Schema migration + pay page input |
+| ❌  | Protocol fee                       | Not started  | Low     | Medium      | constants.ts + jupiter.ts platformFeeBps |
+| ❌  | Webhook notifications              | Not started  | High    | Medium      | Schema migration + submit-tx hook |

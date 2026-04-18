@@ -1,7 +1,6 @@
-import { Connection, PublicKey } from '@solana/web3.js'
+import type { Connection, ParsedTransactionWithMeta, VersionedTransactionResponse } from '@solana/web3.js'
+import { PublicKey } from '@solana/web3.js'
 import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token'
-
-import { RPC_COMMITMENT } from '@/lib/solana/constants'
 
 async function settlementTokenProgram(connection: Connection, mint: PublicKey): Promise<PublicKey> {
   const info = await connection.getAccountInfo(mint)
@@ -11,6 +10,9 @@ async function settlementTokenProgram(connection: Connection, mint: PublicKey): 
 }
 
 export type VerifyResult = { ok: true } | { ok: false; reason: string }
+
+// The pre-fetched tx passed in from processSubmitTx — avoids a second RPC call.
+export type FetchedTx = VersionedTransactionResponse | ParsedTransactionWithMeta | null
 
 type UiTokenBalance = {
   owner?: string
@@ -36,19 +38,21 @@ function sumTokenBalancesForOwnerAndMint(
   return total
 }
 
+/**
+ * Verify that a pre-fetched transaction actually delivered the expected amount
+ * of the settlement token to the merchant.
+ *
+ * Accepts the tx object directly (already fetched by the caller) so we don't
+ * make a second RPC round-trip for the same transaction.
+ */
 export async function verifyPaymentTransaction(params: {
   connection: Connection
-  signature: string
+  tx: FetchedTx
   merchantWallet: string
   settlementMint: string
   expectedRaw: bigint
 }): Promise<VerifyResult> {
-  const { connection, signature, merchantWallet, settlementMint, expectedRaw } = params
-
-  const tx = await connection.getTransaction(signature, {
-    commitment: RPC_COMMITMENT,
-    maxSupportedTransactionVersion: 0,
-  })
+  const { connection, tx, merchantWallet, settlementMint, expectedRaw } = params
 
   if (!tx) {
     return { ok: false, reason: 'Transaction not found on RPC' }

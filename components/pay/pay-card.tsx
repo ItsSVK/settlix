@@ -20,6 +20,10 @@ function shorten(addr: string) {
 export function PayCard({ linkId }: { linkId: string }) {
   const { data: link, isLoading: linkLoading, error: linkError } = usePaymentLink(linkId)
   const [selectedToken, setSelectedToken] = useState<TokenInfo | null>(null)
+  const [successResult, setSuccessResult] = useState<{
+    sig: string
+    swap?: { inputAmount: string; inputDecimals: number; inputSymbol: string }
+  } | null>(null)
   const {
     quote,
     isLoading: quoteLoading,
@@ -30,8 +34,8 @@ export function PayCard({ linkId }: { linkId: string }) {
     linkId,
     selectedToken?.mint ?? null,
     link?.token ?? null,
+    { disabled: !!successResult },
   )
-  const [successTx, setSuccessTx] = useState<string | null>(null)
   const [showPhantomQr, setShowPhantomQr] = useState(false)
 
   return (
@@ -58,9 +62,13 @@ export function PayCard({ linkId }: { linkId: string }) {
           </div>
 
           <AnimatePresence mode='wait'>
-            {successTx ? (
+            {successResult ? (
               <motion.div key='success' initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <SuccessOverlay txSignature={successTx} amount={link?.amount ?? ''} />
+                <SuccessOverlay
+                  txSignature={successResult.sig}
+                  amount={link?.amount ?? ''}
+                  swap={successResult.swap}
+                />
               </motion.div>
             ) : linkLoading ? (
               <motion.div key='loading' className='space-y-3'>
@@ -105,7 +113,7 @@ export function PayCard({ linkId }: { linkId: string }) {
                   linkId={linkId}
                   selectedToken={selectedToken}
                   quoteReady={!!quote && !quoteLoading && !isRefreshing}
-                  onSuccess={(sig) => setSuccessTx(sig)}
+                  onSuccess={(sig, swap) => setSuccessResult({ sig, swap })}
                 />
 
                 {/* Pay with Phantom QR */}
@@ -133,7 +141,7 @@ export function PayCard({ linkId }: { linkId: string }) {
           onClose={() => setShowPhantomQr(false)}
           onSuccess={(sig) => {
             setShowPhantomQr(false)
-            setSuccessTx(sig)
+            setSuccessResult({ sig })
           }}
         />
       )}
