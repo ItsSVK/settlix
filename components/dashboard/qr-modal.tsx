@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { useState } from 'react'
 import { copyText } from '@/lib/utils'
 
-interface QrModalProps {
+interface QRModalProps {
   open: boolean
   onClose: () => void
   /** The full payment URL e.g. https://settlix.app/pay/abc123 */
@@ -17,7 +17,7 @@ interface QrModalProps {
   label: string
 }
 
-export function QrModal({ open, onClose, payUrl, label }: QrModalProps) {
+export function QRModal({ open, onClose, payUrl, label }: QRModalProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const [copied, setCopied] = useState(false)
 

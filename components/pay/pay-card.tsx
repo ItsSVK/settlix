@@ -8,7 +8,7 @@ import { TokenSelector, type TokenInfo } from './token-selector'
 import { QuoteDisplay } from './quote-display'
 import { PayButton } from './pay-button'
 import { SuccessOverlay } from './success-overlay'
-import { PhantomQrModal } from './phantom-qr-modal'
+import { SolanaQRModal } from './solana-qr-modal'
 import { BackgroundBeams } from '@/components/ui/background-beams'
 import { ScanLine } from 'lucide-react'
 import { JupiterCallout } from './jupiter-callout'
@@ -31,7 +31,7 @@ export function PayCard({ linkId }: { linkId: string }) {
     isDirect,
     error: quoteError,
   } = useQuote(linkId, selectedToken?.mint ?? null, link?.token ?? null, { disabled: !!successResult })
-  const [showPhantomQr, setShowPhantomQr] = useState(false)
+  const [showSolanaPayQR, setShowSolanaPayQR] = useState(false)
 
   return (
     <div className='relative flex flex-1 w-full items-center justify-center bg-background px-4 py-20'>
@@ -56,9 +56,7 @@ export function PayCard({ linkId }: { linkId: string }) {
                 </p>
               </div>
 
-              <h1 className='mt-2 text-2xl font-bold tracking-tight text-foreground'>
-                {link?.title ?? 'Untitled Payment'}
-              </h1>
+              {link?.title && <h1 className='mt-2 text-2xl font-bold tracking-tight text-foreground'></h1>}
 
               {link?.description && (
                 <p className='mt-2 max-w-[280px] text-sm text-muted-foreground leading-relaxed'>{link.description}</p>
@@ -130,15 +128,15 @@ export function PayCard({ linkId }: { linkId: string }) {
                     onSuccess={(sig, swap) => setSuccessResult({ sig, swap })}
                   />
 
-                  {/* Pay with Phantom QR */}
+                  {/* Pay with Solana QR */}
                   <button
                     type='button'
                     disabled={!selectedToken}
-                    onClick={() => setShowPhantomQr(true)}
+                    onClick={() => setShowSolanaPayQR(true)}
                     className='flex w-full items-center justify-center gap-2 rounded-xl border border-border/50 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40'
                   >
                     <ScanLine className='h-4 w-4' />
-                    {selectedToken ? 'Pay with Phantom QR' : 'Select a token to use QR'}
+                    {selectedToken ? 'Pay with Solana Pay' : 'Select a token to use QR'}
                   </button>
                 </motion.div>
               )}
@@ -147,14 +145,14 @@ export function PayCard({ linkId }: { linkId: string }) {
         </motion.div>
       </div>
 
-      {/* Phantom QR modal — rendered outside the card so it overlays the full page */}
-      {showPhantomQr && selectedToken && (
-        <PhantomQrModal
+      {/* Solana QR modal — rendered outside the card so it overlays the full page */}
+      {showSolanaPayQR && selectedToken && (
+        <SolanaQRModal
           linkId={linkId}
           selectedToken={selectedToken}
-          onClose={() => setShowPhantomQr(false)}
+          onClose={() => setShowSolanaPayQR(false)}
           onSuccess={(sig) => {
-            setShowPhantomQr(false)
+            setShowSolanaPayQR(false)
             setSuccessResult({ sig })
           }}
         />

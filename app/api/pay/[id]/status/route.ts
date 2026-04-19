@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { getPhantomSession } from '@/lib/realtime/phantom-session-store'
+import { getSolanaPaySession } from '@/lib/realtime/solana-pay-session-store'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -7,7 +7,7 @@ export const runtime = 'nodejs'
 /**
  * GET /api/pay/[id]/status?session=<sessionId>
  *
- * Polled by the PhantomQrModal every 2 seconds.
+ * Polled by the SolanaQRModal every 2 seconds.
  * Returns the current status of the background watcher for this session.
  */
 export async function GET(req: NextRequest) {
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Missing session param' }, { status: 400 })
   }
 
-  const session = getPhantomSession(sessionId)
+  const session = getSolanaPaySession(sessionId)
 
   if (!session) {
     return NextResponse.json({ status: 'not_found' })

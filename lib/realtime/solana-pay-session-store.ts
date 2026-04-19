@@ -1,6 +1,6 @@
-export type PhantomSessionStatus = 'watching' | 'confirmed' | 'timeout'
+export type SolanaPaySessionStatus = 'watching' | 'confirmed' | 'timeout'
 
-export interface PhantomSession {
+export interface SolanaPaySession {
   sessionId: string
   linkId: string
   merchantWallet: string
@@ -15,33 +15,33 @@ export interface PhantomSession {
   isDirect: boolean
   /** Unix ms timestamp when the session was created. */
   createdAt: number
-  status: PhantomSessionStatus
+  status: SolanaPaySessionStatus
   txSignature?: string
 }
 
-type SessionRegistry = Map<string, PhantomSession>
+type SessionRegistry = Map<string, SolanaPaySession>
 
 declare global {
   // Persist across hot-reloads in development.
-  var __settlixPhantomSessionRegistry: SessionRegistry | undefined
+  var __settlixSolanaPaySessionRegistry: SessionRegistry | undefined
 }
 
 function getRegistry(): SessionRegistry {
-  if (!globalThis.__settlixPhantomSessionRegistry) {
-    globalThis.__settlixPhantomSessionRegistry = new Map()
+  if (!globalThis.__settlixSolanaPaySessionRegistry) {
+    globalThis.__settlixSolanaPaySessionRegistry = new Map()
   }
-  return globalThis.__settlixPhantomSessionRegistry
+  return globalThis.__settlixSolanaPaySessionRegistry
 }
 
-export function createPhantomSession(session: PhantomSession): void {
+export function createSolanaPaySession(session: SolanaPaySession): void {
   getRegistry().set(session.sessionId, session)
 }
 
-export function getPhantomSession(sessionId: string): PhantomSession | undefined {
+export function getSolanaPaySession(sessionId: string): SolanaPaySession | undefined {
   return getRegistry().get(sessionId)
 }
 
-export function updatePhantomSession(sessionId: string, update: Partial<PhantomSession>): void {
+export function updateSolanaPaySession(sessionId: string, update: Partial<SolanaPaySession>): void {
   const session = getRegistry().get(sessionId)
   if (!session) return
   Object.assign(session, update)

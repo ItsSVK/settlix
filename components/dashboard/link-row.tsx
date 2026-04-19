@@ -8,7 +8,7 @@ import { ChevronDown, Copy, Check, ExternalLink, ToggleLeft, ToggleRight, QrCode
 import type { DashboardLink } from '@/lib/hooks/use-dashboard'
 import { Button } from '@/components/ui/button'
 import { copyText } from '@/lib/utils'
-import { QrModal } from './qr-modal'
+import { QRModal } from './qr-modal'
 
 function shorten(s: string, start = 6, end = 4) {
   return `${s.slice(0, start)}…${s.slice(-end)}`
@@ -23,7 +23,7 @@ export function LinkRow({ link, onToggle }: LinkRowProps) {
   const [expanded, setExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
   const [toggling, setToggling] = useState(false)
-  const [qrOpen, setQrOpen] = useState(false)
+  const [qrOpen, setQROpen] = useState(false)
 
   const payUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/pay/${link.id}`
 
@@ -68,7 +68,7 @@ export function LinkRow({ link, onToggle }: LinkRowProps) {
         <div className='flex items-center' onClick={(e) => e.stopPropagation()}>
           {/* QR Code */}
           <Button
-            onClick={() => setQrOpen(true)}
+            onClick={() => setQROpen(true)}
             title='Show QR code'
             variant='ghost'
             size='xss'
@@ -172,9 +172,9 @@ export function LinkRow({ link, onToggle }: LinkRowProps) {
           </motion.div>
         )}
       </AnimatePresence>
-      <QrModal
+      <QRModal
         open={qrOpen}
-        onClose={() => setQrOpen(false)}
+        onClose={() => setQROpen(false)}
         payUrl={payUrl}
         label={`${Number(link.amount).toFixed(2)} USDC`}
       />

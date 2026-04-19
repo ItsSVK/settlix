@@ -17,7 +17,7 @@ interface SuccessOverlayProps {
   txSignature: string
   /** Human-decimal USDC amount the merchant receives, e.g. "47.82" */
   amount: string
-  /** Present for web-wallet flow; absent for Phantom QR (server-side) flow */
+  /** Present for web-wallet flow; absent for SolanaPay QR (server-side) flow */
   swap?: SwapDetails
 }
 

@@ -26,7 +26,7 @@ export function JupiterCallout() {
   useEffect(() => {
     const timer = setInterval(() => {
       setIndex((prev) => (prev + 1) % tokens.length)
-    }, 3500) // 3.5s feels slightly more premium than 1s which might be too fast for reading names
+    }, 2500) // 2.5s feels slightly more premium than 1s which might be too fast for reading names
     return () => clearInterval(timer)
   }, [tokens.length])
 
@@ -50,66 +50,59 @@ export function JupiterCallout() {
         {/* Subtle animated background glow */}
         <div className='absolute inset-0 bg-linear-to-tr from-indigo-500/5 via-transparent to-emerald-500/5 animate-pulse' />
 
-        <div className='relative rounded-2xl bg-card/95 px-5 py-3 backdrop-blur-sm border border-white/8 shadow-xl'>
-          {/* Top row: copy + Jupiter attribution */}
-          <div className='flex items-start justify-between gap-3'>
-            <div>
-              <p className='text-[13px] font-medium leading-tight text-foreground/90'>
-                Pay with <span className='text-indigo-500 dark:text-indigo-400 font-bold'>any asset</span>
+        <div className='relative rounded-2xl bg-card/95 px-5 py-3.5 backdrop-blur-md shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-white/5'>
+          <div className='flex flex-row items-center justify-between gap-4'>
+            
+            {/* Left side: Pay with + Animation */}
+            <div className='flex flex-col justify-center h-full'>
+              <div className='flex items-center gap-1.5 h-[22px]'>
+                <span className='text-[14px] font-medium text-muted-foreground whitespace-nowrap'>
+                  Pay with
+                </span>
+                
+                <div className='relative min-w-[90px] h-full overflow-hidden'>
+                  <AnimatePresence mode='popLayout'>
+                    <motion.div
+                      key={currentToken.symbol}
+                      initial={{ opacity: 0, y: 15, filter: 'blur(3px)' }}
+                      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                      exit={{ opacity: 0, y: -15, filter: 'blur(3px)' }}
+                      transition={{
+                        duration: 0.5,
+                        ease: [0.16, 1, 0.3, 1], // Smooth apple-like spring
+                      }}
+                      className='absolute inset-0 flex items-center justify-start gap-1.5'
+                    >
+                      <div className='h-[18px] w-[18px] rounded-full overflow-hidden border border-border/80 shrink-0 bg-background shadow-xs'>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={currentToken.logoURI}
+                          alt={currentToken.symbol}
+                          className='h-full w-full object-cover'
+                          onError={(e) => {
+                            ;(e.target as HTMLImageElement).src = '/token-placeholder.png'
+                          }}
+                        />
+                      </div>
+                      <span className='text-[14px] font-bold text-foreground uppercase tracking-tight'>
+                        {currentToken.symbol}
+                      </span>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </div>
+              <p className='text-[9px] text-muted-foreground/60 font-semibold tracking-[0.08em] uppercase mt-1'>
+                Settled instantly in USDC
               </p>
-              <p className='mt-0.5 text-[10px] text-muted-foreground/60'>Settled instantly in USDC</p>
             </div>
 
             {/* Jupiter attribution */}
-            <div className='shrink-0 flex flex-col items-end gap-1'>
-              <p className='text-[8px] uppercase tracking-[0.15em] text-muted-foreground/40 font-bold'>Powered by</p>
-              <div className='flex items-center gap-1.5'>
-                <JupiterLogo className='h-3 w-3 opacity-90' />
-                <span className='text-[11px] font-bold tracking-tight text-foreground/80'>Jupiter</span>
-              </div>
+            <div className='shrink-0 flex items-center gap-1.5 rounded-full bg-muted/40 px-2.5 py-1.5 border border-border/30 shadow-xs backdrop-blur-sm transition-colors hover:bg-muted/60'>
+              <JupiterLogo className='h-3.5 w-3.5 opacity-80' />
+              <span className='text-[10px] font-semibold tracking-tight text-foreground/70 pr-0.5'>Powered</span>
             </div>
-          </div>
 
-          {/* New Rotating Token Display */}
-          <div className='mt-2.5 flex items-center justify-center h-8'>
-            <AnimatePresence mode='wait'>
-              <motion.div
-                key={currentToken.symbol}
-                initial={{ opacity: 0, y: 10, rotateX: -30 }}
-                animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                exit={{ opacity: 0, y: -10, rotateX: 30 }}
-                transition={{
-                  duration: 0.3,
-                  ease: [0.23, 1, 0.32, 1],
-                }}
-                className='flex items-center gap-2 rounded-full bg-muted/50 border border-border/40 pl-1 pr-3 py-1 shadow-sm'
-              >
-                <div className='relative h-5 w-5 rounded-full overflow-hidden border border-white/10'>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={currentToken.logoURI}
-                    alt={currentToken.symbol}
-                    className='h-full w-full object-cover'
-                    onError={(e) => {
-                      ;(e.target as HTMLImageElement).src = '/token-placeholder.png'
-                    }}
-                  />
-                </div>
-                <div className='flex items-baseline gap-1.5 leading-none'>
-                  <span className='text-[11px] font-bold text-foreground uppercase tracking-wide'>
-                    {currentToken.symbol}
-                  </span>
-                  <span className='text-[9px] text-muted-foreground/50 truncate max-w-[70px]'>{currentToken.name}</span>
-                </div>
-              </motion.div>
-            </AnimatePresence>
           </div>
-
-          {/* <div className='mt-2 text-center'>
-            <p className='text-[9px] text-muted-foreground/30 font-medium tracking-wide uppercase'>
-              + thousands more supported
-            </p>
-          </div> */}
         </div>
       </div>
     </motion.div>

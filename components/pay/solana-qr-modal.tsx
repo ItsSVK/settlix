@@ -6,7 +6,7 @@ import { QRCodeCanvas } from 'qrcode.react'
 import { CheckCircle, ExternalLink, Loader2, X, XCircle } from 'lucide-react'
 import type { TokenInfo } from './token-selector'
 
-interface PhantomQrModalProps {
+interface SolanaQRModalProps {
   linkId: string
   selectedToken: TokenInfo
   onClose: () => void
@@ -18,14 +18,26 @@ type ModalStatus = 'waiting' | 'confirmed' | 'timeout' | 'error'
 const POLL_INTERVAL_MS = 2_000
 const CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK === 'devnet' ? '?cluster=devnet' : ''
 
-export function PhantomQrModal({ linkId, selectedToken, onClose, onSuccess }: PhantomQrModalProps) {
+function generateSessionId() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+  // Fallback for non-secure contexts (like testing on local mobile browser)
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
+
+export function SolanaQRModal({ linkId, selectedToken, onClose, onSuccess }: SolanaQRModalProps) {
   // sessionId is stable for the lifetime of this modal.
-  const [sessionId] = useState(() => crypto.randomUUID())
+  const [sessionId] = useState(() => generateSessionId())
   const [status, setStatus] = useState<ModalStatus>('waiting')
   const [txSignature, setTxSignature] = useState<string | null>(null)
 
   // Build the Solana Pay Transaction Request URL.
-  // inputMint and sessionId are in the PATH (not query params) because Phantom
+  // inputMint and sessionId are in the PATH (not query params) because SolanaPay
   // strips query params when it makes the POST request to the same URL.
   const solanaPayUrl =
     typeof window !== 'undefined'
@@ -109,8 +121,8 @@ export function PhantomQrModal({ linkId, selectedToken, onClose, onSuccess }: Ph
           {/* Header */}
           <div className='mb-5 flex items-start justify-between'>
             <div>
-              <h2 className='text-base font-bold text-foreground'>Pay with Phantom</h2>
-              <p className='mt-0.5 text-xs text-muted-foreground'>Open Phantom → tap QR scanner → scan</p>
+              <h2 className='text-base font-bold text-foreground'>Pay with Solana Pay</h2>
+              <p className='mt-0.5 text-xs text-muted-foreground'>Open SolanaPay/Solflare → tap QR scanner → scan</p>
             </div>
             <button
               onClick={onClose}

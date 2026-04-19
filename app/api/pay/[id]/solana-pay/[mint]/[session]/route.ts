@@ -7,7 +7,11 @@ import { getPaymentLinkByDetails } from '@/lib/solana/database-lookup'
 import { executeJupiterOrderRequest } from '@/lib/services/jupiter-order.service'
 import { processSubmitTx } from '@/lib/services/payment-submit.service'
 import { createServerConnection } from '@/lib/solana/connection'
-import { createPhantomSession, updatePhantomSession, type PhantomSession } from '@/lib/realtime/phantom-session-store'
+import {
+  createSolanaPaySession,
+  updateSolanaPaySession,
+  type SolanaPaySession,
+} from '@/lib/realtime/solana-pay-session-store'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -20,14 +24,14 @@ const CORS = {
 
 type Params = { params: Promise<{ id: string; mint: string; session: string }> }
 
-/** OPTIONS — CORS preflight required by Phantom. */
+/** OPTIONS — CORS preflight required by SolanaPay. */
 export function OPTIONS() {
   return new Response(null, { status: 204, headers: CORS })
 }
 
 /**
- * GET — Phantom fetches label + icon before showing the payment screen.
- * inputMint and sessionId come from path params so they survive Phantom's POST.
+ * GET — SolanaPay fetches label + icon before showing the payment screen.
+ * inputMint and sessionId come from path params so they survive SolanaPay's POST.
  */
 export async function GET(req: NextRequest, { params }: Params) {
   return handleApi(async () => {
@@ -44,9 +48,9 @@ export async function GET(req: NextRequest, { params }: Params) {
 }
 
 /**
- * POST — Phantom sends { account: "<buyer_wallet>" }.
- * We build the Jupiter swap tx and return it unsigned for Phantom to sign + broadcast.
- * inputMint and sessionId are in path params (Phantom strips query params on POST).
+ * POST — SolanaPay sends { account: "<buyer_wallet>" }.
+ * We build the Jupiter swap tx and return it unsigned for SolanaPay to sign + broadcast.
+ * inputMint and sessionId are in path params (SolanaPay strips query params on POST).
  */
 export async function POST(req: NextRequest, { params }: Params) {
   return handleApi(async () => {
@@ -74,7 +78,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Failed to build transaction' }, { status: 500, headers: CORS })
     }
 
-    const session: PhantomSession = {
+    const session: SolanaPaySession = {
       sessionId,
       linkId: id,
       merchantWallet: link.merchantWallet,
@@ -88,10 +92,10 @@ export async function POST(req: NextRequest, { params }: Params) {
       createdAt: Date.now(),
       status: 'watching',
     }
-    createPhantomSession(session)
+    createSolanaPaySession(session)
 
     void watchAndRecord(session).catch(() => {
-      updatePhantomSession(sessionId, { status: 'timeout' })
+      updateSolanaPaySession(sessionId, { status: 'timeout' })
     })
 
     return NextResponse.json({ transaction: order.transaction }, { headers: CORS })
@@ -106,7 +110,7 @@ function sleep(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms))
 }
 
-async function watchAndRecord(session: PhantomSession) {
+async function watchAndRecord(session: SolanaPaySession) {
   const connection = createServerConnection()
   const merchantPk = new PublicKey(session.merchantWallet)
 
@@ -142,7 +146,7 @@ async function watchAndRecord(session: PhantomSession) {
         })
 
         if (result.ok) {
-          updatePhantomSession(session.sessionId, {
+          updateSolanaPaySession(session.sessionId, {
             status: 'confirmed',
             txSignature: sigInfo.signature,
           })
@@ -157,5 +161,5 @@ async function watchAndRecord(session: PhantomSession) {
     await sleep(3_000)
   }
 
-  updatePhantomSession(session.sessionId, { status: 'timeout' })
+  updateSolanaPaySession(session.sessionId, { status: 'timeout' })
 }
