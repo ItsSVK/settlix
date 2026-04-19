@@ -23,14 +23,14 @@ type SessionRegistry = Map<string, PhantomSession>
 
 declare global {
   // Persist across hot-reloads in development.
-  var __settlexPhantomSessionRegistry: SessionRegistry | undefined
+  var __settlixPhantomSessionRegistry: SessionRegistry | undefined
 }
 
 function getRegistry(): SessionRegistry {
-  if (!globalThis.__settlexPhantomSessionRegistry) {
-    globalThis.__settlexPhantomSessionRegistry = new Map()
+  if (!globalThis.__settlixPhantomSessionRegistry) {
+    globalThis.__settlixPhantomSessionRegistry = new Map()
   }
-  return globalThis.__settlexPhantomSessionRegistry
+  return globalThis.__settlixPhantomSessionRegistry
 }
 
 export function createPhantomSession(session: PhantomSession): void {

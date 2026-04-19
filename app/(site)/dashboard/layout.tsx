@@ -4,7 +4,7 @@ import { verifySession } from '@/lib/auth/session'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies()
-  const token = cookieStore.get('settlex_session')?.value
+  const token = cookieStore.get('settlix_session')?.value
   const session = token ? await verifySession(token) : null
 
   if (!session) {

@@ -8,7 +8,7 @@ import { verifyWalletSignature } from '@/lib/auth/verify-signature'
 import { signSession, SESSION_COOKIE, sessionCookieOptions } from '@/lib/auth/session'
 
 /** The exact message prefix that clients must sign. */
-export const SIGN_MESSAGE_PREFIX = 'Sign in to Settlex:\n'
+export const SIGN_MESSAGE_PREFIX = 'Sign in to Settlix:\n'
 
 /**
  * POST /api/auth/login
@@ -19,7 +19,7 @@ export const SIGN_MESSAGE_PREFIX = 'Sign in to Settlex:\n'
  *   - nonce:     UUID previously obtained from GET /api/auth/nonce
  *
  * The expected signed message is:
- *   "Sign in to Settlex:\n<nonce>"
+ *   "Sign in to Settlix:\n<nonce>"
  *
  * On success, sets an HttpOnly JWT cookie and returns { wallet }.
  */

@@ -26,7 +26,7 @@ export function Navbar({ className }: { className?: string }) {
       )}
     >
       <Link href='/' className='mr-2 text-base font-bold tracking-tight text-foreground'>
-        Settl<span className='text-primary'>e</span>X
+        Settl<span className='text-primary'>i</span>X
       </Link>
 
       <div className='flex-1' />

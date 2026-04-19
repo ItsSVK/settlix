@@ -16,14 +16,14 @@ type StreamRegistry = Map<string, Set<Listener>>
 
 declare global {
   // Persist subscribers across module reloads during local development.
-  var __settlexDashboardStreamRegistry: StreamRegistry | undefined
+  var __settlixDashboardStreamRegistry: StreamRegistry | undefined
 }
 
 function getRegistry(): StreamRegistry {
-  if (!globalThis.__settlexDashboardStreamRegistry) {
-    globalThis.__settlexDashboardStreamRegistry = new Map<string, Set<Listener>>()
+  if (!globalThis.__settlixDashboardStreamRegistry) {
+    globalThis.__settlixDashboardStreamRegistry = new Map<string, Set<Listener>>()
   }
-  return globalThis.__settlexDashboardStreamRegistry
+  return globalThis.__settlixDashboardStreamRegistry
 }
 
 export function subscribeDashboardStream(merchantWallet: string, listener: Listener): () => void {

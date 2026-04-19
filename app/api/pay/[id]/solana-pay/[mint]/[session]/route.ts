@@ -39,7 +39,7 @@ export async function GET(req: NextRequest, { params }: Params) {
     await getPaymentLinkByDetails(id)
 
     const origin = req.nextUrl.origin
-    return NextResponse.json({ label: 'SettleX Payment', icon: `${origin}/icon.png` }, { headers: CORS })
+    return NextResponse.json({ label: 'Settlix Payment', icon: `${origin}/icon.png` }, { headers: CORS })
   })
 }
 

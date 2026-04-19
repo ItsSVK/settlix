@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 const fontMono = Geist_Mono({ subsets: ['latin'], variable: '--font-mono' })
 
 export const metadata: Metadata = {
-  title: 'SettleX — Solana Payment Links',
+  title: 'Settlix — Solana Payment Links',
   description: 'Create shareable Solana payment links. Buyers pay in any token; you receive USDC. Non-custodial.',
 }
 

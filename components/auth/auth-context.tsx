@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { nonce } = await nonceRes.json()
 
     // 2. Sign message
-    const message = `Sign in to Settlex:\n${nonce}`
+    const message = `Sign in to Settlix:\n${nonce}`
     const msgBytes = new TextEncoder().encode(message)
     const sigBytes = await signMessage(msgBytes)
     const signature = Buffer.from(sigBytes).toString('base64')

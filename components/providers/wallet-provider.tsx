@@ -13,7 +13,7 @@ import '@solana/wallet-adapter-react-ui/styles.css'
 import { UnsafeBurnerWalletAdapter } from '@solana/wallet-adapter-wallets'
 
 const RPC_ENDPOINT = process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? 'https://api.mainnet-beta.solana.com'
-const DOMAIN = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://settlex.itssvk.dev'
+const DOMAIN = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://settlix.itssvk.dev'
 
 export function SolanaWalletProvider({ children }: { children: React.ReactNode }) {
   const wallets = useMemo(
@@ -21,7 +21,7 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
       new SolanaMobileWalletAdapter({
         addressSelector: createDefaultAddressSelector(),
         appIdentity: {
-          name: 'SettleX',
+          name: 'Settlix',
           uri: typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}` : DOMAIN,
           icon: 'favicon.ico',
         },

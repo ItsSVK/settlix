@@ -5,7 +5,7 @@ import { join } from 'path'
 
 const JUPITER_SWAP_V2 = 'https://api.jup.ag/swap/v2'
 const JUPITER_DEBUG_LOG = process.env.JUPITER_DEBUG_LOG === '1'
-const JUPITER_LOG_PATH = join(tmpdir(), 'settlex-jupiter.log')
+const JUPITER_LOG_PATH = join(tmpdir(), 'settlix-jupiter.log')
 
 function preview(value: string, max = 500) {
   return value.length > max ? `${value.slice(0, max)}...` : value

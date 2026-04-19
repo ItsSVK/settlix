@@ -11,7 +11,7 @@ import { copyText } from '@/lib/utils'
 interface QrModalProps {
   open: boolean
   onClose: () => void
-  /** The full payment URL e.g. https://settlex.app/pay/abc123 */
+  /** The full payment URL e.g. https://settlix.app/pay/abc123 */
   payUrl: string
   /** Human-readable label shown above the QR (e.g. "10.00 USDC") */
   label: string
@@ -32,7 +32,7 @@ export function QrModal({ open, onClose, payUrl, label }: QrModalProps) {
     const canvas = canvasRef.current
     if (!canvas) return
     const link = document.createElement('a')
-    link.download = `settlex-qr-${Date.now()}.png`
+    link.download = `settlix-qr-${Date.now()}.png`
     link.href = canvas.toDataURL('image/png')
     link.click()
   }

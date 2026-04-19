@@ -5,7 +5,7 @@ import type { NextRequest } from 'next/server'
 
 import { getAuthSecret } from '@/lib/env/server'
 
-export const SESSION_COOKIE = 'settlex_session'
+export const SESSION_COOKIE = 'settlix_session'
 const SESSION_TTL_SECONDS = 60 * 60 * 24 // 24 hours
 
 interface SessionPayload {

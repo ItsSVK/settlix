@@ -1,7 +1,7 @@
 import { SendCard } from '@/components/send/send-card'
 
 export const metadata = {
-  title: 'Send · SettleX',
+  title: 'Send · Settlix',
   description: 'Pay any Solana wallet with any token. They receive USDC instantly.',
 }
 

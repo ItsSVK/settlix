@@ -7,7 +7,7 @@ import { getSessionFromRequest } from '@/lib/auth/session'
 /**
  * Guard for protected route handlers.
  *
- * Reads the `settlex_session` JWT cookie from the request, verifies it,
+ * Reads the `settlix_session` JWT cookie from the request, verifies it,
  * and returns the authenticated wallet address.
  *
  * Throws `ApiError(401)` if the cookie is absent or the JWT is invalid/expired.
