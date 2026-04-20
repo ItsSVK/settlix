@@ -2,11 +2,18 @@
   "name": "settlix",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "bun@1.2.21",
+  "workspaces": [
+    "program"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "anchor:build": "bun run --cwd program build",
+    "anchor:test": "bun run --cwd program test",
+    "anchor:lint": "bun run --cwd program lint",
     "format": "bunx prettier --write .",
     "db:init": "prisma init",
     "db:generate": "prisma generate",

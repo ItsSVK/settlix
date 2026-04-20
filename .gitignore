@@ -44,3 +44,10 @@ next-env.d.ts
 
 /scripts/
 settlix.postman_collection.json
+
+
+.anchor
+.DS_Store
+target
+**/*.rs.bk
+test-ledger
