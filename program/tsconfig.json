@@ -1,9 +1,13 @@
 {
   "compilerOptions": {
-    "types": ["mocha", "chai"],
-    "lib": ["es2015"],
-    "module": "commonjs",
-    "target": "es6",
-    "esModuleInterop": true
+    "types": ["mocha", "node"],
+    "lib": ["es2020", "dom"],
+    "module": "esnext",
+    "moduleResolution": "node",
+    "target": "es2020",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "strict": false
   }
 }

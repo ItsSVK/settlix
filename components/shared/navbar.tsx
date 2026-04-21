@@ -21,7 +21,7 @@ export function Navbar({ className }: { className?: string }) {
   return (
     <nav
       className={cn(
-        'fixed top-4 left-1/2 z-50 flex w-[80%] max-w-5xl -translate-x-1/2 items-center md:gap-3 rounded-2xl border border-border/50 bg-background/80 px-5 py-3 shadow-lg backdrop-blur-md',
+        'fixed top-4 min-h-16 left-1/2 z-50 flex w-[80%] max-w-5xl -translate-x-1/2 items-center md:gap-3 rounded-2xl border border-border/50 bg-background/80 px-5 py-3 shadow-lg backdrop-blur-md',
         className,
       )}
     >
