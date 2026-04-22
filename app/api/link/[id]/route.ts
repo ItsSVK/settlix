@@ -33,6 +33,10 @@ export async function GET(_req: Request, { params }: Params) {
       title: link.title ?? null,
       description: link.description ?? null,
       createdAt: link.createdAt.toISOString(),
+      recipients: (link.recipients ?? []).map((r) => ({
+        wallet: r.wallet,
+        basisPoints: r.basisPoints,
+      })),
     })
   })
 }

@@ -9,5 +9,6 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/PaymentLink'
+export type * from './models/SplitRecipient'
 export type * from './models/PaymentExecution'
 export type * from './commonInputTypes'

@@ -42,12 +42,36 @@ export async function POST(req: NextRequest) {
       throw new ApiError(400, 'Amount must be positive', INVALID_AMOUNT)
     }
 
+    // Validate split recipients when provided
+    const recipients = parsed.data.recipients
+    if (recipients && recipients.length > 0) {
+      // All wallets must be valid public keys
+      for (const r of recipients) {
+        try {
+          new PublicKey(r.wallet)
+        } catch {
+          throw new ApiError(400, `Invalid recipient wallet: ${r.wallet}`, 'INVALID_RECIPIENT_WALLET')
+        }
+      }
+
+      // Basis points must sum to exactly 10000
+      const totalBps = recipients.reduce((sum, r) => sum + r.basisPoints, 0)
+      if (totalBps !== 10000) {
+        throw new ApiError(
+          400,
+          `Recipient basis points must sum to 10000 (got ${totalBps})`,
+          'INVALID_SPLIT_BPS',
+        )
+      }
+    }
+
     const link = await insertPaymentLink({
       merchantWallet,
       token: parsed.data.token,
       amount,
       title: parsed.data.title,
       description: parsed.data.description,
+      recipients,
     })
 
     return NextResponse.json({

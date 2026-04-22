@@ -47,6 +47,11 @@ export { Prisma }
  */
 export type PaymentLink = Prisma.PaymentLinkModel
 /**
+ * Model SplitRecipient
+ * 
+ */
+export type SplitRecipient = Prisma.SplitRecipientModel
+/**
  * Model PaymentExecution
  * 
  */

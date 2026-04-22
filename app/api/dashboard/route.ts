@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { getPaymentLinksByWallet } from '@/lib/services/payment-link.service'
 import { handleApi } from '@/lib/api/errors'
 import { requireAuth } from '@/lib/auth/require-auth'
-import { PaymentExecution } from '@/lib/generated/prisma/client'
+import { PaymentExecution, SplitRecipient } from '@/lib/generated/prisma/client'
 
 export async function GET(req: NextRequest) {
   return handleApi(async () => {
@@ -27,6 +27,10 @@ export async function GET(req: NextRequest) {
         type: link.type,
         active: link.active,
         createdAt: link.createdAt.toISOString(),
+        recipients: (link.recipients ?? []).map((r: SplitRecipient) => ({
+          wallet: r.wallet,
+          basisPoints: r.basisPoints,
+        })),
         stats: {
           totalExecutions: executions.length,
           paidCount,

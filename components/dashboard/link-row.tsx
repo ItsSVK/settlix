@@ -4,11 +4,12 @@ const SOLSCAN_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK === 'devnet' ? '?
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { ChevronDown, Copy, Check, ExternalLink, ToggleLeft, ToggleRight, QrCode } from 'lucide-react'
+import { ChevronDown, Copy, Check, ExternalLink, ToggleLeft, ToggleRight, QrCode, GitFork } from 'lucide-react'
 import type { DashboardLink } from '@/lib/hooks/use-dashboard'
 import { Button } from '@/components/ui/button'
 import { copyText } from '@/lib/utils'
 import { QRModal } from './qr-modal'
+import { SplitModal } from './split-modal'
 
 function shorten(s: string, start = 6, end = 4) {
   return `${s.slice(0, start)}…${s.slice(-end)}`
@@ -24,6 +25,7 @@ export function LinkRow({ link, onToggle }: LinkRowProps) {
   const [copied, setCopied] = useState(false)
   const [toggling, setToggling] = useState(false)
   const [qrOpen, setQROpen] = useState(false)
+  const [splitOpen, setSplitOpen] = useState(false)
 
   const payUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/pay/${link.id}`
 
@@ -66,6 +68,19 @@ export function LinkRow({ link, onToggle }: LinkRowProps) {
 
         {/* Actions */}
         <div className='flex items-center' onClick={(e) => e.stopPropagation()}>
+          {/* Splits */}
+          {link.recipients.length > 0 && (
+            <Button
+              onClick={() => setSplitOpen(true)}
+              title='Split'
+              variant='ghost'
+              size='xss'
+              className='text-indigo-500 dark:text-indigo-400 transition-colors hover:bg-indigo-500/10 hover:text-indigo-500 dark:hover:text-indigo-400'
+            >
+              <GitFork className='h-3.5 w-3.5' />
+            </Button>
+          )}
+
           {/* QR Code */}
           <Button
             onClick={() => setQROpen(true)}
@@ -96,7 +111,7 @@ export function LinkRow({ link, onToggle }: LinkRowProps) {
             title='Open pay page'
             variant='ghost'
             size='xss'
-            className='text-muted-foreground transition-colors hover:bg-accent hover:text-foreground'
+            className='hidden md:flex text-muted-foreground transition-colors hover:bg-accent hover:text-foreground'
           >
             <ExternalLink />
           </Button>
@@ -129,18 +144,21 @@ export function LinkRow({ link, onToggle }: LinkRowProps) {
             transition={{ duration: 0.2 }}
             className='overflow-hidden'
           >
-            <div className='border-t border-border/30 px-4 pb-4 pt-3'>
+            <div className='border-t border-border/30 px-4 pb-4 pt-3 space-y-4'>
+              {/* Recent payments */}
               {link.recentExecutions.length === 0 ? (
                 <p className='text-center text-xs text-muted-foreground py-3'>No payments yet</p>
               ) : (
                 <div className='space-y-2'>
-                  <p className='mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground'>
+                  <p className='text-[10px] font-semibold uppercase tracking-widest text-muted-foreground'>
                     Recent payments
                   </p>
                   {link.recentExecutions.map((ex) => (
                     <div key={ex.id} className='flex items-center gap-3 rounded-lg bg-muted/20 px-3 py-2 text-xs'>
                       <span
-                        className={`h-1.5 w-1.5 rounded-full shrink-0 ${ex.status === 'paid' ? 'bg-green-500' : 'bg-destructive'}`}
+                        className={`h-1.5 w-1.5 rounded-full shrink-0 ${
+                          ex.status === 'paid' ? 'bg-green-500' : 'bg-destructive'
+                        }`}
                       />
                       {ex.userWallet ? (
                         <a
@@ -178,6 +196,8 @@ export function LinkRow({ link, onToggle }: LinkRowProps) {
         payUrl={payUrl}
         label={`${Number(link.amount).toFixed(2)} USDC`}
       />
+
+      {link.recipients.length > 0 && <SplitModal open={splitOpen} onClose={() => setSplitOpen(false)} link={link} />}
     </div>
   )
 }

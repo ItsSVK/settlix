@@ -18,6 +18,18 @@ model PaymentLink {
   description    String?
   createdAt      DateTime           @default(now())
   executions     PaymentExecution[]
+  recipients     SplitRecipient[]
+}
+
+model SplitRecipient {
+  id           String      @id @default(cuid())
+  linkId       String
+  wallet       String
+  basisPoints  Int
+  displayOrder Int         @default(0)
+  link         PaymentLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+
+  @@index([linkId])
 }
 
 model PaymentExecution {

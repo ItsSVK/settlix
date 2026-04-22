@@ -52,6 +52,7 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   PaymentLink: 'PaymentLink',
+  SplitRecipient: 'SplitRecipient',
   PaymentExecution: 'PaymentExecution'
 } as const
 
@@ -84,6 +85,17 @@ export const PaymentLinkScalarFieldEnum = {
 } as const
 
 export type PaymentLinkScalarFieldEnum = (typeof PaymentLinkScalarFieldEnum)[keyof typeof PaymentLinkScalarFieldEnum]
+
+
+export const SplitRecipientScalarFieldEnum = {
+  id: 'id',
+  linkId: 'linkId',
+  wallet: 'wallet',
+  basisPoints: 'basisPoints',
+  displayOrder: 'displayOrder'
+} as const
+
+export type SplitRecipientScalarFieldEnum = (typeof SplitRecipientScalarFieldEnum)[keyof typeof SplitRecipientScalarFieldEnum]
 
 
 export const PaymentExecutionScalarFieldEnum = {

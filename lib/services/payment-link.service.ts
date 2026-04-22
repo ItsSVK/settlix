@@ -11,9 +11,10 @@ import { apiLogger } from '@/lib/api/logger'
 import { prisma } from '@/lib/db'
 import { Decimal } from '@/lib/generated/prisma/internal/prismaNamespace'
 import { Prisma } from '@/lib/generated/prisma/client'
+import type { SplitRecipientInput } from '@/lib/validation'
 
-type PaymentLinkWithExecutions = Prisma.PaymentLinkGetPayload<{
-  include: { executions: true }
+type PaymentLinkWithRelations = Prisma.PaymentLinkGetPayload<{
+  include: { executions: true; recipients: true }
 }>
 
 export async function insertPaymentLink(data: {
@@ -22,6 +23,7 @@ export async function insertPaymentLink(data: {
   amount: Decimal
   title?: string
   description?: string
+  recipients?: SplitRecipientInput[]
 }) {
   try {
     return await prisma.paymentLink.create({
@@ -33,7 +35,17 @@ export async function insertPaymentLink(data: {
         active: true,
         title: data.title ?? null,
         description: data.description ?? null,
+        recipients: data.recipients && data.recipients.length > 0
+          ? {
+              create: data.recipients.map((r, i) => ({
+                wallet: r.wallet,
+                basisPoints: r.basisPoints,
+                displayOrder: i,
+              })),
+            }
+          : undefined,
       },
+      include: { recipients: { orderBy: { displayOrder: 'asc' } } },
     })
   } catch (e) {
     apiLogger.error('PaymentLink create failed', e, { merchantWallet: data.merchantWallet })
@@ -46,7 +58,10 @@ export async function insertPaymentLink(data: {
 
 export async function getPaymentLinkById(id: string) {
   try {
-    return await prisma.paymentLink.findUnique({ where: { id } })
+    return await prisma.paymentLink.findUnique({
+      where: { id },
+      include: { recipients: { orderBy: { displayOrder: 'asc' } } },
+    })
   } catch (e) {
     apiLogger.error('PaymentLink findUnique failed', e, { id })
     if (e instanceof Error && 'code' in e) {
@@ -56,7 +71,7 @@ export async function getPaymentLinkById(id: string) {
   }
 }
 
-export async function getPaymentLinksByWallet(merchantWallet: string): Promise<PaymentLinkWithExecutions[]> {
+export async function getPaymentLinksByWallet(merchantWallet: string): Promise<PaymentLinkWithRelations[]> {
   try {
     return await prisma.paymentLink.findMany({
       where: { merchantWallet },
@@ -66,6 +81,7 @@ export async function getPaymentLinksByWallet(merchantWallet: string): Promise<P
           orderBy: { createdAt: 'desc' },
           take: 50,
         },
+        recipients: { orderBy: { displayOrder: 'asc' } },
       },
     })
   } catch (e) {

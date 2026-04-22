@@ -12,6 +12,7 @@ interface DashboardLink {
   type: string
   active: boolean
   createdAt: string
+  recipients: { wallet: string; basisPoints: number }[]
   stats: {
     totalExecutions: number
     paidCount: number

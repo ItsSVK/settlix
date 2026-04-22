@@ -385,6 +385,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   PaymentLink: 'PaymentLink',
+  SplitRecipient: 'SplitRecipient',
   PaymentExecution: 'PaymentExecution'
 } as const
 
@@ -401,7 +402,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "paymentLink" | "paymentExecution"
+    modelProps: "paymentLink" | "splitRecipient" | "paymentExecution"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -476,6 +477,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.PaymentLinkCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.PaymentLinkCountAggregateOutputType> | number
+        }
+      }
+    }
+    SplitRecipient: {
+      payload: Prisma.$SplitRecipientPayload<ExtArgs>
+      fields: Prisma.SplitRecipientFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SplitRecipientFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SplitRecipientPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SplitRecipientFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SplitRecipientPayload>
+        }
+        findFirst: {
+          args: Prisma.SplitRecipientFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SplitRecipientPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SplitRecipientFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SplitRecipientPayload>
+        }
+        findMany: {
+          args: Prisma.SplitRecipientFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SplitRecipientPayload>[]
+        }
+        create: {
+          args: Prisma.SplitRecipientCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SplitRecipientPayload>
+        }
+        createMany: {
+          args: Prisma.SplitRecipientCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.SplitRecipientCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SplitRecipientPayload>[]
+        }
+        delete: {
+          args: Prisma.SplitRecipientDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SplitRecipientPayload>
+        }
+        update: {
+          args: Prisma.SplitRecipientUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SplitRecipientPayload>
+        }
+        deleteMany: {
+          args: Prisma.SplitRecipientDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SplitRecipientUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SplitRecipientUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SplitRecipientPayload>[]
+        }
+        upsert: {
+          args: Prisma.SplitRecipientUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SplitRecipientPayload>
+        }
+        aggregate: {
+          args: Prisma.SplitRecipientAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSplitRecipient>
+        }
+        groupBy: {
+          args: Prisma.SplitRecipientGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SplitRecipientGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SplitRecipientCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SplitRecipientCountAggregateOutputType> | number
         }
       }
     }
@@ -607,6 +682,17 @@ export const PaymentLinkScalarFieldEnum = {
 export type PaymentLinkScalarFieldEnum = (typeof PaymentLinkScalarFieldEnum)[keyof typeof PaymentLinkScalarFieldEnum]
 
 
+export const SplitRecipientScalarFieldEnum = {
+  id: 'id',
+  linkId: 'linkId',
+  wallet: 'wallet',
+  basisPoints: 'basisPoints',
+  displayOrder: 'displayOrder'
+} as const
+
+export type SplitRecipientScalarFieldEnum = (typeof SplitRecipientScalarFieldEnum)[keyof typeof SplitRecipientScalarFieldEnum]
+
+
 export const PaymentExecutionScalarFieldEnum = {
   id: 'id',
   clientExecutionId: 'clientExecutionId',
@@ -703,6 +789,20 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
 
 
 /**
+ * Reference to a field of type 'Int'
+ */
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+/**
+ * Reference to a field of type 'Int[]'
+ */
+export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
  * Reference to a field of type 'PaymentExecutionStatus'
  */
 export type EnumPaymentExecutionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PaymentExecutionStatus'>
@@ -717,16 +817,16 @@ export type ListEnumPaymentExecutionStatusFieldRefInput<$PrismaModel> = FieldRef
 
 
 /**
- * Reference to a field of type 'Int'
+ * Reference to a field of type 'Float'
  */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
     
 
 
 /**
- * Reference to a field of type 'Int[]'
+ * Reference to a field of type 'Float[]'
  */
-export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
 
 /**
@@ -825,6 +925,7 @@ export type PrismaClientOptions = ({
 }
 export type GlobalOmitConfig = {
   paymentLink?: Prisma.PaymentLinkOmit
+  splitRecipient?: Prisma.SplitRecipientOmit
   paymentExecution?: Prisma.PaymentExecutionOmit
 }
 
