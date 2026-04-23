@@ -11,8 +11,8 @@ function resolveServerRpcUrl(): string {
 
 export function rpcUrlFromCluster(cluster: SolanaCluster): string {
   return cluster === 'devnet'
-    ? (process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? clusterApiUrl('devnet'))
-    : (process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? clusterApiUrl('mainnet-beta'))
+    ? process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? clusterApiUrl('devnet')
+    : process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? clusterApiUrl('mainnet-beta')
 }
 
 export function createBrowserConnection(): Connection {

@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'motion/react'
-import { Plus, Loader2, X, Trash2, UserPlus, ChevronDown, AlertCircle, Check } from 'lucide-react'
+import { Plus, Loader2, X, Trash2, ChevronDown, AlertCircle, Check } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-context'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
@@ -38,9 +38,6 @@ function limitDecimals(val: string): string {
   return decimal && decimal.length > 2 ? `${whole}.${decimal.slice(0, 2)}` : val
 }
 
-const INPUT =
-  'w-full rounded-xl border border-border/50 bg-muted/30 px-3 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-colors'
-
 /** Framer Motion collapse animation — animates height + opacity on mount/unmount */
 const collapseVariants = {
   initial: { height: 0, opacity: 0 },
@@ -72,6 +69,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
 
   const [mounted, setMounted] = useState(false)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
   }, [])
 

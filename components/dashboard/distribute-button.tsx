@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useWallet, useConnection } from '@solana/wallet-adapter-react'
 import { VersionedTransaction } from '@solana/web3.js'
-import { GitFork, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { GitFork, Loader2, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 
@@ -42,7 +42,6 @@ export function DistributeButton({ onDistributed }: DistributeButtonProps) {
   const [pending, setPending] = useState<PendingDistributions | null>(null)
   const [loadingPending, setLoadingPending] = useState(true)
   const [step, setStep] = useState<Step>('idle')
-  const [errorMsg, setErrorMsg] = useState('')
 
   const loadPending = useCallback(async () => {
     try {
@@ -58,6 +57,7 @@ export function DistributeButton({ onDistributed }: DistributeButtonProps) {
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadPending()
   }, [loadPending])
 
@@ -65,7 +65,6 @@ export function DistributeButton({ onDistributed }: DistributeButtonProps) {
     if (!pending || !signTransaction || !publicKey) return
 
     setStep('building')
-    setErrorMsg('')
 
     try {
       // 1. Build unsigned transaction
@@ -125,7 +124,6 @@ export function DistributeButton({ onDistributed }: DistributeButtonProps) {
       onDistributed()
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Unknown error'
-      setErrorMsg(msg)
       setStep('error')
       toast.error(msg)
     }

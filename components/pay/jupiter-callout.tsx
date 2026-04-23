@@ -52,14 +52,11 @@ export function JupiterCallout() {
 
         <div className='relative rounded-2xl bg-card/95 px-5 py-3.5 backdrop-blur-md shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-white/5'>
           <div className='flex flex-row items-center justify-between gap-4'>
-            
             {/* Left side: Pay with + Animation */}
             <div className='flex flex-col justify-center h-full'>
               <div className='flex items-center gap-1.5 h-[22px]'>
-                <span className='text-[14px] font-medium text-muted-foreground whitespace-nowrap'>
-                  Pay with
-                </span>
-                
+                <span className='text-[14px] font-medium text-muted-foreground whitespace-nowrap'>Pay with</span>
+
                 <div className='relative min-w-[90px] h-full overflow-hidden'>
                   <AnimatePresence mode='popLayout'>
                     <motion.div
@@ -101,7 +98,6 @@ export function JupiterCallout() {
               <JupiterLogo className='h-3.5 w-3.5 opacity-80' />
               <span className='text-[10px] font-semibold tracking-tight text-foreground/70 pr-0.5'>Powered</span>
             </div>
-
           </div>
         </div>
       </div>

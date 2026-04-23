@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/db'
 import { ApiError } from '@/lib/api/errors'
-import { DB_QUERY_FAILED, DB_UNEXPECTED, DB_UPDATE_FAILED } from '@/lib/api/constants'
+import { DB_QUERY_FAILED, DB_UPDATE_FAILED } from '@/lib/api/constants'
 import { apiLogger } from '@/lib/api/logger'
 
 export interface PartnerOwed {
@@ -54,10 +54,7 @@ export async function getPendingDistributions(merchantWallet: string): Promise<P
       const outputRaw = BigInt(exec.outputAmount.toFixed(0))
       for (const recipient of exec.link.recipients) {
         const owed = (outputRaw * BigInt(recipient.basisPoints)) / BigInt(10000)
-        partnerTotals.set(
-          recipient.wallet,
-          (partnerTotals.get(recipient.wallet) ?? BigInt(0)) + owed,
-        )
+        partnerTotals.set(recipient.wallet, (partnerTotals.get(recipient.wallet) ?? BigInt(0)) + owed)
       }
     }
 
@@ -66,7 +63,9 @@ export async function getPendingDistributions(merchantWallet: string): Promise<P
       owedRaw: owedRaw.toString(),
     }))
 
-    const totalOwedRaw = Array.from(partnerTotals.values()).reduce((a, b) => a + b, BigInt(0)).toString()
+    const totalOwedRaw = Array.from(partnerTotals.values())
+      .reduce((a, b) => a + b, BigInt(0))
+      .toString()
 
     return {
       executionIds: executions.map((e) => e.id),

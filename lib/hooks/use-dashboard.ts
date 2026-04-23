@@ -97,6 +97,7 @@ export function useDashboard() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load()
   }, [load])
 
@@ -120,7 +121,7 @@ export function useDashboard() {
 
         const token = payload.settlementToken ?? 'token'
         const amount = Number(payload.outputAmount) / 10 ** getDecimalsByMint(token) || 0
-        const amountLabel = Number.isFinite(amount) ? amount.toFixed(2) : (payload.outputAmount ?? '0')
+        const amountLabel = Number.isFinite(amount) ? amount.toFixed(2) : payload.outputAmount ?? '0'
         toast.success(`Payment received — ${amountLabel} ${getNameByMint(token)}`)
       } catch {
         // Ignore malformed stream payloads and keep listening.

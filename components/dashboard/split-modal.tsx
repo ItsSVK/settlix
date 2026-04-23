@@ -22,6 +22,7 @@ interface SplitModalProps {
 export function SplitModal({ open, onClose, link }: SplitModalProps) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
   }, [])
 

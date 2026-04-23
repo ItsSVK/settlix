@@ -35,15 +35,16 @@ export async function insertPaymentLink(data: {
         active: true,
         title: data.title ?? null,
         description: data.description ?? null,
-        recipients: data.recipients && data.recipients.length > 0
-          ? {
-              create: data.recipients.map((r, i) => ({
-                wallet: r.wallet,
-                basisPoints: r.basisPoints,
-                displayOrder: i,
-              })),
-            }
-          : undefined,
+        recipients:
+          data.recipients && data.recipients.length > 0
+            ? {
+                create: data.recipients.map((r, i) => ({
+                  wallet: r.wallet,
+                  basisPoints: r.basisPoints,
+                  displayOrder: i,
+                })),
+              }
+            : undefined,
       },
       include: { recipients: { orderBy: { displayOrder: 'asc' } } },
     })

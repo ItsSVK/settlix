@@ -18,12 +18,15 @@ import { getSolanaCluster } from '@/lib/env/server'
 const USDC_DECIMALS = 6
 
 const buildTxBody = z.object({
-  partners: z.array(
-    z.object({
-      wallet: z.string().min(32).max(64),
-      owedRaw: z.string().regex(/^\d+$/, 'owedRaw must be a non-negative integer string'),
-    }),
-  ).min(1).max(9),
+  partners: z
+    .array(
+      z.object({
+        wallet: z.string().min(32).max(64),
+        owedRaw: z.string().regex(/^\d+$/, 'owedRaw must be a non-negative integer string'),
+      }),
+    )
+    .min(1)
+    .max(9),
 })
 
 /**
@@ -74,7 +77,7 @@ export async function POST(req: NextRequest) {
       // Create partner ATA if it doesn't exist — no-op if it already does
       instructions.push(
         createAssociatedTokenAccountIdempotentInstruction(
-          merchantPk,   // payer (merchant pays ATA rent if needed)
+          merchantPk, // payer (merchant pays ATA rent if needed)
           partnerATA,
           partnerPk,
           usdcMint,

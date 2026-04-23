@@ -57,11 +57,7 @@ export async function POST(req: NextRequest) {
       // Basis points must sum to exactly 10000
       const totalBps = recipients.reduce((sum, r) => sum + r.basisPoints, 0)
       if (totalBps !== 10000) {
-        throw new ApiError(
-          400,
-          `Recipient basis points must sum to 10000 (got ${totalBps})`,
-          'INVALID_SPLIT_BPS',
-        )
+        throw new ApiError(400, `Recipient basis points must sum to 10000 (got ${totalBps})`, 'INVALID_SPLIT_BPS')
       }
     }
 

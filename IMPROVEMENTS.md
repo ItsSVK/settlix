@@ -1,8 +1,8 @@
-# SettleX — Hackathon Improvement Backlog
+# Settlix — Hackathon Improvement Backlog
 
 A prioritized list of features to build, updated with Colosseum Copilot data (5,400+ hackathon projects analyzed).
 
-**Context:** 200+ projects in your cluster have been built before (Jpay, ChainPay, etc.) — none of them won. The ones that *did* win (Decal $20k, LocalPay $15k, SP3ND $5k) each had a sharp real-world angle. Your Jupiter multi-token swap is a genuine differentiator none of the winners used — but it's currently invisible to judges and buyers. The items below are ordered to fix that first.
+**Context:** 200+ projects in your cluster have been built before (Jpay, ChainPay, etc.) — none of them won. The ones that _did_ win (Decal $20k, LocalPay $15k, SP3ND $5k) each had a sharp real-world angle. Your Jupiter multi-token swap is a genuine differentiator none of the winners used — but it's currently invisible to judges and buyers. The items below are ordered to fix that first.
 
 ---
 
@@ -44,6 +44,7 @@ This is your visible moat. It's working.
 **Status: Done.**
 
 `SuccessOverlay` now renders a full receipt card for the web-wallet flow:
+
 - "You paid: X TOKEN" (raw integer formatted via `formatInput`)
 - "Merchant received: Y USDC"
 - "Rate: 1 TOKEN = Z USDC" with Jupiter logo (hidden for direct USDC transfers)
@@ -109,6 +110,7 @@ No `PROTOCOL_FEE_BPS` constant exists. Jupiter's `buildOrderUrl` in `lib/solana/
 **Status: Done.**
 
 All three missing pieces are now in `link-row.tsx`:
+
 - `SOLSCAN_CLUSTER` constant added — `?cluster=devnet` appended on devnet, empty string on mainnet
 - Wallet addresses are now `<a href="https://solscan.io/account/{wallet}{SOLSCAN_CLUSTER}">` links
 - Tx signatures show as `Ab3x…9Qr ↗` (truncated text + ExternalLink icon) linking to Solscan with cluster suffix
@@ -128,21 +130,21 @@ No `webhookUrl` field on `PaymentLink` schema. No webhook firing in the submit-t
 - Add `webhookUrl String?` and `webhookSecret String?` to `PaymentLink` + migrate
 - In `CreateLinkDialog`, add optional "Webhook URL" input
 - After `publishDashboardPaymentPaid` fires in `payment-submit.service.ts`, fire a background `fetch` POST to the webhook URL with `{ linkId, txSignature, inputToken, inputAmount, outputAmount, status, timestamp }`
-- Sign the payload with HMAC-SHA256 using `webhookSecret`, send as `X-SettleX-Signature` header
+- Sign the payload with HMAC-SHA256 using `webhookSecret`, send as `X-Settlix-Signature` header
 - Show last delivery status in the dashboard
 
 ---
 
 ## Build Order
 
-| #   | Feature                            | Status       | Effort  | Demo Impact | Next action |
-| --- | ---------------------------------- | ------------ | ------- | ----------- | ----------- |
-| ✅  | Real-time notifications (SSE)      | Done         | —       | Highest     | —           |
-| ✅  | QR code (dashboard + Phantom)      | Done         | —       | High        | —           |
-| ✅  | "Pay with any token" UI            | Done         | —       | Highest     | —           |
-| ✅  | Swap receipt on confirmation       | Done         | —       | High        | —           |
-| ✅  | Explorer deep links                | Done         | —       | Medium      | —           |
-| ❌  | Pay page customization             | Not started  | Low     | High        | Schema migration + CreateLinkDialog fields |
-| ❌  | Open amount links                  | Not started  | Medium  | High        | Schema migration + pay page input |
-| ❌  | Protocol fee                       | Not started  | Low     | Medium      | constants.ts + jupiter.ts platformFeeBps |
-| ❌  | Webhook notifications              | Not started  | High    | Medium      | Schema migration + submit-tx hook |
+| #   | Feature                       | Status      | Effort | Demo Impact | Next action                                |
+| --- | ----------------------------- | ----------- | ------ | ----------- | ------------------------------------------ |
+| ✅  | Real-time notifications (SSE) | Done        | —      | Highest     | —                                          |
+| ✅  | QR code (dashboard + Phantom) | Done        | —      | High        | —                                          |
+| ✅  | "Pay with any token" UI       | Done        | —      | Highest     | —                                          |
+| ✅  | Swap receipt on confirmation  | Done        | —      | High        | —                                          |
+| ✅  | Explorer deep links           | Done        | —      | Medium      | —                                          |
+| ❌  | Pay page customization        | Not started | Low    | High        | Schema migration + CreateLinkDialog fields |
+| ❌  | Open amount links             | Not started | Medium | High        | Schema migration + pay page input          |
+| ❌  | Protocol fee                  | Not started | Low    | Medium      | constants.ts + jupiter.ts platformFeeBps   |
+| ❌  | Webhook notifications         | Not started | High   | Medium      | Schema migration + submit-tx hook          |

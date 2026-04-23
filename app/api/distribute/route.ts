@@ -6,7 +6,6 @@ import { requireAuth } from '@/lib/auth/require-auth'
 import { VALIDATION } from '@/lib/api/constants'
 import { getPendingDistributions, markAsDistributed } from '@/lib/services/distribute.service'
 import { createServerConnection } from '@/lib/solana/connection'
-import { RPC_COMMITMENT } from '@/lib/solana/constants'
 
 /** GET /api/distribute — returns pending partner amounts for the authenticated merchant */
 export async function GET(req: NextRequest) {
@@ -35,14 +34,20 @@ export async function POST(req: NextRequest) {
     const json = await readJsonBody(req)
     const parsed = confirmBody.safeParse(json)
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Validation failed', code: VALIDATION, issues: parsed.error.issues }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Validation failed', code: VALIDATION, issues: parsed.error.issues },
+        { status: 400 },
+      )
     }
 
     // Verify the distribution tx actually landed on-chain
     const connection = createServerConnection()
     const tx = await connection.getSignatureStatus(parsed.data.txSignature, { searchTransactionHistory: true })
     if (!tx?.value || tx.value.err) {
-      return NextResponse.json({ error: 'Transaction not confirmed on-chain', code: 'TX_NOT_CONFIRMED' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Transaction not confirmed on-chain', code: 'TX_NOT_CONFIRMED' },
+        { status: 400 },
+      )
     }
 
     const updated = await markAsDistributed(parsed.data.executionIds, wallet)
