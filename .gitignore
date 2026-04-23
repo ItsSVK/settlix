@@ -52,3 +52,4 @@ settlix.postman_collection.json
 target
 **/*.rs.bk
 test-ledger
+.superstack
