@@ -9,7 +9,7 @@ crate-type = ["cdylib", "lib"]
 name = "settlix"
 
 [features]
-default = []
+default = ["no-log-ix-name"]
 cpi = ["no-entrypoint"]
 no-entrypoint = []
 no-idl = []
@@ -22,7 +22,7 @@ custom-panic = []
 
 [dependencies]
 anchor-lang = "0.32.1"
-anchor-spl = { version = "0.32.1", features = ["token", "associated_token"] }
+anchor-spl = { version = "0.32.1", default-features = false, features = ["token", "associated_token", "token_2022"] }
 
 
 [lints.rust]

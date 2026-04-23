@@ -8,7 +8,7 @@ pub use errors::SettlixError;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("8Ke6bFDR9aYGvJyKEayQF6cEoMhZ5Wu2RKCUVydCW5oY");
+declare_id!("DNEKZnPsm6T8thqtM9ZFrsLZr7tMGcVzc9fMrXNFcreh");
 
 pub const MAX_RECIPIENTS: usize = 10;
 pub const ANCHOR_DISCRIMINATOR: usize = 8;

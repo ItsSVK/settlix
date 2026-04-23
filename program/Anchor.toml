@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-settlix = "8Ke6bFDR9aYGvJyKEayQF6cEoMhZ5Wu2RKCUVydCW5oY"
+settlix = "DNEKZnPsm6T8thqtM9ZFrsLZr7tMGcVzc9fMrXNFcreh"
 
 [registry]
 url = "https://api.apr.dev"
