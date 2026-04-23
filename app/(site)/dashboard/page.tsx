@@ -6,6 +6,7 @@ import { WalletAvatar } from '@/components/shared/wallet-avatar'
 import { StatsBar } from '@/components/dashboard/stats-bar'
 import { LinksTable } from '@/components/dashboard/links-table'
 import { CreateLinkDialog } from '@/components/dashboard/create-link-dialog'
+import { DistributeButton } from '@/components/dashboard/distribute-button'
 import { useDashboard } from '@/lib/hooks/use-dashboard'
 import { useAuth } from '@/components/auth/auth-context'
 import { Switch } from '@/components/ui/switch'
@@ -49,6 +50,7 @@ export default function DashboardPage() {
 
         {/* Links */}
         <motion.div initial={false} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 0.2 }}>
+          <DistributeButton onDistributed={refresh} />
           <div className='mb-4 flex items-center justify-between'>
             <h2 className='text-sm font-semibold text-muted-foreground uppercase tracking-wider'>
               Payment Links {!isLoading && `(${filteredLinks.length})`}

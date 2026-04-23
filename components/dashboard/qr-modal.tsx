@@ -1,11 +1,11 @@
 'use client'
 
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import { X, Download, Copy, Check, QrCode } from 'lucide-react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { Button } from '@/components/ui/button'
-import { useState } from 'react'
 import { copyText } from '@/lib/utils'
 
 interface QRModalProps {
@@ -20,6 +20,11 @@ interface QRModalProps {
 export function QRModal({ open, onClose, payUrl, label }: QRModalProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const [copied, setCopied] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Walk up from the QRCodeCanvas wrapper to find the <canvas>
   const qrWrapperRef = useCallback((node: HTMLDivElement | null) => {
@@ -37,7 +42,7 @@ export function QRModal({ open, onClose, payUrl, label }: QRModalProps) {
     link.click()
   }
 
-  return (
+  const content = (
     <AnimatePresence>
       {open && (
         <>
@@ -48,7 +53,7 @@ export function QRModal({ open, onClose, payUrl, label }: QRModalProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className='fixed inset-0 z-50 bg-black/60 backdrop-blur-sm'
+            className='fixed inset-0 z-100 bg-black/60 backdrop-blur-sm'
             onClick={onClose}
           />
 
@@ -59,9 +64,9 @@ export function QRModal({ open, onClose, payUrl, label }: QRModalProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: 'spring', stiffness: 340, damping: 28 }}
-            className='fixed left-1/2 top-1/2 z-50 w-[min(340px,90vw)] -translate-x-1/2 -translate-y-1/2'
+            className='fixed left-1/2 top-1/2 z-100 w-[min(340px,90vw)] -translate-x-1/2 -translate-y-1/2'
           >
-            <div className='relative rounded-2xl border border-border/50 bg-card/95 p-6 shadow-[0_32px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl'>
+            <div className='relative rounded-3xl border border-border/50 bg-card/95 p-6 shadow-[0_32px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl'>
               {/* Close */}
               <Button
                 onClick={onClose}
@@ -79,7 +84,7 @@ export function QRModal({ open, onClose, payUrl, label }: QRModalProps) {
                 </div>
                 <div>
                   <p className='text-sm font-semibold text-foreground'>Payment QR</p>
-                  <p className='text-xs text-muted-foreground'>{label}</p>
+                  <p className='text-[11px] font-medium text-muted-foreground'>{label}</p>
                 </div>
               </div>
 
@@ -103,7 +108,7 @@ export function QRModal({ open, onClose, payUrl, label }: QRModalProps) {
               </div>
 
               {/* URL pill */}
-              <div className='mt-4 rounded-lg border border-border/30 bg-muted/30 px-3 py-2'>
+              <div className='mt-4 rounded-xl border border-border/30 bg-muted/30 px-3 py-2 text-center'>
                 <p className='truncate font-mono text-[10px] text-muted-foreground'>{payUrl}</p>
               </div>
 
@@ -112,22 +117,26 @@ export function QRModal({ open, onClose, payUrl, label }: QRModalProps) {
                 <Button
                   variant='outline'
                   size='sm'
-                  className='flex-1 gap-1.5 border-border/40 text-xs'
+                  className='flex-1 gap-1.5 rounded-xl border-border/40 text-xs shadow-sm bg-background/50 hover:bg-muted/50 transition-all font-medium'
                   onClick={() => copyText(payUrl, setCopied)}
                 >
                   {copied ? <Check className='h-3.5 w-3.5 text-green-500' /> : <Copy className='h-3.5 w-3.5' />}
                   {copied ? 'Copied!' : 'Copy URL'}
                 </Button>
 
-                <Button size='sm' className='flex-1 gap-1.5 text-xs' onClick={handleDownload}>
+                <Button
+                  size='sm'
+                  className='flex-1 gap-1.5 rounded-xl text-xs shadow-sm transition-all font-medium py-3.5'
+                  onClick={handleDownload}
+                >
                   <Download className='h-3.5 w-3.5' />
                   Download PNG
                 </Button>
               </div>
 
               {/* Hint */}
-              <p className='mt-3 text-center text-[10px] text-muted-foreground'>
-                Scan with any Solana wallet to pay instantly
+              <p className='mt-3 text-center text-[9px] font-medium uppercase tracking-wider text-muted-foreground'>
+                Scan to continue payment
               </p>
             </div>
           </motion.div>
@@ -135,4 +144,7 @@ export function QRModal({ open, onClose, payUrl, label }: QRModalProps) {
       )}
     </AnimatePresence>
   )
+
+  if (!mounted) return null
+  return createPortal(content, document.body)
 }

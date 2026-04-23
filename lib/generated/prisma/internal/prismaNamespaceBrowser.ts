@@ -108,6 +108,7 @@ export const PaymentExecutionScalarFieldEnum = {
   outputAmount: 'outputAmount',
   txSignature: 'txSignature',
   status: 'status',
+  distributedAt: 'distributedAt',
   createdAt: 'createdAt'
 } as const
 

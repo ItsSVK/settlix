@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'motion/react'
-import { Plus, Loader2, X, Trash2, UserPlus, ChevronDown, AlertCircle } from 'lucide-react'
+import { Plus, Loader2, X, Trash2, UserPlus, ChevronDown, AlertCircle, Check } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-context'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
@@ -11,6 +11,7 @@ import { copyText } from '@/lib/utils'
 import { getDefaultUsdcMint } from '@/lib/solana/constants'
 
 interface Partner {
+  id: string
   wallet: string
   percent: string // human-readable, e.g. "30" or "15.5"
 }
@@ -62,7 +63,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
 
   // Split state
   const [splitEnabled, setSplitEnabled] = useState(false)
-  const [partners, setPartners] = useState<Partner[]>([{ wallet: '', percent: '' }])
+  const [partners, setPartners] = useState<Partner[]>([{ id: 'init', wallet: '', percent: '' }])
 
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -80,7 +81,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
     setDescription('')
     setDetailsOpen(false)
     setSplitEnabled(false)
-    setPartners([{ wallet: '', percent: '' }])
+    setPartners([{ id: Math.random().toString(36).substring(7), wallet: '', percent: '' }])
     setError('')
     setResult(null)
     setOpen(false)
@@ -113,7 +114,8 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
   }, [splitEnabled, partners, partnerBpTotal])
 
   const addPartner = () => {
-    if (partners.length < 9) setPartners((p) => [...p, { wallet: '', percent: '' }])
+    if (partners.length < 9)
+      setPartners((p) => [...p, { id: Math.random().toString(36).substring(7), wallet: '', percent: '' }])
     setError('')
   }
 
@@ -213,298 +215,332 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
     <>
       <Button
         onClick={() => setOpen(true)}
-        className='flex items-center rounded-xl bg-primary sm:px-4 sm:py-2 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90 active:scale-[0.98]'
+        className='flex items-center rounded-xl bg-primary px-3 py-2 sm:px-4 sm:py-2 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90 active:scale-[0.98] shadow-sm'
       >
         <Plus className='h-4 w-4' />
         <span className='hidden sm:inline-block'>Create Link</span>
       </Button>
 
-      {open &&
-        mounted &&
+      {mounted &&
         createPortal(
-          <div className='fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4'>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-              className='w-full max-w-md rounded-2xl border border-border/50 bg-card p-6 shadow-2xl max-h-[90vh] overflow-y-auto'
-            >
-              {/* Header */}
-              <div className='mb-5 flex items-center justify-between'>
-                <h2 className='text-base font-bold text-foreground'>New Payment Link</h2>
-                <button
-                  onClick={reset}
-                  className='rounded-lg p-1 text-muted-foreground hover:bg-muted transition-colors'
-                >
-                  <X className='h-4 w-4' />
-                </button>
-              </div>
-
-              {result ? (
-                /* ── Success state ── */
-                <div className='space-y-4'>
-                  <p className='text-sm text-muted-foreground'>Your link is ready to share:</p>
-                  <div className='flex items-center gap-2 rounded-xl border border-border/50 bg-muted/30 p-3'>
-                    <span className='flex-1 truncate font-mono text-xs text-foreground'>{payUrl}</span>
-                    <Button
-                      onClick={() => copyText(payUrl, setCopied)}
-                      title='Copy pay URL'
-                      variant='ghost'
-                      size='xs'
-                      className={`shrink-0 rounded-lg border border-border px-2 py-1 text-xs text-muted-foreground hover:bg-muted ${
-                        copied ? 'bg-muted' : ''
-                      }`}
-                    >
-                      {copied ? 'Copied' : 'Copy'}
-                    </Button>
-                  </div>
-                  <button
-                    onClick={reset}
-                    className='w-full rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity'
+          <AnimatePresence>
+            {open && (
+              <div className='fixed inset-0 z-100 overflow-y-auto'>
+                <div className='flex min-h-full items-center justify-center p-4'>
+                  {/* Backdrop */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className='fixed inset-0 bg-background/80 backdrop-blur-md transition-opacity'
+                  />
+                  {/* Modal */}
+                  <motion.div
+                    layout
+                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                    className='relative w-full max-w-lg rounded-3xl border border-border/40 bg-card/60 backdrop-blur-xl p-6 shadow-2xl outline-none ring-1 ring-white/5'
                   >
-                    Done
-                  </button>
-                </div>
-              ) : (
-                /* ── Form ── */
-                <form onSubmit={submit} className='space-y-3' noValidate>
-                  {/* Settlement token — read-only label */}
-                  <div className='flex items-center gap-2 rounded-xl border border-border/40 bg-muted/30 px-3 py-2.5'>
-                    <span className='text-xs text-muted-foreground'>Settled in</span>
-                    <span className='text-sm font-semibold text-foreground'>USDC</span>
-                    <span className='font-mono text-[10px] text-muted-foreground/60'>EPjFWdd5…TDt1v</span>
-                  </div>
-
-                  {/* Amount */}
-                  <div>
-                    <label className='mb-1.5 block text-xs font-medium text-muted-foreground'>Amount (USDC)</label>
-                    <input
-                      type='number'
-                      step='0.01'
-                      min='0.01'
-                      required
-                      value={amount}
-                      onChange={(e) => {
-                        setAmount(limitDecimals(e.target.value))
-                        setError('')
-                      }}
-                      placeholder='10.00'
-                      className={INPUT}
-                    />
-                  </div>
-
-                  {/* ── Details (collapsible optional) ── */}
-                  <div className='rounded-xl border border-border/50 overflow-hidden'>
-                    <button
-                      type='button'
-                      onClick={() => setDetailsOpen((v) => !v)}
-                      className='flex w-full items-center justify-between px-3 py-2.5 text-left hover:bg-muted/30 transition-colors'
-                    >
-                      <div>
-                        <p className='text-xs font-semibold text-foreground'>Details</p>
-                        <p className='text-[10px] text-muted-foreground mt-0.5'>Add a title or note to this link</p>
-                      </div>
-                      <motion.span
-                        animate={{ rotate: detailsOpen ? 180 : 0 }}
-                        transition={collapseTransition}
-                        className='text-muted-foreground/50 shrink-0 ml-3'
+                    {/* Header */}
+                    <div className='mb-6 flex items-center justify-between'>
+                      <h2 className='text-lg font-semibold text-foreground tracking-tight'>New Payment</h2>
+                      <Button
+                        onClick={reset}
+                        className='rounded-full p-2 text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all'
+                        variant='ghost'
                       >
-                        <ChevronDown className='h-3.5 w-3.5' />
-                      </motion.span>
-                    </button>
-                    <AnimatePresence initial={false}>
-                      {detailsOpen && (
-                        <motion.div
-                          key='details-body'
-                          variants={collapseVariants}
-                          initial='initial'
-                          animate='animate'
-                          exit='exit'
-                          transition={collapseTransition}
-                          className='overflow-hidden'
-                        >
-                          <div className='border-t border-border/40 px-3 pb-3 pt-3 space-y-3'>
-                            <div>
-                              <label className='mb-1.5 block text-[10px] font-semibold uppercase tracking-widest text-muted-foreground'>
-                                Title
-                              </label>
-                              <input
-                                type='text'
-                                maxLength={80}
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                placeholder='e.g. Design invoice #12'
-                                className={INPUT}
-                              />
-                            </div>
-                            <div>
-                              <label className='mb-1.5 block text-[10px] font-semibold uppercase tracking-widest text-muted-foreground'>
-                                Note
-                              </label>
-                              <textarea
-                                maxLength={300}
-                                rows={2}
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                placeholder='What is this payment for?'
-                                className={`${INPUT} resize-none`}
-                              />
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
+                        <X className='h-4 w-4' />
+                      </Button>
+                    </div>
 
-                  {/* ── Revenue Split ── */}
-                  <div className='rounded-xl border border-border/50 overflow-hidden'>
-                    {/* Toggle header */}
-                    <div className='flex items-center justify-between px-3 py-2.5'>
-                      <div>
-                        <p className='text-xs font-semibold text-foreground'>Revenue Split</p>
-                        <p className='text-[10px] text-muted-foreground mt-0.5'>
-                          Share payouts with partners automatically
-                        </p>
+                    {result ? (
+                      /* ── Success state ── */
+                      <div className='space-y-6'>
+                        <div className='flex flex-col items-center justify-center py-6 border border-border/30 rounded-2xl bg-muted/10'>
+                          <div className='h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center text-green-500 mb-3'>
+                            <Check className='h-6 w-6' />
+                          </div>
+                          <p className='text-sm font-medium text-foreground tracking-tight'>Your link is ready</p>
+                          <p className='text-xs text-muted-foreground mt-1'>Share this URL with your customer</p>
+                        </div>
+
+                        <div className='flex items-center gap-2 rounded-2xl border border-border/50 bg-background/50 p-3 ring-1 ring-border/20'>
+                          <span className='flex-1 truncate font-mono text-sm text-muted-foreground ml-2'>{payUrl}</span>
+                          <Button
+                            onClick={() => copyText(payUrl, setCopied)}
+                            title='Copy pay URL'
+                            variant='secondary'
+                            size='sm'
+                            className={`shrink-0 rounded-xl px-4 font-medium transition-all ${
+                              copied ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20' : ''
+                            }`}
+                          >
+                            {copied ? 'Copied!' : 'Copy'}
+                          </Button>
+                        </div>
+                        <button
+                          onClick={reset}
+                          className='w-full rounded-2xl bg-primary py-3.5 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-all focus:ring-2 focus:ring-primary/20 outline-none'
+                        >
+                          Done
+                        </button>
                       </div>
-                      <Switch
-                        id='split-toggle'
-                        checked={splitEnabled}
-                        onCheckedChange={(checked) => {
-                          setSplitEnabled(checked)
-                          setError('')
-                        }}
-                        className='cursor-pointer [&>span]:rounded-full'
-                      />
-                    </div>
-
-                    {/* Collapsible split body */}
-                    <AnimatePresence initial={false}>
-                      {splitEnabled && (
-                        <motion.div
-                          key='split-body'
-                          variants={collapseVariants}
-                          initial='initial'
-                          animate='animate'
-                          exit='exit'
-                          transition={collapseTransition}
-                          className='overflow-hidden'
-                        >
-                          <div className='border-t border-border/40 px-3 pb-3 pt-3 space-y-3'>
-                            {/* Your share (read-only) */}
-                            <div>
-                              <p className='mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground'>
-                                Your share
-                              </p>
-                              <div className='flex items-center justify-between rounded-lg border border-border/40 bg-muted/20 px-3 py-2'>
-                                <span className='font-mono text-xs text-muted-foreground truncate max-w-[60%]'>
-                                  {wallet ? shorten(wallet, 8, 6) : '—'}
-                                </span>
-                                <span
-                                  className={`text-sm font-bold tabular-nums ${
-                                    merchantBp < 0 ? 'text-destructive' : 'text-foreground'
-                                  }`}
-                                >
-                                  {merchantBp < 0 ? '—' : `${merchantPercent}%`}
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* Partner rows */}
-                            {partners.length > 0 && (
-                              <div>
-                                <p className='mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground'>
-                                  Partners
-                                </p>
-                                <div className='space-y-2'>
-                                  {partners.map((p, i) => (
-                                    <div
-                                      key={i}
-                                      className='rounded-xl border border-border/40 bg-muted/10 p-2.5 space-y-2'
-                                    >
-                                      <input
-                                        type='text'
-                                        value={p.wallet}
-                                        onChange={(e) => updatePartner(i, 'wallet', e.target.value)}
-                                        placeholder='Wallet address'
-                                        className='w-full rounded-lg border border-border/40 bg-background/60 px-2.5 py-2 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors'
-                                      />
-                                      <div className='flex items-center gap-2'>
-                                        <div className='relative flex-1'>
-                                          <input
-                                            type='number'
-                                            min='0.01'
-                                            max='99.99'
-                                            step='0.01'
-                                            value={p.percent}
-                                            onChange={(e) => updatePartner(i, 'percent', limitDecimals(e.target.value))}
-                                            placeholder='0.00'
-                                            className='w-full rounded-lg border border-border/40 bg-background/60 py-2 pl-2.5 pr-7 text-xs text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors'
-                                          />
-                                          <span className='absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground pointer-events-none'>
-                                            %
-                                          </span>
-                                        </div>
-                                        <button
-                                          type='button'
-                                          onClick={() => removePartner(i)}
-                                          className='shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors'
-                                        >
-                                          <Trash2 className='h-3.5 w-3.5' />
-                                        </button>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {partners.length < 9 && (
-                              <button
-                                type='button'
-                                onClick={addPartner}
-                                className='flex items-center gap-1.5 text-xs text-primary hover:opacity-75 transition-opacity'
-                              >
-                                <UserPlus className='h-3.5 w-3.5' />
-                                Add partner
-                              </button>
-                            )}
-
-                            {/* Allocation summary */}
-                            <div className='flex items-center justify-between pt-1 border-t border-border/30'>
-                              <span className='text-[10px] text-muted-foreground'>Total allocated</span>
-                              <span
-                                className={`text-[11px] font-semibold tabular-nums ${
-                                  allocationOk ? 'text-green-500' : 'text-amber-500'
-                                }`}
-                              >
-                                {((partnerBpTotal + Math.max(merchantBp, 0)) / 100).toFixed(2)}%
-                              </span>
-                            </div>
+                    ) : (
+                      /* ── Form ── */
+                      <form onSubmit={submit} className='space-y-5' noValidate>
+                        {/* Hero Amount Input */}
+                        <div className='flex flex-col items-center justify-center py-6 px-4 rounded-3xl bg-muted/90 border border-border/30 transition-all focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/10'>
+                          <span className='text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2'>
+                            Amount
+                          </span>
+                          <div className='flex items-center justify-center gap-2'>
+                            <span className='text-3xl font-medium text-muted-foreground/50'>$</span>
+                            <input
+                              type='number'
+                              step='0.01'
+                              min='0.01'
+                              required
+                              value={amount}
+                              onChange={(e) => {
+                                setAmount(limitDecimals(e.target.value))
+                                setError('')
+                              }}
+                              placeholder='0.00'
+                              className='w-[140px] bg-transparent text-5xl font-semibold text-foreground tracking-tighter outline-none placeholder:text-muted-foreground/30 text-center shrink-0'
+                              style={{ WebkitAppearance: 'none', margin: 0, MozAppearance: 'textfield' }}
+                            />
                           </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
+                          <div className='mt-4 flex items-center gap-1.5 rounded-full bg-background dark:bg-background/50 px-3 py-1 border border-border/40'>
+                            <div className='h-3 w-3 rounded-full bg-blue-500/80' />
+                            <span className='text-[11px] font-medium text-foreground'>Settled in USDC</span>
+                          </div>
+                        </div>
 
-                  {error && (
-                    <div className='flex items-start gap-2 rounded-lg bg-destructive/10 p-2.5 text-xs text-destructive'>
-                      <AlertCircle className='h-4 w-4 shrink-0 mt-0.5' />
-                      <p>{error}</p>
-                    </div>
-                  )}
+                        {/* Details Card */}
+                        <div className='rounded-2xl border border-border/40 bg-background/30 overflow-hidden transition-all hover:bg-background/40'>
+                          <button
+                            type='button'
+                            onClick={() => setDetailsOpen((v) => !v)}
+                            className='flex w-full items-center justify-between px-4 py-3.5 text-left outline-none focus-visible:bg-muted/50'
+                          >
+                            <div>
+                              <p className='text-sm font-medium text-foreground'>Details</p>
+                              <p className='text-xs text-muted-foreground mt-0.5'>Add an optional title and note</p>
+                            </div>
+                            <motion.div
+                              animate={{ rotate: detailsOpen ? 180 : 0 }}
+                              transition={collapseTransition}
+                              className='flex h-8 w-8 items-center justify-center rounded-full bg-muted/50 text-muted-foreground'
+                            >
+                              <ChevronDown className='h-4 w-4' />
+                            </motion.div>
+                          </button>
+                          <AnimatePresence initial={false}>
+                            {detailsOpen && (
+                              <motion.div
+                                key='details-body'
+                                variants={collapseVariants}
+                                initial='initial'
+                                animate='animate'
+                                exit='exit'
+                                transition={collapseTransition}
+                                className='overflow-hidden'
+                              >
+                                <div className='border-t border-border/40 px-4 pb-4 pt-3 space-y-4'>
+                                  <div>
+                                    <input
+                                      type='text'
+                                      maxLength={80}
+                                      value={title}
+                                      onChange={(e) => setTitle(e.target.value)}
+                                      placeholder='Title (e.g. Design invoice #12)'
+                                      className='w-full rounded-xl border-none bg-muted/40 px-3.5 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30 transition-all font-medium pt-3'
+                                    />
+                                  </div>
+                                  <div>
+                                    <textarea
+                                      maxLength={300}
+                                      rows={2}
+                                      value={description}
+                                      onChange={(e) => setDescription(e.target.value)}
+                                      placeholder='What is this payment for?'
+                                      className='w-full rounded-xl border-none bg-muted/40 px-3.5 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30 transition-all resize-none'
+                                    />
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
 
-                  <button
-                    type='submit'
-                    disabled={isLoading || !amount}
-                    className='flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none'
-                  >
-                    {isLoading && <Loader2 className='h-4 w-4 animate-spin' />}
-                    {isLoading ? 'Creating…' : 'Create Link'}
-                  </button>
-                </form>
-              )}
-            </motion.div>
-          </div>,
+                        {/* Revenue Split Card */}
+                        <div className='rounded-2xl border border-border/40 bg-background/30 overflow-hidden transition-all hover:bg-background/40'>
+                          <div className='flex items-center justify-between px-4 py-3.5'>
+                            <div>
+                              <p className='text-sm font-medium text-foreground'>Revenue Split</p>
+                              <p className='text-xs text-muted-foreground mt-0.5'>
+                                Automatically route payouts to partners
+                              </p>
+                            </div>
+                            <Switch
+                              id='split-toggle'
+                              checked={splitEnabled}
+                              onCheckedChange={(checked) => {
+                                setSplitEnabled(checked)
+                                setError('')
+                              }}
+                              className='cursor-pointer [&>span]:rounded-full'
+                            />
+                          </div>
+
+                          <AnimatePresence initial={false}>
+                            {splitEnabled && (
+                              <motion.div
+                                key='split-body'
+                                variants={collapseVariants}
+                                initial='initial'
+                                animate='animate'
+                                exit='exit'
+                                transition={collapseTransition}
+                                className='overflow-hidden'
+                              >
+                                <div className='border-t border-border/40 px-4 pb-4 pt-4 space-y-4'>
+                                  {/* Distribution visualization */}
+                                  <div className='flex items-center gap-3 w-full bg-muted/20 p-3 rounded-xl border border-border/30'>
+                                    <div className='flex flex-col gap-1 items-start flex-1'>
+                                      <span className='text-[10px] uppercase font-bold tracking-wider text-muted-foreground'>
+                                        Your share
+                                      </span>
+                                      <span
+                                        className={`text-sm font-bold ${
+                                          merchantBp < 0 ? 'text-destructive' : 'text-foreground'
+                                        }`}
+                                      >
+                                        {merchantBp < 0 ? '—' : `${merchantPercent}%`}
+                                      </span>
+                                    </div>
+                                    <div className='h-8 w-px bg-border/50 shrink-0' />
+                                    <div className='flex flex-col gap-1 items-end flex-1'>
+                                      <span className='text-[10px] uppercase font-bold tracking-wider text-muted-foreground'>
+                                        Partners
+                                      </span>
+                                      <span
+                                        className={`text-sm font-bold ${
+                                          allocationOk ? 'text-green-500' : 'text-amber-500'
+                                        }`}
+                                      >
+                                        {(partnerBpTotal / 100).toFixed(2)}%
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Partners list */}
+                                  <div className='flex flex-col'>
+                                    <AnimatePresence initial={false}>
+                                      {partners.map((p, i) => (
+                                        <motion.div
+                                          key={p.id}
+                                          layout
+                                          initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                                          animate={{ opacity: 1, height: 'auto', marginTop: 8 }}
+                                          exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                                          transition={{
+                                            opacity: { duration: 0.2 },
+                                            height: { duration: 0.3, ease: 'easeInOut' },
+                                            marginTop: { duration: 0.3, ease: 'easeInOut' },
+                                          }}
+                                          className='flex flex-col gap-2 rounded-xl group relative overflow-hidden'
+                                        >
+                                          <div className='flex items-center gap-2'>
+                                            <div className='relative flex-1'>
+                                              <input
+                                                type='text'
+                                                value={p.wallet}
+                                                onChange={(e) => updatePartner(i, 'wallet', e.target.value)}
+                                                placeholder='Wallet address'
+                                                className='w-full rounded-xl border border-border/30 bg-muted/30 px-3 py-2.5 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-border/60 focus:bg-muted/50 transition-all'
+                                              />
+                                            </div>
+                                            <div className='relative w-[80px] shrink-0'>
+                                              <input
+                                                type='number'
+                                                min='0.01'
+                                                max='99.99'
+                                                step='0.01'
+                                                value={p.percent}
+                                                onChange={(e) =>
+                                                  updatePartner(i, 'percent', limitDecimals(e.target.value))
+                                                }
+                                                placeholder='0.0'
+                                                className='w-full rounded-xl border border-border/30 bg-muted/30 py-2.5 pl-3 pr-6 text-xs font-semibold text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-border/60 focus:bg-muted/50 transition-all'
+                                              />
+                                              <span className='absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground pointer-events-none'>
+                                                %
+                                              </span>
+                                            </div>
+                                            <Button
+                                              type='button'
+                                              onClick={() => removePartner(i)}
+                                              className='flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-destructive/5 text-destructive/70 hover:bg-destructive/10 hover:text-destructive transition-all'
+                                            >
+                                              <Trash2 className='h-4 w-4' />
+                                            </Button>
+                                          </div>
+                                        </motion.div>
+                                      ))}
+                                    </AnimatePresence>
+                                  </div>
+
+                                  {partners.length < 9 && (
+                                    <Button
+                                      type='button'
+                                      onClick={addPartner}
+                                      className='flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border/60 bg-gray-300 hover:bg-gray-300 py-3 text-xs font-medium text-foreground transition-all dark:bg-gray-700 dark:text-gray-300'
+                                    >
+                                      <Plus className='h-3.5 w-3.5' />
+                                      Add Partner
+                                    </Button>
+                                  )}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+
+                        {error && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className='flex items-start gap-2 rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-xs text-destructive'
+                          >
+                            <AlertCircle className='h-4 w-4 shrink-0 mt-0.5' />
+                            <p className='font-medium'>{error}</p>
+                          </motion.div>
+                        )}
+
+                        <Button
+                          type='submit'
+                          disabled={isLoading || !amount || parseFloat(amount) <= 0}
+                          className='relative mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-sm font-semibold text-background dark:text-foreground transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none'
+                        >
+                          {isLoading ? (
+                            <>
+                              <Loader2 className='h-5 w-5 animate-spin' />
+                              Creating...
+                            </>
+                          ) : (
+                            'Create Payment Link'
+                          )}
+                        </Button>
+                      </form>
+                    )}
+                  </motion.div>
+                </div>
+              </div>
+            )}
+          </AnimatePresence>,
           document.body,
         )}
     </>

@@ -9,6 +9,8 @@ interface DashboardLink {
   merchantWallet: string
   token: string
   amount: string
+  title?: string
+  description?: string
   type: string
   active: boolean
   createdAt: string
