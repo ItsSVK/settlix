@@ -14,6 +14,7 @@ interface DashboardLink {
   type: string
   active: boolean
   webhookUrl?: string | null
+  hasWebhookSecret?: boolean
   createdAt: string
   recipients: { wallet: string; basisPoints: number }[]
   stats: {

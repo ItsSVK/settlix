@@ -17,31 +17,42 @@ export const createLinkBody = z.object({
   amount: z.union([z.number().positive(), z.string()]),
   title: z.string().max(80).optional(),
   description: z.string().max(300).optional(),
-  webhookUrl: z.preprocess(
-    emptyStringToUndefined,
-    z
-      .string()
-      .trim()
-      .url('Webhook URL must be a valid URL')
-      .max(2048)
-      .refine((url) => ['http:', 'https:'].includes(new URL(url).protocol), {
-        message: 'Webhook URL must use http or https',
-      })
-      .optional(),
-  ),
-  webhookSecret: z.preprocess(
-    emptyStringToUndefined,
-    z.string().trim().max(200, 'Webhook secret must be 200 characters or fewer').optional(),
-  ),
   /**
    * Optional split config — up to 10 recipients (including the merchant).
    * basisPoints across all entries must sum to exactly 10000.
    * If omitted the merchant wallet receives 100% of every payment.
    */
   recipients: z.array(splitRecipientInput).min(1).max(10).optional(),
-}).refine((data) => !data.webhookSecret || !!data.webhookUrl, {
-  path: ['webhookUrl'],
-  message: 'Webhook URL is required when a webhook secret is provided',
+})
+
+const webhookUrlSchema = z
+  .string()
+  .trim()
+  .url('Webhook URL must be a valid URL')
+  .max(2048)
+  .refine((url) => ['http:', 'https:'].includes(new URL(url).protocol), {
+    message: 'Webhook URL must use http or https',
+  })
+
+const webhookSecretSchema = z
+  .string()
+  .trim()
+  .min(16, 'Webhook secret must be at least 16 characters')
+  .max(200, 'Webhook secret must be 200 characters or fewer')
+
+export const paymentLinkWebhookBody = z
+  .object({
+    webhookUrl: z.preprocess(emptyStringToUndefined, webhookUrlSchema.optional()),
+    webhookSecret: z.preprocess(emptyStringToUndefined, webhookSecretSchema.optional()),
+  })
+  .refine((data) => !data.webhookSecret || !!data.webhookUrl, {
+    path: ['webhookUrl'],
+    message: 'Webhook URL is required when a webhook secret is provided',
+  })
+
+export const webhookTestBody = z.object({
+  webhookUrl: webhookUrlSchema,
+  webhookSecret: z.preprocess(emptyStringToUndefined, webhookSecretSchema.optional()),
 })
 
 export type SplitRecipientInput = z.infer<typeof splitRecipientInput>
@@ -130,6 +141,8 @@ export type DirectPayExecuteBody = z.infer<typeof directPayExecuteBody>
 export type DirectPaySendBody = z.infer<typeof directPaySendBody>
 
 export type CreateLinkBody = z.infer<typeof createLinkBody>
+export type PaymentLinkWebhookBody = z.infer<typeof paymentLinkWebhookBody>
+export type WebhookTestBody = z.infer<typeof webhookTestBody>
 export type SplitRecipientInputArr = z.infer<typeof createLinkBody>['recipients']
 export type UpdateLinkActiveBody = z.infer<typeof updateLinkActiveBody>
 export type WalletLoginBody = z.infer<typeof walletLoginBody>

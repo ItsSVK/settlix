@@ -38,12 +38,6 @@ function limitDecimals(val: string): string {
   return decimal && decimal.length > 2 ? `${whole}.${decimal.slice(0, 2)}` : val
 }
 
-function generateWebhookSecret() {
-  const bytes = new Uint8Array(24)
-  crypto.getRandomValues(bytes)
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
-}
-
 /** Framer Motion collapse animation — animates height + opacity on mount/unmount */
 const collapseVariants = {
   initial: { height: 0, opacity: 0 },
@@ -60,24 +54,15 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
   const [amount, setAmount] = useState('')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-
-  // Optional fields open state
   const [detailsOpen, setDetailsOpen] = useState(false)
-  const [developerOpen, setDeveloperOpen] = useState(false)
-  const [webhookUrl, setWebhookUrl] = useState('')
-  const [webhookSecret, setWebhookSecret] = useState('')
-
-  // Split state
   const [splitEnabled, setSplitEnabled] = useState(false)
   const [partners, setPartners] = useState<Partner[]>([{ id: 'init', wallet: '', percent: '' }])
-
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
-  const [webhookCopied, setWebhookCopied] = useState(false)
   const [result, setResult] = useState<{ id: string; payPath: string } | null>(null)
-
   const [mounted, setMounted] = useState(false)
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
@@ -88,19 +73,12 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
     setTitle('')
     setDescription('')
     setDetailsOpen(false)
-    setDeveloperOpen(false)
-    setWebhookUrl('')
-    setWebhookSecret('')
     setSplitEnabled(false)
     setPartners([{ id: Math.random().toString(36).substring(7), wallet: '', percent: '' }])
     setError('')
     setResult(null)
     setOpen(false)
   }
-
-  // ------------------------------------------------------------------
-  // Split helpers
-  // ------------------------------------------------------------------
 
   const partnerBpTotal = partners.reduce((sum, p) => {
     const bp = toBasisPoints(p.percent)
@@ -140,38 +118,14 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
     setError('')
   }
 
-  // ------------------------------------------------------------------
-  // Submit
-  // ------------------------------------------------------------------
-
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!wallet) return
 
     const numAmount = parseFloat(amount)
-    const trimmedWebhookUrl = webhookUrl.trim()
-    const trimmedWebhookSecret = webhookSecret.trim()
-
     if (isNaN(numAmount) || numAmount <= 0) {
       setError('Amount must be greater than 0.')
       return
-    }
-
-    if (trimmedWebhookSecret && !trimmedWebhookUrl) {
-      setError('Webhook URL is required when you add a signing secret.')
-      return
-    }
-
-    if (trimmedWebhookUrl) {
-      try {
-        const parsedWebhookUrl = new URL(trimmedWebhookUrl)
-        if (!['http:', 'https:'].includes(parsedWebhookUrl.protocol)) {
-          throw new Error('Webhook URL must use http or https.')
-        }
-      } catch {
-        setError('Webhook URL must be a valid http or https URL.')
-        return
-      }
     }
 
     if (splitEnabled) {
@@ -182,24 +136,10 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
       }
     }
 
-    // console.log({
-    //   token: getDefaultUsdcMint(),
-    //   amount,
-    //   title: title.trim() || undefined,
-    //   description: description.trim() || undefined,
-    //   recipients: splitEnabled
-    //     ? partners.map((p) => ({
-    //         wallet: p.wallet.trim(),
-    //         basisPoints: toBasisPoints(p.percent),
-    //       }))
-    //     : undefined,
-    // })
-
     setIsLoading(true)
     setError('')
 
     try {
-      // Build recipients array: [merchant, ...partners] when split is enabled
       let recipients: { wallet: string; basisPoints: number }[] | undefined
 
       if (splitEnabled && partners.length > 0) {
@@ -219,8 +159,6 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
           amount,
           title: title.trim() || undefined,
           description: description.trim() || undefined,
-          webhookUrl: trimmedWebhookUrl || undefined,
-          webhookSecret: trimmedWebhookSecret || undefined,
           recipients,
         }),
       })
@@ -241,7 +179,6 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
   }
 
   const payUrl = result ? `${typeof window !== 'undefined' ? window.location.origin : ''}/pay/${result.id}` : ''
-
   const allocationOk = Math.abs((partnerBpTotal + Math.max(merchantBp, 0)) / 100 - 100) < 0.001
 
   return (
@@ -260,28 +197,25 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
             {open && (
               <div className='fixed inset-0 z-100 overflow-y-auto'>
                 <div className='flex min-h-full items-center justify-center p-4'>
-                  {/* Backdrop */}
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className='fixed inset-0 bg-background/80 backdrop-blur-md transition-opacity'
                   />
-                  {/* Modal */}
                   <motion.div
                     layout
                     initial={{ opacity: 0, scale: 0.95, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 10 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                    className='relative w-full max-w-lg rounded-3xl border border-border/40 bg-card/60 backdrop-blur-xl p-6 shadow-2xl outline-none ring-1 ring-white/5'
+                    className='relative w-full max-w-lg rounded-3xl border border-border/40 bg-card/60 p-6 shadow-2xl outline-none ring-1 ring-white/5 backdrop-blur-xl'
                   >
-                    {/* Header */}
                     <div className='mb-6 flex items-center justify-between'>
-                      <h2 className='text-lg font-semibold text-foreground tracking-tight'>New Payment</h2>
+                      <h2 className='text-lg font-semibold tracking-tight text-foreground'>New Payment</h2>
                       <Button
                         onClick={reset}
-                        className='rounded-full p-2 text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all'
+                        className='rounded-full p-2 text-muted-foreground transition-all hover:bg-muted/50 hover:text-foreground'
                         variant='ghost'
                       >
                         <X className='h-4 w-4' />
@@ -289,27 +223,24 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                     </div>
 
                     {result ? (
-                      /* ── Success state ── */
                       <div className='space-y-6'>
-                        <div className='flex flex-col items-center justify-center py-6 border border-border/30 rounded-2xl bg-muted/10'>
-                          <div className='h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center text-green-500 mb-3'>
+                        <div className='flex flex-col items-center justify-center rounded-2xl border border-border/30 bg-muted/10 py-6'>
+                          <div className='mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-500/10 text-green-500'>
                             <Check className='h-6 w-6' />
                           </div>
-                          <p className='text-sm font-medium text-foreground tracking-tight'>Your link is ready</p>
-                          <p className='text-xs text-muted-foreground mt-1'>Share this URL with your customer</p>
+                          <p className='text-sm font-medium tracking-tight text-foreground'>Your link is ready</p>
+                          <p className='mt-1 text-xs text-muted-foreground'>Share this URL with your customer</p>
                         </div>
 
                         <div className='flex items-center gap-2 rounded-2xl border border-border/50 bg-background/50 p-3 ring-1 ring-border/20'>
-                          <span className='flex-1 truncate font-mono text-sm text-muted-foreground ml-2'>{payUrl}</span>
+                          <span className='ml-2 flex-1 truncate font-mono text-sm text-muted-foreground'>{payUrl}</span>
                           <Button
                             onClick={() => copyText(payUrl, setCopied)}
                             title='Copy pay URL'
-                            variant={copied ? 'ghost' : 'secondary'}
+                            variant='secondary'
                             size='sm'
-                            className={`shrink-0 rounded-xl px-4 font-medium transition-all min-w-[75px] ${
-                              copied
-                                ? 'bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-500/15 dark:text-green-400 dark:hover:bg-green-500/25'
-                                : ''
+                            className={`shrink-0 rounded-xl px-4 font-medium transition-all ${
+                              copied ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20' : ''
                             }`}
                           >
                             {copied ? 'Copied!' : 'Copy'}
@@ -317,17 +248,15 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                         </div>
                         <button
                           onClick={reset}
-                          className='w-full rounded-2xl bg-primary py-3.5 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-all focus:ring-2 focus:ring-primary/20 outline-none'
+                          className='w-full rounded-2xl bg-primary py-3.5 text-sm font-semibold text-primary-foreground outline-none transition-all hover:opacity-90 focus:ring-2 focus:ring-primary/20'
                         >
                           Done
                         </button>
                       </div>
                     ) : (
-                      /* ── Form ── */
                       <form onSubmit={submit} className='space-y-5' noValidate>
-                        {/* Hero Amount Input */}
-                        <div className='flex flex-col items-center justify-center py-6 px-4 rounded-3xl bg-muted/90 border border-border/30 transition-all focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/10'>
-                          <span className='text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2'>
+                        <div className='flex flex-col items-center justify-center rounded-3xl border border-border/30 bg-muted/90 px-4 py-6 transition-all focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/10'>
+                          <span className='mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground'>
                             Amount
                           </span>
                           <div className='flex items-center justify-center gap-2'>
@@ -343,18 +272,17 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                                 setError('')
                               }}
                               placeholder='0.00'
-                              className='w-[140px] bg-transparent text-5xl font-semibold text-foreground tracking-tighter outline-none placeholder:text-muted-foreground/30 text-center shrink-0'
+                              className='w-[140px] shrink-0 bg-transparent text-center text-5xl font-semibold tracking-tighter text-foreground outline-none placeholder:text-muted-foreground/30'
                               style={{ WebkitAppearance: 'none', margin: 0, MozAppearance: 'textfield' }}
                             />
                           </div>
-                          <div className='mt-4 flex items-center gap-1.5 rounded-full bg-background dark:bg-background/50 px-3 py-1 border border-border/40'>
+                          <div className='mt-4 flex items-center gap-1.5 rounded-full border border-border/40 bg-background px-3 py-1 dark:bg-background/50'>
                             <div className='h-3 w-3 rounded-full bg-blue-500/80' />
                             <span className='text-[11px] font-medium text-foreground'>Settled in USDC</span>
                           </div>
                         </div>
 
-                        {/* Details Card */}
-                        <div className='rounded-2xl border border-border/40 bg-background/30 overflow-hidden transition-all hover:bg-background/40'>
+                        <div className='overflow-hidden rounded-2xl border border-border/40 bg-background/30 transition-all hover:bg-background/40'>
                           <button
                             type='button'
                             onClick={() => setDetailsOpen((v) => !v)}
@@ -362,7 +290,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                           >
                             <div>
                               <p className='text-sm font-medium text-foreground'>Details</p>
-                              <p className='text-xs text-muted-foreground mt-0.5'>Add an optional title and note</p>
+                              <p className='mt-0.5 text-xs text-muted-foreground'>Add an optional title and note</p>
                             </div>
                             <motion.div
                               animate={{ rotate: detailsOpen ? 180 : 0 }}
@@ -383,7 +311,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                                 transition={collapseTransition}
                                 className='overflow-hidden'
                               >
-                                <div className='border-t border-border/40 px-4 pb-4 pt-3 space-y-4'>
+                                <div className='space-y-4 border-t border-border/40 px-4 pb-4 pt-3'>
                                   <div>
                                     <input
                                       type='text'
@@ -391,7 +319,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                                       value={title}
                                       onChange={(e) => setTitle(e.target.value)}
                                       placeholder='Title (e.g. Design invoice #12)'
-                                      className='w-full rounded-xl border-none bg-muted/90 px-3.5 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30 transition-all font-medium pt-3'
+                                      className='w-full rounded-xl border-none bg-muted/90 px-3.5 py-3 pt-3 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30'
                                     />
                                   </div>
                                   <div>
@@ -401,7 +329,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                                       value={description}
                                       onChange={(e) => setDescription(e.target.value)}
                                       placeholder='What is this payment for?'
-                                      className='w-full rounded-xl border-none bg-muted/90 px-3.5 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30 transition-all resize-none'
+                                      className='w-full resize-none rounded-xl border-none bg-muted/90 px-3.5 py-3 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30'
                                     />
                                   </div>
                                 </div>
@@ -410,115 +338,11 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                           </AnimatePresence>
                         </div>
 
-                        {/* Developer Card */}
-                        <div className='rounded-2xl border border-border/40 bg-background/30 overflow-hidden transition-all hover:bg-background/40'>
-                          <button
-                            type='button'
-                            onClick={() => setDeveloperOpen((v) => !v)}
-                            className='flex w-full items-center justify-between px-4 py-3.5 text-left outline-none focus-visible:bg-muted/90'
-                          >
-                            <div>
-                              <p className='text-sm font-medium text-foreground'>Developer</p>
-                              <p className='text-xs text-muted-foreground mt-0.5'>
-                                Send a webhook when a payment settles
-                              </p>
-                            </div>
-                            <motion.div
-                              animate={{ rotate: developerOpen ? 180 : 0 }}
-                              transition={collapseTransition}
-                              className='flex h-8 w-8 items-center justify-center rounded-full bg-muted/50 text-muted-foreground'
-                            >
-                              <ChevronDown className='h-4 w-4' />
-                            </motion.div>
-                          </button>
-                          <AnimatePresence initial={false}>
-                            {developerOpen && (
-                              <motion.div
-                                key='developer-body'
-                                variants={collapseVariants}
-                                initial='initial'
-                                animate='animate'
-                                exit='exit'
-                                transition={collapseTransition}
-                                className='overflow-hidden'
-                              >
-                                <div className='border-t border-border/40 px-4 pb-4 pt-3 space-y-4'>
-                                  <div>
-                                    <input
-                                      id='webhook-url'
-                                      type='url'
-                                      inputMode='url'
-                                      autoComplete='url'
-                                      value={webhookUrl}
-                                      onChange={(e) => {
-                                        setWebhookUrl(e.target.value)
-                                        setError('')
-                                      }}
-                                      placeholder='Webhook URL (e.g. https://your-app.com/api/webhook)'
-                                      className='w-full rounded-xl border-none bg-muted/90 px-3.5 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30 transition-all font-medium'
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <div className='flex items-center gap-2 rounded-xl bg-muted/90 pl-3.5 pr-1.5 py-1.5 focus-within:ring-1 focus-within:ring-primary/30 transition-all'>
-                                      <input
-                                        id='webhook-secret'
-                                        type='text'
-                                        autoComplete='new-password'
-                                        spellCheck='false'
-                                        value={webhookSecret}
-                                        onChange={(e) => {
-                                          setWebhookSecret(e.target.value)
-                                          setError('')
-                                        }}
-                                        placeholder='Signing Secret (Optional HMAC)'
-                                        className='flex-1 bg-transparent font-mono text-sm text-foreground outline-none placeholder:text-muted-foreground min-w-0'
-                                      />
-                                      {!webhookSecret ? (
-                                        <Button
-                                          type='button'
-                                          variant='secondary'
-                                          size='sm'
-                                          onClick={() => {
-                                            setWebhookSecret(generateWebhookSecret())
-                                            setError('')
-                                          }}
-                                          className='shrink-0 h-8 rounded-lg px-3 text-xs font-medium transition-all'
-                                        >
-                                          Generate
-                                        </Button>
-                                      ) : (
-                                        <Button
-                                          type='button'
-                                          onClick={() => copyText(webhookSecret, setWebhookCopied)}
-                                          title='Copy webhook secret'
-                                          variant={webhookCopied ? 'ghost' : 'secondary'}
-                                          size='sm'
-                                          className={`shrink-0 h-8 rounded-lg px-3 text-xs font-medium transition-all min-w-[75px] ${
-                                            webhookCopied
-                                              ? 'bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-500/15 dark:text-green-400 dark:hover:bg-green-500/25'
-                                              : ''
-                                          }`}
-                                        >
-                                          {webhookCopied ? 'Copied!' : 'Copy'}
-                                        </Button>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-
-                        {/* Revenue Split Card */}
-                        <div className='rounded-2xl border border-border/40 bg-background/30 overflow-hidden transition-all hover:bg-background/40'>
+                        <div className='overflow-hidden rounded-2xl border border-border/40 bg-background/30 transition-all hover:bg-background/40'>
                           <div className='flex items-center justify-between px-4 py-3.5'>
                             <div>
                               <p className='text-sm font-medium text-foreground'>Revenue Split</p>
-                              <p className='text-xs text-muted-foreground mt-0.5'>
-                                Automatically route payouts to partners
-                              </p>
+                              <p className='mt-0.5 text-xs text-muted-foreground'>Route payments to partners</p>
                             </div>
                             <Switch
                               id='split-toggle'
@@ -527,7 +351,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                                 setSplitEnabled(checked)
                                 setError('')
                               }}
-                              className='cursor-pointer [&>span]:rounded-full'
+                              className='cursor-pointer [&>span]:w-4! data-[state=checked]:[&>span]:translate-x-6!'
                             />
                           </div>
 
@@ -542,11 +366,10 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                                 transition={collapseTransition}
                                 className='overflow-hidden'
                               >
-                                <div className='border-t border-border/40 px-4 pb-4 pt-4 space-y-4'>
-                                  {/* Distribution visualization */}
-                                  <div className='flex items-center gap-3 w-full bg-muted/40 p-3 rounded-xl border border-border/30'>
-                                    <div className='flex flex-col gap-1 items-start flex-1'>
-                                      <span className='text-[10px] uppercase font-bold tracking-wider text-muted-foreground'>
+                                <div className='space-y-4 border-t border-border/40 px-4 pb-4 pt-4'>
+                                  <div className='flex w-full items-center gap-3 rounded-xl border border-border/30 bg-muted/20 p-3'>
+                                    <div className='flex flex-1 flex-col items-start gap-1'>
+                                      <span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground'>
                                         Your share
                                       </span>
                                       <span
@@ -557,9 +380,9 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                                         {merchantBp < 0 ? '—' : `${merchantPercent}%`}
                                       </span>
                                     </div>
-                                    <div className='h-8 w-px bg-border/50 shrink-0' />
-                                    <div className='flex flex-col gap-1 items-end flex-1'>
-                                      <span className='text-[10px] uppercase font-bold tracking-wider text-muted-foreground'>
+                                    <div className='h-8 w-px shrink-0 bg-border/50' />
+                                    <div className='flex flex-1 flex-col items-end gap-1'>
+                                      <span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground'>
                                         Partners
                                       </span>
                                       <span
@@ -572,7 +395,6 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                                     </div>
                                   </div>
 
-                                  {/* Partners list */}
                                   <div className='flex flex-col'>
                                     <AnimatePresence initial={false}>
                                       {partners.map((p, i) => (
@@ -587,7 +409,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                                             height: { duration: 0.3, ease: 'easeInOut' },
                                             marginTop: { duration: 0.3, ease: 'easeInOut' },
                                           }}
-                                          className='flex flex-col gap-2 rounded-xl group relative overflow-hidden'
+                                          className='group relative flex flex-col gap-2 overflow-hidden rounded-xl'
                                         >
                                           <div className='flex items-center gap-2'>
                                             <div className='relative flex-1'>
@@ -596,7 +418,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                                                 value={p.wallet}
                                                 onChange={(e) => updatePartner(i, 'wallet', e.target.value)}
                                                 placeholder='Wallet address'
-                                                className='w-full rounded-xl border border-border/30 bg-muted/90 px-3 py-2.5 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-primary/40 dark:focus:border-border transition-all'
+                                                className='w-full rounded-xl border border-border/30 bg-muted/90 px-3 py-2.5 font-mono text-xs text-foreground outline-none transition-all placeholder:text-muted-foreground/50 focus:border-border/60'
                                               />
                                             </div>
                                             <div className='relative w-[80px] shrink-0'>
@@ -610,16 +432,16 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                                                   updatePartner(i, 'percent', limitDecimals(e.target.value))
                                                 }
                                                 placeholder='0.0'
-                                                className='w-full rounded-xl border border-border/30 bg-muted/90 py-2.5 pl-3 pr-6 text-xs font-semibold text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-primary/40 dark:focus:border-border transition-all'
+                                                className='w-full rounded-xl border border-border/30 bg-muted/90 py-2.5 pl-3 pr-6 text-xs font-semibold text-foreground outline-none transition-all placeholder:text-muted-foreground/50 focus:border-border/60'
                                               />
-                                              <span className='absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground pointer-events-none'>
+                                              <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground'>
                                                 %
                                               </span>
                                             </div>
                                             <Button
                                               type='button'
                                               onClick={() => removePartner(i)}
-                                              className='flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-destructive/5 text-destructive/70 hover:bg-destructive/10 hover:text-destructive transition-all'
+                                              className='flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-destructive/5 text-destructive/70 transition-all hover:bg-destructive/10 hover:text-destructive'
                                             >
                                               <Trash2 className='h-4 w-4' />
                                             </Button>
@@ -633,7 +455,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                                     <Button
                                       type='button'
                                       onClick={addPartner}
-                                      className='flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border/60 bg-gray-300 hover:bg-gray-300 py-3 text-xs font-medium text-foreground transition-all dark:bg-gray-700 dark:text-gray-300'
+                                      className='flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border/60 bg-gray-300 py-3 text-xs font-medium text-foreground transition-all hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300'
                                     >
                                       <Plus className='h-3.5 w-3.5' />
                                       Add Partner
@@ -651,7 +473,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                             animate={{ opacity: 1, y: 0 }}
                             className='flex items-start gap-2 rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-xs text-destructive'
                           >
-                            <AlertCircle className='h-4 w-4 shrink-0 mt-0.5' />
+                            <AlertCircle className='mt-0.5 h-4 w-4 shrink-0' />
                             <p className='font-medium'>{error}</p>
                           </motion.div>
                         )}
@@ -659,7 +481,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                         <Button
                           type='submit'
                           disabled={isLoading || !amount || parseFloat(amount) <= 0}
-                          className='relative mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-sm font-semibold text-background dark:text-foreground transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none'
+                          className='relative mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-sm font-semibold text-background transition-all hover:opacity-90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 dark:text-foreground'
                         >
                           {isLoading ? (
                             <>

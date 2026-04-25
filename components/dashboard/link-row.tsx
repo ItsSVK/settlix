@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { copyText } from '@/lib/utils'
 import { QRModal } from './qr-modal'
 import { SplitModal } from './split-modal'
+import { WebhookModal } from './webhook-modal'
 import { TOKENS } from '@/lib/tokens/tokens'
 
 function shorten(s: string, start = 6, end = 4) {
@@ -30,14 +31,16 @@ function shortenUrl(url: string, max = 30) {
 interface LinkRowProps {
   link: DashboardLink
   onToggle: (id: string, active: boolean) => Promise<void>
+  onRefresh: () => void
 }
 
-export function LinkRow({ link, onToggle }: LinkRowProps) {
+export function LinkRow({ link, onToggle, onRefresh }: LinkRowProps) {
   const [expanded, setExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
   const [toggling, setToggling] = useState(false)
   const [qrOpen, setQROpen] = useState(false)
   const [splitOpen, setSplitOpen] = useState(false)
+  const [webhookOpen, setWebhookOpen] = useState(false)
 
   const payUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/pay/${link.id}`
 
@@ -86,14 +89,6 @@ export function LinkRow({ link, onToggle }: LinkRowProps) {
               <span className='truncate text-[11px] text-muted-foreground max-w-[200px]'>• {link.description}</span>
             )}
           </div>
-          {link.webhookUrl && (
-            <div className='mt-1 flex items-center gap-1.5 text-[10px] text-muted-foreground'>
-              <Webhook className='h-3 w-3 shrink-0 text-primary/70' />
-              <span className='truncate' title={link.webhookUrl}>
-                {shortenUrl(link.webhookUrl)}
-              </span>
-            </div>
-          )}
         </div>
 
         {/* Stats */}
@@ -143,15 +138,14 @@ export function LinkRow({ link, onToggle }: LinkRowProps) {
             <QrCode className='h-3 w-3' />
           </Button>
 
-          {/* Webhook */}
           <Button
-            onClick={() => {}}
+            onClick={() => setWebhookOpen(true)}
             title='Webhook Configuration'
             variant='ghost'
             size='sm'
             className='h-6 w-6 rounded-lg p-0 text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors'
           >
-            <Webhook className='h-3 w-3 text-blue-400' />
+            <Webhook className={`h-3 w-3 ${link.webhookUrl ? 'text-blue-400' : ''}`} />
           </Button>
 
           <Button
@@ -283,6 +277,7 @@ export function LinkRow({ link, onToggle }: LinkRowProps) {
       />
 
       {link.recipients.length > 0 && <SplitModal open={splitOpen} onClose={() => setSplitOpen(false)} link={link} />}
+      <WebhookModal open={webhookOpen} onClose={() => setWebhookOpen(false)} onUpdated={onRefresh} link={link} />
     </div>
   )
 }

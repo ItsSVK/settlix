@@ -24,9 +24,12 @@ export async function GET(req: NextRequest) {
         merchantWallet: link.merchantWallet,
         token: link.token,
         amount: link.amount.toString(),
+        title: link.title ?? undefined,
+        description: link.description ?? undefined,
         type: link.type,
         active: link.active,
         webhookUrl: link.webhookUrl ?? null,
+        hasWebhookSecret: Boolean(link.webhookSecret),
         createdAt: link.createdAt.toISOString(),
         recipients: (link.recipients ?? []).map((r: SplitRecipient) => ({
           wallet: r.wallet,

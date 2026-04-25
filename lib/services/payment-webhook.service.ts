@@ -10,13 +10,16 @@ export interface PaymentWebhookPayload {
   outputAmount: string
   userWallet: string
   timestamp: string
+  test?: boolean
 }
+
+export type WebhookDeliveryResult = { ok: true } | { ok: false; error: string }
 
 export async function deliverPaymentWebhook(config: {
   webhookUrl: string
   webhookSecret?: string | null
   payload: PaymentWebhookPayload
-}) {
+}): Promise<WebhookDeliveryResult> {
   const body = JSON.stringify(config.payload)
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -43,7 +46,7 @@ export async function deliverPaymentWebhook(config: {
         status: response.status,
         responsePreview,
       })
-      return
+      return { ok: false, error: `Endpoint responded ${response.status}` }
     }
 
     apiLogger.info('Payment webhook delivered', {
@@ -52,12 +55,15 @@ export async function deliverPaymentWebhook(config: {
       webhookUrl: config.webhookUrl,
       signed: Boolean(config.webhookSecret),
     })
+    return { ok: true }
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
     apiLogger.warn('Payment webhook delivery failed', {
       linkId: config.payload.linkId,
       txSignature: config.payload.txSignature,
       webhookUrl: config.webhookUrl,
-      error: error instanceof Error ? error.message : String(error),
+      error: message,
     })
+    return { ok: false, error: message }
   }
 }
