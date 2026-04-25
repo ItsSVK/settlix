@@ -26,6 +26,7 @@ export async function GET(req: NextRequest) {
         amount: link.amount.toString(),
         type: link.type,
         active: link.active,
+        webhookUrl: link.webhookUrl ?? null,
         createdAt: link.createdAt.toISOString(),
         recipients: (link.recipients ?? []).map((r: SplitRecipient) => ({
           wallet: r.wallet,

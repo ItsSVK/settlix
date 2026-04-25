@@ -38,6 +38,12 @@ function limitDecimals(val: string): string {
   return decimal && decimal.length > 2 ? `${whole}.${decimal.slice(0, 2)}` : val
 }
 
+function generateWebhookSecret() {
+  const bytes = new Uint8Array(24)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
 /** Framer Motion collapse animation — animates height + opacity on mount/unmount */
 const collapseVariants = {
   initial: { height: 0, opacity: 0 },
@@ -57,6 +63,9 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
 
   // Optional fields open state
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const [developerOpen, setDeveloperOpen] = useState(false)
+  const [webhookUrl, setWebhookUrl] = useState('')
+  const [webhookSecret, setWebhookSecret] = useState('')
 
   // Split state
   const [splitEnabled, setSplitEnabled] = useState(false)
@@ -65,6 +74,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
+  const [webhookCopied, setWebhookCopied] = useState(false)
   const [result, setResult] = useState<{ id: string; payPath: string } | null>(null)
 
   const [mounted, setMounted] = useState(false)
@@ -78,6 +88,9 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
     setTitle('')
     setDescription('')
     setDetailsOpen(false)
+    setDeveloperOpen(false)
+    setWebhookUrl('')
+    setWebhookSecret('')
     setSplitEnabled(false)
     setPartners([{ id: Math.random().toString(36).substring(7), wallet: '', percent: '' }])
     setError('')
@@ -136,9 +149,29 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
     if (!wallet) return
 
     const numAmount = parseFloat(amount)
+    const trimmedWebhookUrl = webhookUrl.trim()
+    const trimmedWebhookSecret = webhookSecret.trim()
+
     if (isNaN(numAmount) || numAmount <= 0) {
       setError('Amount must be greater than 0.')
       return
+    }
+
+    if (trimmedWebhookSecret && !trimmedWebhookUrl) {
+      setError('Webhook URL is required when you add a signing secret.')
+      return
+    }
+
+    if (trimmedWebhookUrl) {
+      try {
+        const parsedWebhookUrl = new URL(trimmedWebhookUrl)
+        if (!['http:', 'https:'].includes(parsedWebhookUrl.protocol)) {
+          throw new Error('Webhook URL must use http or https.')
+        }
+      } catch {
+        setError('Webhook URL must be a valid http or https URL.')
+        return
+      }
     }
 
     if (splitEnabled) {
@@ -186,6 +219,8 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
           amount,
           title: title.trim() || undefined,
           description: description.trim() || undefined,
+          webhookUrl: trimmedWebhookUrl || undefined,
+          webhookSecret: trimmedWebhookSecret || undefined,
           recipients,
         }),
       })
@@ -269,10 +304,12 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                           <Button
                             onClick={() => copyText(payUrl, setCopied)}
                             title='Copy pay URL'
-                            variant='secondary'
+                            variant={copied ? 'ghost' : 'secondary'}
                             size='sm'
-                            className={`shrink-0 rounded-xl px-4 font-medium transition-all ${
-                              copied ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20' : ''
+                            className={`shrink-0 rounded-xl px-4 font-medium transition-all min-w-[75px] ${
+                              copied
+                                ? 'bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-500/15 dark:text-green-400 dark:hover:bg-green-500/25'
+                                : ''
                             }`}
                           >
                             {copied ? 'Copied!' : 'Copy'}
@@ -354,7 +391,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                                       value={title}
                                       onChange={(e) => setTitle(e.target.value)}
                                       placeholder='Title (e.g. Design invoice #12)'
-                                      className='w-full rounded-xl border-none bg-muted/40 px-3.5 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30 transition-all font-medium pt-3'
+                                      className='w-full rounded-xl border-none bg-muted/90 px-3.5 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30 transition-all font-medium pt-3'
                                     />
                                   </div>
                                   <div>
@@ -364,8 +401,109 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                                       value={description}
                                       onChange={(e) => setDescription(e.target.value)}
                                       placeholder='What is this payment for?'
-                                      className='w-full rounded-xl border-none bg-muted/40 px-3.5 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30 transition-all resize-none'
+                                      className='w-full rounded-xl border-none bg-muted/90 px-3.5 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30 transition-all resize-none'
                                     />
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+
+                        {/* Developer Card */}
+                        <div className='rounded-2xl border border-border/40 bg-background/30 overflow-hidden transition-all hover:bg-background/40'>
+                          <button
+                            type='button'
+                            onClick={() => setDeveloperOpen((v) => !v)}
+                            className='flex w-full items-center justify-between px-4 py-3.5 text-left outline-none focus-visible:bg-muted/90'
+                          >
+                            <div>
+                              <p className='text-sm font-medium text-foreground'>Developer</p>
+                              <p className='text-xs text-muted-foreground mt-0.5'>
+                                Send a webhook when a payment settles
+                              </p>
+                            </div>
+                            <motion.div
+                              animate={{ rotate: developerOpen ? 180 : 0 }}
+                              transition={collapseTransition}
+                              className='flex h-8 w-8 items-center justify-center rounded-full bg-muted/50 text-muted-foreground'
+                            >
+                              <ChevronDown className='h-4 w-4' />
+                            </motion.div>
+                          </button>
+                          <AnimatePresence initial={false}>
+                            {developerOpen && (
+                              <motion.div
+                                key='developer-body'
+                                variants={collapseVariants}
+                                initial='initial'
+                                animate='animate'
+                                exit='exit'
+                                transition={collapseTransition}
+                                className='overflow-hidden'
+                              >
+                                <div className='border-t border-border/40 px-4 pb-4 pt-3 space-y-4'>
+                                  <div>
+                                    <input
+                                      id='webhook-url'
+                                      type='url'
+                                      inputMode='url'
+                                      autoComplete='url'
+                                      value={webhookUrl}
+                                      onChange={(e) => {
+                                        setWebhookUrl(e.target.value)
+                                        setError('')
+                                      }}
+                                      placeholder='Webhook URL (e.g. https://your-app.com/api/webhook)'
+                                      className='w-full rounded-xl border-none bg-muted/90 px-3.5 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30 transition-all font-medium'
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <div className='flex items-center gap-2 rounded-xl bg-muted/90 pl-3.5 pr-1.5 py-1.5 focus-within:ring-1 focus-within:ring-primary/30 transition-all'>
+                                      <input
+                                        id='webhook-secret'
+                                        type='text'
+                                        autoComplete='new-password'
+                                        spellCheck='false'
+                                        value={webhookSecret}
+                                        onChange={(e) => {
+                                          setWebhookSecret(e.target.value)
+                                          setError('')
+                                        }}
+                                        placeholder='Signing Secret (Optional HMAC)'
+                                        className='flex-1 bg-transparent font-mono text-sm text-foreground outline-none placeholder:text-muted-foreground min-w-0'
+                                      />
+                                      {!webhookSecret ? (
+                                        <Button
+                                          type='button'
+                                          variant='secondary'
+                                          size='sm'
+                                          onClick={() => {
+                                            setWebhookSecret(generateWebhookSecret())
+                                            setError('')
+                                          }}
+                                          className='shrink-0 h-8 rounded-lg px-3 text-xs font-medium transition-all'
+                                        >
+                                          Generate
+                                        </Button>
+                                      ) : (
+                                        <Button
+                                          type='button'
+                                          onClick={() => copyText(webhookSecret, setWebhookCopied)}
+                                          title='Copy webhook secret'
+                                          variant={webhookCopied ? 'ghost' : 'secondary'}
+                                          size='sm'
+                                          className={`shrink-0 h-8 rounded-lg px-3 text-xs font-medium transition-all min-w-[75px] ${
+                                            webhookCopied
+                                              ? 'bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-500/15 dark:text-green-400 dark:hover:bg-green-500/25'
+                                              : ''
+                                          }`}
+                                        >
+                                          {webhookCopied ? 'Copied!' : 'Copy'}
+                                        </Button>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               </motion.div>
@@ -406,7 +544,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                               >
                                 <div className='border-t border-border/40 px-4 pb-4 pt-4 space-y-4'>
                                   {/* Distribution visualization */}
-                                  <div className='flex items-center gap-3 w-full bg-muted/20 p-3 rounded-xl border border-border/30'>
+                                  <div className='flex items-center gap-3 w-full bg-muted/40 p-3 rounded-xl border border-border/30'>
                                     <div className='flex flex-col gap-1 items-start flex-1'>
                                       <span className='text-[10px] uppercase font-bold tracking-wider text-muted-foreground'>
                                         Your share
@@ -458,7 +596,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                                                 value={p.wallet}
                                                 onChange={(e) => updatePartner(i, 'wallet', e.target.value)}
                                                 placeholder='Wallet address'
-                                                className='w-full rounded-xl border border-border/30 bg-muted/30 px-3 py-2.5 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-border/60 focus:bg-muted/50 transition-all'
+                                                className='w-full rounded-xl border border-border/30 bg-muted/90 px-3 py-2.5 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-primary/40 dark:focus:border-border transition-all'
                                               />
                                             </div>
                                             <div className='relative w-[80px] shrink-0'>
@@ -472,7 +610,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                                                   updatePartner(i, 'percent', limitDecimals(e.target.value))
                                                 }
                                                 placeholder='0.0'
-                                                className='w-full rounded-xl border border-border/30 bg-muted/30 py-2.5 pl-3 pr-6 text-xs font-semibold text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-border/60 focus:bg-muted/50 transition-all'
+                                                className='w-full rounded-xl border border-border/30 bg-muted/90 py-2.5 pl-3 pr-6 text-xs font-semibold text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-primary/40 dark:focus:border-border transition-all'
                                               />
                                               <span className='absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground pointer-events-none'>
                                                 %

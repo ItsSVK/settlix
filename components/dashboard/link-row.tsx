@@ -5,7 +5,7 @@ const SOLSCAN_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK === 'devnet' ? '?
 import { useState } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'motion/react'
-import { ChevronDown, Copy, Check, ExternalLink, ToggleLeft, ToggleRight, QrCode, GitFork } from 'lucide-react'
+import { ChevronDown, Copy, Check, ExternalLink, ToggleLeft, ToggleRight, QrCode, GitFork, Webhook } from 'lucide-react'
 import type { DashboardLink } from '@/lib/hooks/use-dashboard'
 import { Button } from '@/components/ui/button'
 import { copyText } from '@/lib/utils'
@@ -15,6 +15,16 @@ import { TOKENS } from '@/lib/tokens/tokens'
 
 function shorten(s: string, start = 6, end = 4) {
   return `${s.slice(0, start)}…${s.slice(-end)}`
+}
+
+function shortenUrl(url: string, max = 30) {
+  try {
+    const parsed = new URL(url)
+    const compact = `${parsed.host}${parsed.pathname === '/' ? '' : parsed.pathname}`
+    return compact.length > max ? `${compact.slice(0, max - 1)}…` : compact
+  } catch {
+    return url.length > max ? `${url.slice(0, max - 1)}…` : url
+  }
 }
 
 interface LinkRowProps {
@@ -76,6 +86,14 @@ export function LinkRow({ link, onToggle }: LinkRowProps) {
               <span className='truncate text-[11px] text-muted-foreground max-w-[200px]'>• {link.description}</span>
             )}
           </div>
+          {link.webhookUrl && (
+            <div className='mt-1 flex items-center gap-1.5 text-[10px] text-muted-foreground'>
+              <Webhook className='h-3 w-3 shrink-0 text-primary/70' />
+              <span className='truncate' title={link.webhookUrl}>
+                {shortenUrl(link.webhookUrl)}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Stats */}
@@ -125,7 +143,17 @@ export function LinkRow({ link, onToggle }: LinkRowProps) {
             <QrCode className='h-3 w-3' />
           </Button>
 
-          {/* Copy */}
+          {/* Webhook */}
+          <Button
+            onClick={() => {}}
+            title='Webhook Configuration'
+            variant='ghost'
+            size='sm'
+            className='h-6 w-6 rounded-lg p-0 text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors'
+          >
+            <Webhook className='h-3 w-3 text-blue-400' />
+          </Button>
+
           <Button
             onClick={() => copyText(payUrl, setCopied)}
             title='Copy URL'

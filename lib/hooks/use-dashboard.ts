@@ -13,6 +13,7 @@ interface DashboardLink {
   description?: string
   type: string
   active: boolean
+  webhookUrl?: string | null
   createdAt: string
   recipients: { wallet: string; basisPoints: number }[]
   stats: {

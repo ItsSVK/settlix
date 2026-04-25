@@ -25,6 +25,7 @@ import type { SubmitTxBody } from '@/lib/validation'
 import { publishDashboardPaymentPaid } from '@/lib/realtime/dashboard-stream'
 
 import { getPaymentLinkById } from './payment-link.service'
+import { deliverPaymentWebhook } from './payment-webhook.service'
 
 export type SubmitTxOutcome = { ok: true } | { ok: false; reason: string; httpStatus: number; code: string }
 
@@ -58,6 +59,8 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
       outputAmount: decimalFromOptionalString(body.outputAmount, new Decimal(0)),
       status: PaymentExecutionStatus.failed,
       settlementToken: link.token,
+      webhookUrl: link.webhookUrl,
+      webhookSecret: link.webhookSecret,
     })
     return {
       ok: false,
@@ -95,6 +98,8 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
     outputAmount: outputAmountDec,
     status,
     settlementToken: link.token,
+    webhookUrl: link.webhookUrl,
+    webhookSecret: link.webhookSecret,
   })
 
   // txSignature was already recorded (different executionId, same on-chain tx).
@@ -123,6 +128,8 @@ async function upsertPaymentExecution(data: {
   outputAmount: Decimal
   status: PaymentExecutionStatus
   settlementToken: string
+  webhookUrl?: string | null
+  webhookSecret?: string | null
 }): Promise<UpsertResult> {
   try {
     const existing = await prisma.paymentExecution.findUnique({
@@ -163,6 +170,22 @@ async function upsertPaymentExecution(data: {
         settlementToken: data.settlementToken,
         createdAt: saved.createdAt.toISOString(),
       })
+
+      if (data.webhookUrl) {
+        void deliverPaymentWebhook({
+          webhookUrl: data.webhookUrl,
+          webhookSecret: data.webhookSecret,
+          payload: {
+            linkId: data.linkId,
+            txSignature: data.txSignature,
+            inputToken: data.inputToken,
+            inputAmount: data.inputAmount.toString(),
+            outputAmount: data.outputAmount.toString(),
+            userWallet: data.userWallet,
+            timestamp: saved.createdAt.toISOString(),
+          },
+        })
+      }
     }
 
     return 'ok'

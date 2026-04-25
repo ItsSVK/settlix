@@ -23,6 +23,8 @@ export async function insertPaymentLink(data: {
   amount: Decimal
   title?: string
   description?: string
+  webhookUrl?: string
+  webhookSecret?: string
   recipients?: SplitRecipientInput[]
 }) {
   try {
@@ -35,6 +37,8 @@ export async function insertPaymentLink(data: {
         active: true,
         title: data.title ?? null,
         description: data.description ?? null,
+        webhookUrl: data.webhookUrl ?? null,
+        webhookSecret: data.webhookSecret ?? null,
         recipients:
           data.recipients && data.recipients.length > 0
             ? {

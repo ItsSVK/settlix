@@ -67,6 +67,8 @@ export async function POST(req: NextRequest) {
       amount,
       title: parsed.data.title,
       description: parsed.data.description,
+      webhookUrl: parsed.data.webhookUrl,
+      webhookSecret: parsed.data.webhookSecret,
       recipients,
     })
 

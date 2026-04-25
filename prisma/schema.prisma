@@ -16,6 +16,8 @@ model PaymentLink {
   active         Boolean            @default(true)
   title          String?
   description    String?
+  webhookUrl     String?
+  webhookSecret  String?
   createdAt      DateTime           @default(now())
   executions     PaymentExecution[]
   recipients     SplitRecipient[]
