@@ -15,6 +15,8 @@ interface DashboardLink {
   active: boolean
   webhookUrl?: string | null
   hasWebhookSecret?: boolean
+  expiresAt?: string | null
+  maxUses?: number | null
   createdAt: string
   recipients: { wallet: string; basisPoints: number }[]
   stats: {

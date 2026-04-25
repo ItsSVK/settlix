@@ -18,16 +18,6 @@ function shorten(s: string, start = 6, end = 4) {
   return `${s.slice(0, start)}…${s.slice(-end)}`
 }
 
-function shortenUrl(url: string, max = 30) {
-  try {
-    const parsed = new URL(url)
-    const compact = `${parsed.host}${parsed.pathname === '/' ? '' : parsed.pathname}`
-    return compact.length > max ? `${compact.slice(0, max - 1)}…` : compact
-  } catch {
-    return url.length > max ? `${url.slice(0, max - 1)}…` : url
-  }
-}
-
 interface LinkRowProps {
   link: DashboardLink
   onToggle: (id: string, active: boolean) => Promise<void>
@@ -43,6 +33,9 @@ export function LinkRow({ link, onToggle, onRefresh }: LinkRowProps) {
   const [webhookOpen, setWebhookOpen] = useState(false)
 
   const payUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/pay/${link.id}`
+
+  const isExpired = link.expiresAt && new Date(link.expiresAt) < new Date()
+  const isSoldOut = link.maxUses && link.stats.paidCount >= link.maxUses
 
   const handleToggle = async () => {
     setToggling(true)
@@ -60,11 +53,21 @@ export function LinkRow({ link, onToggle, onRefresh }: LinkRowProps) {
         {/* Status Badge */}
         <div
           className={`flex items-center gap-1.5 rounded-full px-2 py-2 md:py-0.5 text-[9px] font-bold uppercase tracking-wider ${
-            link.active ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground'
+            isExpired || isSoldOut
+              ? 'bg-destructive/10 text-destructive'
+              : link.active
+              ? 'bg-green-500/10 text-green-500'
+              : 'bg-muted text-muted-foreground'
           }`}
         >
-          <span className={`h-1.5 w-1.5 rounded-full ${link.active ? 'bg-green-500' : 'bg-muted-foreground'}`} />
-          <span className='hidden md:flex'>{link.active ? 'Active' : 'Inactive'}</span>
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${
+              isExpired || isSoldOut ? 'bg-destructive' : link.active ? 'bg-green-500' : 'bg-muted-foreground'
+            }`}
+          />
+          <span className='hidden md:flex'>
+            {isExpired ? 'Expired' : isSoldOut ? 'Sold Out' : link.active ? 'Active' : 'Inactive'}
+          </span>
         </div>
 
         {/* Info */}
@@ -74,7 +77,7 @@ export function LinkRow({ link, onToggle, onRefresh }: LinkRowProps) {
           ) : (
             <span className='truncate font-mono text-[11px] text-muted-foreground/70'>{shorten(link.id, 8, 6)}</span>
           )}
-          <div className='flex items-center gap-1.5'>
+          <div className='flex items-center gap-1.5 flex-wrap'>
             <span className='text-xs font-bold text-foreground flex items-center gap-1'>
               <Image
                 src={TOKENS.find((t) => t.mint === link.token)?.logoURI as string}
@@ -204,6 +207,27 @@ export function LinkRow({ link, onToggle, onRefresh }: LinkRowProps) {
             className='overflow-hidden'
           >
             <div className='border-t border-border/30 bg-muted/10 px-3.5 pb-4 pt-3'>
+              <div
+                className={`text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex justify-center`}
+              >
+                <span className={isExpired ? 'text-red-500' : ''}>
+                  {link.expiresAt
+                    ? new Date(link.expiresAt).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: 'numeric',
+                        hour12: true,
+                      })
+                    : "Won't expire"}
+                </span>
+                {!!link.maxUses && <span className='mx-2'>•</span>}
+                {link.maxUses && (
+                  <span className={` ${isSoldOut ? 'text-destructive' : ''}`}>
+                    {`${link.stats.paidCount}/${link.maxUses} uses`}
+                  </span>
+                )}
+              </div>
               {link.recentExecutions.length === 0 ? (
                 <div className='flex flex-col items-center justify-center py-4'>
                   <div className='h-6 w-6 rounded-full bg-muted/50 flex items-center justify-center mb-1.5'>

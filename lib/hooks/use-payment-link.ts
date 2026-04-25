@@ -21,11 +21,15 @@ export function usePaymentLink(id: string) {
   useEffect(() => {
     fetch(`/api/link/${id}`)
       .then(async (res) => {
-        if (!res.ok) throw new Error('Link not found or inactive')
+        if (res.status === 410) {
+          const body = await res.json().catch(() => ({}))
+          throw new Error((body?.code as string | undefined) ?? 'LINK_UNAVAILABLE')
+        }
+        if (!res.ok) throw new Error('LINK_UNAVAILABLE')
         return res.json()
       })
       .then(setData)
-      .catch((e) => setError(e instanceof Error ? e.message : 'Error'))
+      .catch((e) => setError(e instanceof Error ? e.message : 'LINK_UNAVAILABLE'))
       .finally(() => setIsLoading(false))
   }, [id])
 

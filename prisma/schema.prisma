@@ -18,6 +18,8 @@ model PaymentLink {
   description    String?
   webhookUrl     String?
   webhookSecret  String?
+  expiresAt      DateTime?
+  maxUses        Int?
   createdAt      DateTime           @default(now())
   executions     PaymentExecution[]
   recipients     SplitRecipient[]

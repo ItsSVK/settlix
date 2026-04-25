@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 
 import { ApiError, handleApi, readJsonBody } from '@/lib/api/errors'
 import { getPaymentLinkById, updatePaymentLinkActive } from '@/lib/services/payment-link.service'
-import { FORBIDDEN, NOT_FOUND, VALIDATION } from '@/lib/api/constants'
+import { FORBIDDEN, LINK_EXPIRED, LINK_SOLD_OUT, NOT_FOUND, VALIDATION } from '@/lib/api/constants'
 import { paymentLinkId, updateLinkActiveBody } from '@/lib/validation'
 import { requireAuth } from '@/lib/auth/require-auth'
 
@@ -22,6 +22,14 @@ export async function GET(_req: Request, { params }: Params) {
 
     if (!link || !link.active) {
       return NextResponse.json({ error: 'Not found', code: NOT_FOUND }, { status: 404 })
+    }
+
+    if (link.expiresAt && link.expiresAt < new Date()) {
+      return NextResponse.json({ error: 'Link expired', code: LINK_EXPIRED }, { status: 410 })
+    }
+
+    if (link.maxUses && link._count.executions >= link.maxUses) {
+      return NextResponse.json({ error: 'Link sold out', code: LINK_SOLD_OUT }, { status: 410 })
     }
 
     return NextResponse.json({

@@ -88,6 +88,18 @@ export function PayCard({ linkId }: { linkId: string }) {
                     <div key={i} className={`h-${h > 30 ? 12 : h > 24 ? 8 : 5} animate-pulse rounded-xl bg-muted`} />
                   ))}
                 </motion.div>
+              ) : linkError === 'LINK_EXPIRED' ? (
+                <motion.div key='expired' initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='py-10 text-center space-y-2'>
+                  <p className='text-2xl'>⏰</p>
+                  <p className='text-sm font-medium text-foreground'>This link has expired</p>
+                  <p className='text-xs text-muted-foreground'>The merchant is no longer accepting payments on this link.</p>
+                </motion.div>
+              ) : linkError === 'LINK_SOLD_OUT' ? (
+                <motion.div key='sold-out' initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='py-10 text-center space-y-2'>
+                  <p className='text-2xl'>🎟️</p>
+                  <p className='text-sm font-medium text-foreground'>Sold out</p>
+                  <p className='text-xs text-muted-foreground'>This link has reached its maximum number of payments.</p>
+                </motion.div>
               ) : linkError || !link ? (
                 <motion.div key='error' className='py-10 text-center'>
                   <p className='text-sm text-muted-foreground'>This payment link is not available.</p>

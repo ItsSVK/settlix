@@ -10,7 +10,7 @@ import {
 import { apiLogger } from '@/lib/api/logger'
 import { prisma } from '@/lib/db'
 import { Decimal } from '@/lib/generated/prisma/internal/prismaNamespace'
-import { Prisma } from '@/lib/generated/prisma/client'
+import { Prisma, PaymentExecutionStatus } from '@/lib/generated/prisma/client'
 import type { SplitRecipientInput } from '@/lib/validation'
 
 type PaymentLinkWithRelations = Prisma.PaymentLinkGetPayload<{
@@ -24,6 +24,8 @@ export async function insertPaymentLink(data: {
   title?: string
   description?: string
   recipients?: SplitRecipientInput[]
+  expiresAt?: Date | null
+  maxUses?: number | null
 }) {
   try {
     return await prisma.paymentLink.create({
@@ -35,6 +37,8 @@ export async function insertPaymentLink(data: {
         active: true,
         title: data.title ?? null,
         description: data.description ?? null,
+        expiresAt: data.expiresAt ?? null,
+        maxUses: data.maxUses ?? null,
         recipients:
           data.recipients && data.recipients.length > 0
             ? {
@@ -61,7 +65,10 @@ export async function getPaymentLinkById(id: string) {
   try {
     return await prisma.paymentLink.findUnique({
       where: { id },
-      include: { recipients: { orderBy: { displayOrder: 'asc' } } },
+      include: {
+        recipients: { orderBy: { displayOrder: 'asc' } },
+        _count: { select: { executions: { where: { status: PaymentExecutionStatus.paid } } } },
+      },
     })
   } catch (e) {
     apiLogger.error('PaymentLink findUnique failed', e, { id })

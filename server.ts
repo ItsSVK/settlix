@@ -13,11 +13,11 @@ const server = Bun.serve({
     },
 
     // Wildcard route for all routes that start with "/api/" and aren't otherwise matched
-    '/*': (req: Request) => new Response(JSON.stringify({ message: 'Not found' }), { status: 404 }),
+    '/*': () => new Response(JSON.stringify({ message: 'Not found' }), { status: 404 }),
   },
 
   // fallback for unmatched routes:
-  fetch(req) {
+  fetch() {
     return new Response('Not Found', { status: 404 })
   },
 

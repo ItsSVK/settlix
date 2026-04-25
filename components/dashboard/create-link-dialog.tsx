@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'motion/react'
-import { Plus, Loader2, X, Trash2, ChevronDown, AlertCircle, Check } from 'lucide-react'
+import { Plus, Loader2, X, Trash2, ChevronDown, AlertCircle, Check, Calendar } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-context'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
@@ -55,6 +55,9 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const [limitsOpen, setLimitsOpen] = useState(false)
+  const [expiresAt, setExpiresAt] = useState('')
+  const [maxUses, setMaxUses] = useState('')
   const [splitEnabled, setSplitEnabled] = useState(false)
   const [partners, setPartners] = useState<Partner[]>([{ id: 'init', wallet: '', percent: '' }])
   const [isLoading, setIsLoading] = useState(false)
@@ -73,6 +76,9 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
     setTitle('')
     setDescription('')
     setDetailsOpen(false)
+    setLimitsOpen(false)
+    setExpiresAt('')
+    setMaxUses('')
     setSplitEnabled(false)
     setPartners([{ id: Math.random().toString(36).substring(7), wallet: '', percent: '' }])
     setError('')
@@ -160,6 +166,8 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
           title: title.trim() || undefined,
           description: description.trim() || undefined,
           recipients,
+          expiresAt: expiresAt ? new Date(expiresAt).toISOString() : undefined,
+          maxUses: maxUses ? parseInt(maxUses, 10) : undefined,
         }),
       })
 
@@ -330,6 +338,78 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                                       onChange={(e) => setDescription(e.target.value)}
                                       placeholder='What is this payment for?'
                                       className='w-full resize-none rounded-xl border-none bg-muted/90 px-3.5 py-3 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30'
+                                    />
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+
+                        <div className='overflow-hidden rounded-2xl border border-border/40 bg-background/30 transition-all hover:bg-background/40'>
+                          <button
+                            type='button'
+                            onClick={() => setLimitsOpen((v) => !v)}
+                            className='flex w-full items-center justify-between px-4 py-3.5 text-left outline-none focus-visible:bg-muted/50'
+                          >
+                            <div>
+                              <p className='text-sm font-medium text-foreground'>Limits</p>
+                              <p className='mt-0.5 text-xs text-muted-foreground'>
+                                {expiresAt || maxUses
+                                  ? [expiresAt && 'Expires set', maxUses && `Max ${maxUses} uses`]
+                                      .filter(Boolean)
+                                      .join(' · ')
+                                  : 'Set expiry or max uses'}
+                              </p>
+                            </div>
+                            <motion.div
+                              animate={{ rotate: limitsOpen ? 180 : 0 }}
+                              transition={collapseTransition}
+                              className='flex h-8 w-8 items-center justify-center rounded-full bg-muted/50 text-muted-foreground'
+                            >
+                              <ChevronDown className='h-4 w-4' />
+                            </motion.div>
+                          </button>
+                          <AnimatePresence initial={false}>
+                            {limitsOpen && (
+                              <motion.div
+                                key='limits-body'
+                                variants={collapseVariants}
+                                initial='initial'
+                                animate='animate'
+                                exit='exit'
+                                transition={collapseTransition}
+                                className='overflow-hidden'
+                              >
+                                <div className='space-y-4 border-t border-border/40 px-4 pb-4 pt-3'>
+                                  <div>
+                                    <label className='mb-1.5 block text-xs font-medium text-muted-foreground'>
+                                      Expires at
+                                    </label>
+                                    <div className='relative'>
+                                      <input
+                                        type='datetime-local'
+                                        value={expiresAt}
+                                        min={new Date().toISOString().slice(0, 16)}
+                                        onChange={(e) => setExpiresAt(e.target.value)}
+                                        className='peer relative w-full appearance-none rounded-xl border-none bg-muted/90 pl-3.5 pr-10 py-3 text-sm font-medium text-foreground outline-none transition-all focus:ring-1 focus:ring-primary/30 dark:scheme-dark [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0'
+                                      />
+                                      <Calendar className='pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors peer-focus:text-primary' />
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className='mb-1.5 block text-xs font-medium text-muted-foreground'>
+                                      Max uses
+                                    </label>
+                                    <input
+                                      type='number'
+                                      min='1'
+                                      step='1'
+                                      value={maxUses}
+                                      onChange={(e) => setMaxUses(e.target.value)}
+                                      placeholder='Unlimited'
+                                      className='w-full rounded-xl border-none bg-muted/90 px-3.5 py-3 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30'
+                                      style={{ WebkitAppearance: 'none', MozAppearance: 'textfield' }}
                                     />
                                   </div>
                                 </div>

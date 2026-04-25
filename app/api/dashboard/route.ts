@@ -30,6 +30,8 @@ export async function GET(req: NextRequest) {
         active: link.active,
         webhookUrl: link.webhookUrl ?? null,
         hasWebhookSecret: Boolean(link.webhookSecret),
+        expiresAt: link.expiresAt?.toISOString() ?? null,
+        maxUses: link.maxUses ?? null,
         createdAt: link.createdAt.toISOString(),
         recipients: (link.recipients ?? []).map((r: SplitRecipient) => ({
           wallet: r.wallet,

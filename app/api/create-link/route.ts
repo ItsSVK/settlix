@@ -68,6 +68,8 @@ export async function POST(req: NextRequest) {
       title: parsed.data.title,
       description: parsed.data.description,
       recipients,
+      expiresAt: parsed.data.expiresAt ? new Date(parsed.data.expiresAt) : undefined,
+      maxUses: parsed.data.maxUses,
     })
 
     return NextResponse.json({
