@@ -2,18 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import {
-  X,
-  Copy,
-  Check,
-  Zap,
-  ArrowRight,
-  Terminal,
-  Webhook,
-  ShieldCheck,
-  Code2,
-  FileCode,
-} from 'lucide-react'
+import { X, Copy, Check, Zap, ArrowRight, Terminal, Webhook, ShieldCheck, Code2, FileCode } from 'lucide-react'
 import { PayCardBase } from '@/components/pay/pay-card-base'
 import { createPortal } from 'react-dom'
 import { Button } from '@/components/ui/button'
@@ -22,6 +11,7 @@ import { Button } from '@/components/ui/button'
 
 function useClientMounted() {
   const [mounted, setMounted] = useState(false)
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), [])
   return mounted
 }
@@ -340,6 +330,7 @@ export default function EmbedDocsPage() {
 
   useEffect(() => {
     const saved = sessionStorage.getItem('settlix_test_link_id')
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (saved) setLinkId(saved)
 
     const activeSections = new Set<string>()
@@ -519,7 +510,6 @@ export default function EmbedDocsPage() {
                   </Button>
                 </div>
 
-
                 {/* Event log */}
                 <div className='mt-8'>
                   <div className='mb-2.5 flex items-center justify-between'>
@@ -651,7 +641,7 @@ export default function EmbedDocsPage() {
                   <code className='font-mono text-foreground bg-background rounded px-1 border border-border/40'>
                     X-Settlix-Signature
                   </code>
-                  . Reject the request if they don't match.
+                  . Reject the request if they don&apos;t match.
                 </p>
               </div>
             </Section>

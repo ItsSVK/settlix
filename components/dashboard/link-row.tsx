@@ -5,18 +5,7 @@ const SOLSCAN_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK === 'devnet' ? '?
 import { useState } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'motion/react'
-import {
-  ChevronDown,
-  Copy,
-  Check,
-  ExternalLink,
-  ToggleLeft,
-  ToggleRight,
-  QrCode,
-  GitFork,
-  Webhook,
-  Code2,
-} from 'lucide-react'
+import { ChevronDown, Copy, Check, ExternalLink, ToggleLeft, ToggleRight, QrCode, GitFork, Webhook } from 'lucide-react'
 import type { DashboardLink } from '@/lib/hooks/use-dashboard'
 import { Button } from '@/components/ui/button'
 import { copyText } from '@/lib/utils'

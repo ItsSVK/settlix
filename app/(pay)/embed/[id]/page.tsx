@@ -16,7 +16,9 @@ export default async function EmbedPage({ params, searchParams }: Props) {
   const { metadata: rawMeta } = await searchParams
   let metadata: Record<string, unknown> | null = null
   if (rawMeta) {
-    try { metadata = JSON.parse(decodeURIComponent(rawMeta)) } catch {}
+    try {
+      metadata = JSON.parse(decodeURIComponent(rawMeta))
+    } catch {}
   }
 
   return <EmbedPayCard linkId={parsedId.data} metadata={metadata} />

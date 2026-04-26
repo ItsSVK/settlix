@@ -143,7 +143,7 @@ export async function upsertPaymentLinkWebhook(params: {
     const nextWebhookUrl = params.webhookUrl
     const nextWebhookSecret = nextWebhookUrl
       ? params.replaceSecret
-        ? (params.webhookSecret ?? null)
+        ? params.webhookSecret ?? null
         : link.webhookSecret
       : null
 

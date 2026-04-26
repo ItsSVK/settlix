@@ -6,3 +6,7 @@ coverage/
 pnpm-lock.yaml
 .pnpm-store/
 program/
+
+.cursor/
+.claude/
+.agents/

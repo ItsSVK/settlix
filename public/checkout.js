@@ -28,7 +28,7 @@
           return scripts[scripts.length - 1]
         })()
       return el && el.src ? new URL(el.src).origin : location.origin
-    } catch (e) {
+    } catch {
       return location.origin
     }
   })()
@@ -157,7 +157,9 @@
     if (_meta) {
       try {
         iframeSrc += '?metadata=' + encodeURIComponent(JSON.stringify(_meta))
-      } catch (e) {}
+      } catch {
+        // Ignore error and continue with unadorned URL
+      }
     }
     iframe.src = iframeSrc
     iframe.title = 'Settlix Checkout'

@@ -1,9 +1,5 @@
 interface SettlixCheckout {
-  open(opts: {
-    linkId: string
-    onSuccess?: (txSignature: string) => void
-    onClose?: () => void
-  }): void
+  open(opts: { linkId: string; onSuccess?: (txSignature: string) => void; onClose?: () => void }): void
   close(): void
 }
 

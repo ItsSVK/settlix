@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
         // Allow the /embed/* pages to be iframed from any merchant domain.
         // CSP frame-ancestors is the modern replacement for X-Frame-Options.
         source: '/embed/:path*',
-        headers: [{ key: 'Content-Security-Policy', value: "frame-ancestors *" }],
+        headers: [{ key: 'Content-Security-Policy', value: 'frame-ancestors *' }],
       },
     ]
   },

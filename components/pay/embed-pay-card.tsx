@@ -17,9 +17,12 @@ interface EmbedPayCardProps {
 }
 
 export function EmbedPayCard({ linkId, metadata }: EmbedPayCardProps) {
-  const handlePaid = useCallback((txSignature: string) => {
-    postToParent({ type: 'settlix:paid', txSignature, metadata: metadata ?? null })
-  }, [metadata])
+  const handlePaid = useCallback(
+    (txSignature: string) => {
+      postToParent({ type: 'settlix:paid', txSignature, metadata: metadata ?? null })
+    },
+    [metadata],
+  )
 
   return <PayCardBase linkId={linkId} onPaid={handlePaid} />
 }
