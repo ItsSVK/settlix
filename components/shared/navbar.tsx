@@ -7,9 +7,8 @@ import { cn } from '@/lib/utils'
 import { usePathname } from 'next/navigation'
 import { AnimatedThemeButton } from '@/components/shared/animated-theme-button'
 import { useTheme } from 'next-themes'
-import { DashboardButton } from '@/components/shared/dashboard-button'
 import { SendButton } from '@/components/shared/send-button'
-import { LogoutButton } from '@/components/shared/logout-button'
+import { AvatarDropdown } from '@/components/shared/avater-dropdown'
 
 export function Navbar({ className }: { className?: string }) {
   const { wallet, isLoading } = useAuth()
@@ -38,15 +37,14 @@ export function Navbar({ className }: { className?: string }) {
       ) : wallet ? (
         <>
           <SendButton />
-          <DashboardButton />
           <AnimatedThemeButton className='md:hidden' isDark={isDark} />
-          <LogoutButton />
+          <AvatarDropdown />
         </>
       ) : (
         <span className='flex items-center gap-2'>
           <SendButton />
-          <ConnectButton className='h-[36px] rounded-[15px] border-0 bg-white px-5 py-0 text-[13px] text-black hover:bg-neutral-200 hover:shadow-none' />
           <AnimatedThemeButton className='md:hidden' isDark={isDark} />
+          <ConnectButton className='h-[36px] rounded-[15px] border-0 bg-white px-5 py-0 text-[13px] text-black hover:bg-neutral-200 hover:shadow-none' />
         </span>
       )}
     </nav>

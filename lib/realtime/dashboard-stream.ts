@@ -43,14 +43,18 @@ export function subscribeDashboardStream(merchantWallet: string, listener: Liste
 }
 
 export function publishDashboardPaymentPaid(event: DashboardPaymentPaidEvent) {
-  const listeners = getRegistry().get(event.merchantWallet)
+  const registry = getRegistry()
+  const listeners = registry.get(event.merchantWallet)
   if (!listeners || listeners.size === 0) return
 
   for (const listener of [...listeners]) {
     try {
       listener(event)
     } catch {
-      // Ignore a broken subscriber and continue fan-out.
+      // Listener threw (closed controller) — evict it so stale entries don't accumulate.
+      listeners.delete(listener)
     }
   }
+
+  if (listeners.size === 0) registry.delete(event.merchantWallet)
 }

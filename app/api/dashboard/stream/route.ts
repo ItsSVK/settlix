@@ -15,12 +15,18 @@ function formatPing(): Uint8Array {
   return new TextEncoder().encode(`event: ping\ndata: {}\n\n`)
 }
 
+// Max lifetime per connection. EventSource reconnects automatically after the
+// server closes. Without this, zombie connections (e.g. from dev hot-reloads
+// where req.signal abort doesn't fire) accumulate and leak memory.
+const MAX_STREAM_MS = 5 * 60_000
+
 export async function GET(req: NextRequest) {
   try {
     const { wallet } = await requireAuth(req)
 
     let unsubscribe = () => {}
     let heartbeat: ReturnType<typeof setInterval> | null = null
+    let maxAge: ReturnType<typeof setTimeout> | null = null
     let streamClosed = false
 
     const stream = new ReadableStream<Uint8Array>({
@@ -30,6 +36,7 @@ export async function GET(req: NextRequest) {
           streamClosed = true
           unsubscribe()
           if (heartbeat) clearInterval(heartbeat)
+          if (maxAge) clearTimeout(maxAge)
           try {
             controller.close()
           } catch {
@@ -38,18 +45,31 @@ export async function GET(req: NextRequest) {
         }
 
         unsubscribe = subscribeDashboardStream(wallet, (event) => {
-          controller.enqueue(formatSse(event))
+          if (streamClosed) return
+          try {
+            controller.enqueue(formatSse(event))
+          } catch {
+            close()
+          }
         })
 
         heartbeat = setInterval(() => {
-          controller.enqueue(formatPing())
+          if (streamClosed) return
+          try {
+            controller.enqueue(formatPing())
+          } catch {
+            close()
+          }
         }, 20_000)
+
+        maxAge = setTimeout(close, MAX_STREAM_MS)
 
         req.signal.addEventListener('abort', close)
       },
       cancel() {
         unsubscribe()
         if (heartbeat) clearInterval(heartbeat)
+        if (maxAge) clearTimeout(maxAge)
       },
     })
 
