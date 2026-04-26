@@ -1,4 +1,4 @@
-import { PaymentExecutionStatus } from '@/lib/generated/prisma/client'
+import { PaymentExecutionStatus, Prisma } from '@/lib/generated/prisma/client'
 import { Decimal } from '@/lib/generated/prisma/internal/prismaNamespace'
 import { getMint } from '@solana/spl-token'
 import { PublicKey } from '@solana/web3.js'
@@ -151,7 +151,7 @@ async function upsertPaymentExecution(data: {
         outputAmount: data.outputAmount,
         txSignature: data.txSignature,
         status: data.status,
-        metadata: data.metadata ?? undefined,
+        metadata: data.metadata ? (data.metadata as Prisma.InputJsonValue) : undefined,
       },
       update: {
         status: data.status,
@@ -160,7 +160,7 @@ async function upsertPaymentExecution(data: {
         inputToken: data.inputToken,
         inputAmount: data.inputAmount,
         outputAmount: data.outputAmount,
-        metadata: data.metadata ?? undefined,
+        metadata: data.metadata ? (data.metadata as Prisma.InputJsonValue) : undefined,
       },
     })
 

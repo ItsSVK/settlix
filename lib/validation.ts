@@ -81,7 +81,7 @@ export const submitTxBody = z.object({
   inputToken: z.string().min(32).max(64).optional(),
   inputAmount: z.string().optional(),
   outputAmount: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 })
 
 export const jupiterOrderBody = z.object({
@@ -101,7 +101,7 @@ const paymentRecordContext = z.object({
   userWallet: z.string().min(32).max(64),
   inputToken: z.string().min(32).max(64),
   inAmount: z.string(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 })
 
 export const jupiterExecuteBody = z
