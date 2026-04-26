@@ -59,3 +59,14 @@ enum PaymentExecutionStatus {
   paid
   failed
 }
+
+model ApiKey {
+  id             String    @id @default(cuid())
+  merchantWallet String
+  keyHash        String    @unique
+  name           String
+  lastUsedAt     DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([merchantWallet])
+}

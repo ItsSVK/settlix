@@ -7,6 +7,7 @@ import { StatsBar } from '@/components/dashboard/stats-bar'
 import { LinksTable } from '@/components/dashboard/links-table'
 import { CreateLinkDialog } from '@/components/dashboard/create-link-dialog'
 import { DistributeButton } from '@/components/dashboard/distribute-button'
+import { ApiKeysSection } from '@/components/dashboard/api-keys-section'
 import { useDashboard } from '@/lib/hooks/use-dashboard'
 import { useAuth } from '@/components/auth/auth-context'
 import { Switch } from '@/components/ui/switch'
@@ -64,6 +65,10 @@ export default function DashboardPage() {
             )}
           </div>
           <LinksTable links={filteredLinks} isLoading={isLoading} onRefresh={refresh} onToggle={toggleLinkActive} />
+        </motion.div>
+
+        <motion.div initial={false} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 0.3 }}>
+          <ApiKeysSection />
         </motion.div>
       </div>
     </main>
