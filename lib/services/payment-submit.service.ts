@@ -59,6 +59,7 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
       outputAmount: decimalFromOptionalString(body.outputAmount, new Decimal(0)),
       status: PaymentExecutionStatus.failed,
       settlementToken: link.token,
+      metadata: body.metadata ?? null,
       webhookUrl: link.webhookUrl,
       webhookSecret: link.webhookSecret,
     })
@@ -98,6 +99,7 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
     outputAmount: outputAmountDec,
     status,
     settlementToken: link.token,
+    metadata: body.metadata ?? null,
     webhookUrl: link.webhookUrl,
     webhookSecret: link.webhookSecret,
   })
@@ -128,6 +130,7 @@ async function upsertPaymentExecution(data: {
   outputAmount: Decimal
   status: PaymentExecutionStatus
   settlementToken: string
+  metadata?: Record<string, unknown> | null
   webhookUrl?: string | null
   webhookSecret?: string | null
 }): Promise<UpsertResult> {
@@ -148,6 +151,7 @@ async function upsertPaymentExecution(data: {
         outputAmount: data.outputAmount,
         txSignature: data.txSignature,
         status: data.status,
+        metadata: data.metadata ?? undefined,
       },
       update: {
         status: data.status,
@@ -156,6 +160,7 @@ async function upsertPaymentExecution(data: {
         inputToken: data.inputToken,
         inputAmount: data.inputAmount,
         outputAmount: data.outputAmount,
+        metadata: data.metadata ?? undefined,
       },
     })
 
@@ -183,6 +188,7 @@ async function upsertPaymentExecution(data: {
             outputAmount: data.outputAmount.toString(),
             userWallet: data.userWallet,
             timestamp: saved.createdAt.toISOString(),
+            metadata: data.metadata ?? null,
           },
         })
       }

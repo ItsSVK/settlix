@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from 'react'
 import { useTheme } from 'next-themes'
+import { usePathname } from 'next/navigation'
 
 import { cn } from '@/lib/utils'
 import { AnimatedThemeButton } from '@/components/shared/animated-theme-button'
@@ -35,6 +36,9 @@ function KbdD() {
 export function FloatingThemeToggle() {
   const mounted = useIsClient()
   const { resolvedTheme } = useTheme()
+  const pathname = usePathname()
+
+  if (pathname.startsWith('/embed/')) return null
 
   if (!mounted) {
     return (

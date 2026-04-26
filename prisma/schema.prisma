@@ -46,7 +46,8 @@ model PaymentExecution {
   outputAmount      Decimal                @db.Decimal(30, 18)
   txSignature       String                 @unique
   status            PaymentExecutionStatus
-  distributedAt     DateTime?              // null = not yet paid out to partners
+  metadata          Json?
+  distributedAt     DateTime?
   createdAt         DateTime               @default(now())
   link              PaymentLink            @relation(fields: [linkId], references: [id], onDelete: Cascade)
 

@@ -10,6 +10,7 @@ export interface PaymentWebhookPayload {
   outputAmount: string
   userWallet: string
   timestamp: string
+  metadata?: Record<string, unknown> | null
   test?: boolean
 }
 
