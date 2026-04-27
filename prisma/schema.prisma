@@ -7,17 +7,29 @@ datasource db {
   provider = "postgresql"
 }
 
+model Merchant {
+  id             String        @id @default(cuid())
+  wallet         String        @unique
+  webhookUrl     String?
+  webhookSecret  String?
+  createdAt      DateTime      @default(now())
+  lastSeenAt     DateTime      @default(now())
+
+  paymentLinks   PaymentLink[]
+  invoices       Invoice[]
+  apiKeys        ApiKey[]
+}
+
 model PaymentLink {
   id             String             @id @default(cuid())
   merchantWallet String
+  merchant       Merchant           @relation(fields: [merchantWallet], references: [wallet])
   token          String
   amount         Decimal            @db.Decimal(20, 6)
   type           String             @default("fixed")
   active         Boolean            @default(true)
   title          String?
   description    String?
-  webhookUrl     String?
-  webhookSecret  String?
   expiresAt      DateTime?
   maxUses        Int?
   createdAt      DateTime           @default(now())
@@ -29,6 +41,7 @@ model PaymentLink {
 model Invoice {
   id             String        @id @default(cuid())
   merchantWallet String
+  merchant       Merchant      @relation(fields: [merchantWallet], references: [wallet])
   clientName     String?
   clientEmail    String?
   dueDate        DateTime?
@@ -91,6 +104,7 @@ enum PaymentExecutionStatus {
 model ApiKey {
   id             String    @id @default(cuid())
   merchantWallet String
+  merchant       Merchant  @relation(fields: [merchantWallet], references: [wallet])
   keyHash        String    @unique
   name           String
   lastUsedAt     DateTime?

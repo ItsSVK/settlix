@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { CodeXml, FileCode, LayoutDashboard, LogOut } from 'lucide-react'
+import { CodeXml, FileCode, FileText, LayoutDashboard, LogOut, Webhook } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-context'
 import { useRouter } from 'next/navigation'
 
@@ -32,9 +32,17 @@ export function AvatarDropdown() {
             <LayoutDashboard className='h-4 w-4' />
             Dashboard
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push('/dashboard/invoices')}>
+            <FileText className='h-4 w-4' />
+            Invoices
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => router.push('/dashboard/keys')}>
             <CodeXml className='h-4 w-4' />
             API Keys
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push('/dashboard/webhook')}>
+            <Webhook className='h-4 w-4' />
+            Webhook
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => window.open('/docs', '_blank')}>
             <FileCode className='h-4 w-4' />

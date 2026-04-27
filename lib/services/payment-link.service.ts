@@ -68,6 +68,7 @@ export async function getPaymentLinkById(id: string) {
       include: {
         recipients: { orderBy: { displayOrder: 'asc' } },
         _count: { select: { executions: { where: { status: PaymentExecutionStatus.paid } } } },
+        merchant: { select: { webhookUrl: true, webhookSecret: true } },
       },
     })
   } catch (e) {
@@ -121,45 +122,5 @@ export async function updatePaymentLinkActive(id: string, merchantWallet: string
       throw new ApiError(500, 'Could not update payment link', DB_UPDATE_FAILED, { error: e.message })
     }
     throw new ApiError(500, 'Could not update payment link', DB_UNEXPECTED, { error: e })
-  }
-}
-
-export async function upsertPaymentLinkWebhook(params: {
-  id: string
-  merchantWallet: string
-  webhookUrl: string | null
-  webhookSecret?: string
-  replaceSecret: boolean
-}) {
-  try {
-    const link = await prisma.paymentLink.findUnique({ where: { id: params.id } })
-    if (!link) {
-      throw new ApiError(404, 'Payment link not found', NOT_FOUND)
-    }
-    if (link.merchantWallet !== params.merchantWallet) {
-      throw new ApiError(403, 'Not authorized to update this link', FORBIDDEN)
-    }
-
-    const nextWebhookUrl = params.webhookUrl
-    const nextWebhookSecret = nextWebhookUrl
-      ? params.replaceSecret
-        ? params.webhookSecret ?? null
-        : link.webhookSecret
-      : null
-
-    return await prisma.paymentLink.update({
-      where: { id: params.id },
-      data: {
-        webhookUrl: nextWebhookUrl,
-        webhookSecret: nextWebhookSecret,
-      },
-    })
-  } catch (e) {
-    if (e instanceof ApiError) throw e
-    apiLogger.error('PaymentLink upsert webhook failed', e, { id: params.id })
-    if (e instanceof Error && 'message' in e) {
-      throw new ApiError(500, 'Could not update webhook', DB_UPDATE_FAILED, { error: e.message })
-    }
-    throw new ApiError(500, 'Could not update webhook', DB_UNEXPECTED, { error: e })
   }
 }

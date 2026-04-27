@@ -5,13 +5,12 @@ const SOLSCAN_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK === 'devnet' ? '?
 import { useState } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'motion/react'
-import { ChevronDown, Copy, Check, ExternalLink, ToggleLeft, ToggleRight, QrCode, GitFork, Webhook } from 'lucide-react'
+import { ChevronDown, Copy, Check, ExternalLink, ToggleLeft, ToggleRight, QrCode, GitFork } from 'lucide-react'
 import type { DashboardLink } from '@/lib/hooks/use-dashboard'
 import { Button } from '@/components/ui/button'
 import { copyText } from '@/lib/utils'
 import { QRModal } from './qr-modal'
 import { SplitModal } from './split-modal'
-import { WebhookModal } from './webhook-modal'
 import { TOKENS } from '@/lib/tokens/tokens'
 
 function shorten(s: string, start = 6, end = 4) {
@@ -30,7 +29,6 @@ export function LinkRow({ link, onToggle, onRefresh }: LinkRowProps) {
   const [toggling, setToggling] = useState(false)
   const [qrOpen, setQROpen] = useState(false)
   const [splitOpen, setSplitOpen] = useState(false)
-  const [webhookOpen, setWebhookOpen] = useState(false)
 
   const payUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/pay/${link.id}`
 
@@ -142,16 +140,6 @@ export function LinkRow({ link, onToggle, onRefresh }: LinkRowProps) {
           </Button>
 
           <Button
-            onClick={() => setWebhookOpen(true)}
-            title='Webhook Configuration'
-            variant='ghost'
-            size='sm'
-            className='h-6 w-6 rounded-lg p-0 text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors'
-          >
-            <Webhook className={`h-3 w-3 ${link.webhookUrl ? 'text-blue-400' : ''}`} />
-          </Button>
-
-          <Button
             onClick={() => copyText(payUrl, setCopied)}
             title='Copy URL'
             variant='ghost'
@@ -219,9 +207,9 @@ export function LinkRow({ link, onToggle, onRefresh }: LinkRowProps) {
                         minute: 'numeric',
                         hour12: true,
                       })
-                    : "Won't expire"}
+                    : ''}
                 </span>
-                {!!link.maxUses && <span className='mx-2'>•</span>}
+                {link.expiresAt && !!link.maxUses && <span className='mx-2'>•</span>}
                 {link.maxUses && (
                   <span className={` ${isSoldOut ? 'text-destructive' : ''}`}>
                     {`${link.stats.paidCount}/${link.maxUses} uses`}
@@ -301,7 +289,6 @@ export function LinkRow({ link, onToggle, onRefresh }: LinkRowProps) {
       />
 
       {link.recipients.length > 0 && <SplitModal open={splitOpen} onClose={() => setSplitOpen(false)} link={link} />}
-      <WebhookModal open={webhookOpen} onClose={() => setWebhookOpen(false)} onUpdated={onRefresh} link={link} />
     </div>
   )
 }

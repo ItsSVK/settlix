@@ -6,6 +6,7 @@ import { walletLoginBody } from '@/lib/validation'
 import { consumeNonce } from '@/lib/auth/nonce-store'
 import { verifyWalletSignature } from '@/lib/auth/verify-signature'
 import { signSession, SESSION_COOKIE, sessionCookieOptions } from '@/lib/auth/session'
+import { prisma } from '@/lib/db'
 
 /** The exact message prefix that clients must sign. */
 export const SIGN_MESSAGE_PREFIX = 'Sign in to Settlix:\n'
@@ -49,7 +50,14 @@ export async function POST(req: Request) {
       throw new ApiError(401, 'Signature verification failed', UNAUTHORIZED)
     }
 
-    // 3. Issue JWT and set HttpOnly cookie
+    // 3. Upsert merchant record — creates on first login, updates lastSeenAt on subsequent logins
+    await prisma.merchant.upsert({
+      where: { wallet },
+      create: { wallet },
+      update: { lastSeenAt: new Date() },
+    })
+
+    // 4. Issue JWT and set HttpOnly cookie
     const token = await signSession(wallet)
     const res = NextResponse.json({ wallet }, { status: 200 })
     res.cookies.set(SESSION_COOKIE, token, sessionCookieOptions())

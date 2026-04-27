@@ -254,12 +254,14 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                             {copied ? 'Copied!' : 'Copy'}
                           </Button>
                         </div>
-                        <button
+                        <Button
+                          type='button'
                           onClick={reset}
-                          className='w-full rounded-2xl bg-primary py-3.5 text-sm font-semibold text-primary-foreground outline-none transition-all hover:opacity-90 focus:ring-2 focus:ring-primary/20'
+                          className='relative mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-sm font-semibold text-background transition-all hover:opacity-90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 dark:text-foreground'
+                          // className='w-full rounded-2xl bg-primary py-3.5 text-sm font-semibold text-primary-foreground outline-none transition-all hover:opacity-90 focus:ring-2 focus:ring-primary/20'
                         >
                           Done
-                        </button>
+                        </Button>
                       </div>
                     ) : (
                       <form onSubmit={submit} className='space-y-5' noValidate>

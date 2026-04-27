@@ -65,8 +65,8 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
       status: PaymentExecutionStatus.failed,
       settlementToken: link.token,
       metadata: body.metadata ?? null,
-      webhookUrl: link.webhookUrl,
-      webhookSecret: link.webhookSecret,
+      webhookUrl: link.merchant?.webhookUrl ?? null,
+      webhookSecret: link.merchant?.webhookSecret ?? null,
     })
     return {
       ok: false,
@@ -105,8 +105,8 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
     status,
     settlementToken: link.token,
     metadata: body.metadata ?? null,
-    webhookUrl: link.webhookUrl,
-    webhookSecret: link.webhookSecret,
+    webhookUrl: link.merchant?.webhookUrl ?? null,
+    webhookSecret: link.merchant?.webhookSecret ?? null,
   })
 
   // txSignature was already recorded (different executionId, same on-chain tx).

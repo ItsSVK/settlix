@@ -3,11 +3,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'motion/react'
-import { AlertCircle, Check, Copy, Key, Loader2, Plus, Trash2, X } from 'lucide-react'
+import { AlertCircle, Check, Copy, Key, Loader2, Plus, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { copyText } from '@/lib/utils'
+import ArchiveItem from '@/components/shared/archive-item'
 
 interface ApiKey {
   id: string
@@ -115,11 +116,7 @@ function RevealModalPanel({ rawKey, name, onClose }: RevealModalProps) {
             </Button>
           </div>
 
-          <Button
-            onClick={onClose}
-            className='w-full rounded-2xl py-3 text-sm font-semibold'
-            variant='secondary'
-          >
+          <Button onClick={onClose} className='w-full rounded-2xl py-3 text-sm font-semibold' variant='secondary'>
             Done, I&apos;ve saved it
           </Button>
         </motion.div>
@@ -221,10 +218,7 @@ function CreateKeyDialogPanel({ onClose, onCreated }: Omit<CreateKeyDialogProps,
 
           <form onSubmit={(e) => void handleSubmit(e)} className='space-y-4'>
             <div className='space-y-1.5 rounded-2xl border border-border/40 bg-background/30 p-4'>
-              <label
-                htmlFor='key-name'
-                className='text-xs font-medium uppercase tracking-wider text-muted-foreground'
-              >
+              <label htmlFor='key-name' className='text-xs font-medium uppercase tracking-wider text-muted-foreground'>
                 Key Name
               </label>
               <div className='rounded-xl bg-muted/90 p-1.5 focus-within:ring-1 focus-within:ring-primary/30 transition-all'>
@@ -242,7 +236,9 @@ function CreateKeyDialogPanel({ onClose, onCreated }: Omit<CreateKeyDialogProps,
                   className='w-full bg-transparent px-3 py-1 text-sm text-foreground outline-none placeholder:text-muted-foreground'
                 />
               </div>
-              <p className='text-[11px] text-muted-foreground'>This is just a label — it doesn&apos;t affect what the key can access.</p>
+              <p className='text-[11px] text-muted-foreground'>
+                This is just a label — it doesn&apos;t affect what the key can access.
+              </p>
             </div>
 
             {error && (
@@ -313,7 +309,10 @@ export function ApiKeysSection() {
 
   const handleCreated = (data: ApiKey & { key: string }) => {
     setCreateOpen(false)
-    setKeys((prev) => [{ id: data.id, name: data.name, lastUsedAt: data.lastUsedAt, createdAt: data.createdAt }, ...prev])
+    setKeys((prev) => [
+      { id: data.id, name: data.name, lastUsedAt: data.lastUsedAt, createdAt: data.createdAt },
+      ...prev,
+    ])
     setRevealKey({ raw: data.key, name: data.name })
   }
 
@@ -405,48 +404,14 @@ export function ApiKeysSection() {
                   </div>
                 </div>
 
-                <AnimatePresence mode='wait'>
-                  {confirmRevoke === key.id ? (
-                    <motion.div
-                      key='confirm'
-                      initial={{ opacity: 0, x: 8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 8 }}
-                      className='flex items-center gap-1.5'
-                    >
-                      <span className='text-[11px] font-medium text-destructive'>Revoke?</span>
-                      <Button
-                        onClick={() => void handleRevoke(key.id)}
-                        disabled={revoking === key.id}
-                        size='sm'
-                        variant='ghost'
-                        className='h-7 rounded-lg px-2.5 text-xs font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive'
-                      >
-                        {revoking === key.id ? <Loader2 className='h-3 w-3 animate-spin' /> : 'Yes'}
-                      </Button>
-                      <Button
-                        onClick={() => setConfirmRevoke(null)}
-                        size='sm'
-                        variant='ghost'
-                        className='h-7 rounded-lg px-2.5 text-xs font-medium text-muted-foreground hover:bg-muted/50'
-                      >
-                        Cancel
-                      </Button>
-                    </motion.div>
-                  ) : (
-                    <motion.div key='idle' initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                      <Button
-                        onClick={() => setConfirmRevoke(key.id)}
-                        size='sm'
-                        variant='ghost'
-                        title='Revoke key'
-                        className='h-7 w-7 rounded-lg p-0 text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-all'
-                      >
-                        <Trash2 className='h-3.5 w-3.5' />
-                      </Button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                <ArchiveItem
+                  handleArchive={handleRevoke}
+                  confirmArchive={confirmRevoke}
+                  setConfirmArchive={setConfirmRevoke}
+                  archiving={revoking}
+                  item={key}
+                  type='Revoke'
+                />
               </motion.div>
             ))
           )}

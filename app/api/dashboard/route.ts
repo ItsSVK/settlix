@@ -28,8 +28,6 @@ export async function GET(req: NextRequest) {
         description: link.description ?? undefined,
         type: link.type,
         active: link.active,
-        webhookUrl: link.webhookUrl ?? null,
-        hasWebhookSecret: Boolean(link.webhookSecret),
         expiresAt: link.expiresAt?.toISOString() ?? null,
         maxUses: link.maxUses ?? null,
         createdAt: link.createdAt.toISOString(),

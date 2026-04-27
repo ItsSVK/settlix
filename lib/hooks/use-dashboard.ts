@@ -13,8 +13,6 @@ interface DashboardLink {
   description?: string
   type: string
   active: boolean
-  webhookUrl?: string | null
-  hasWebhookSecret?: boolean
   expiresAt?: string | null
   maxUses?: number | null
   createdAt: string
