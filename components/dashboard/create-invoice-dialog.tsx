@@ -1,0 +1,370 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
+import { motion, AnimatePresence } from 'motion/react'
+import { Plus, Loader2, X, Trash2, AlertCircle, Check, Calendar, FileText } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { copyText } from '@/lib/utils'
+import { getDefaultUsdcMint } from '@/lib/solana/constants'
+
+interface LineItem {
+  id: string
+  description: string
+  quantity: string
+  unitPrice: string
+}
+
+interface CreateInvoiceDialogProps {
+  onCreated: () => void
+}
+
+function newItem(): LineItem {
+  return { id: Math.random().toString(36).slice(2), description: '', quantity: '1', unitPrice: '' }
+}
+
+function rowTotal(item: LineItem): number {
+  const q = parseFloat(item.quantity)
+  const p = parseFloat(item.unitPrice)
+  return isNaN(q) || isNaN(p) ? 0 : q * p
+}
+
+function invoiceTotal(items: LineItem[]): number {
+  return items.reduce((acc, item) => acc + rowTotal(item), 0)
+}
+
+function fmt(n: number) {
+  return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+export function CreateInvoiceDialog({ onCreated }: CreateInvoiceDialogProps) {
+  const [open, setOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  const [clientName, setClientName] = useState('')
+  const [clientEmail, setClientEmail] = useState('')
+  const [dueDate, setDueDate] = useState('')
+  const [memo, setMemo] = useState('')
+  const [lineItems, setLineItems] = useState<LineItem[]>([newItem()])
+
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [result, setResult] = useState<{ id: string; invoicePath: string } | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
+
+  const reset = () => {
+    setClientName('')
+    setClientEmail('')
+    setDueDate('')
+    setMemo('')
+    setLineItems([newItem()])
+    setError('')
+    setResult(null)
+    setOpen(false)
+  }
+
+  const updateItem = (id: string, field: keyof Omit<LineItem, 'id'>, value: string) => {
+    setLineItems((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)))
+    setError('')
+  }
+
+  const addItem = () => setLineItems((prev) => [...prev, newItem()])
+
+  const removeItem = (id: string) => {
+    if (lineItems.length > 1) setLineItems((prev) => prev.filter((item) => item.id !== id))
+  }
+
+  const total = invoiceTotal(lineItems)
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    for (const item of lineItems) {
+      if (!item.description.trim()) { setError('All line items need a description.'); return }
+      const q = parseFloat(item.quantity)
+      const p = parseFloat(item.unitPrice)
+      if (isNaN(q) || q <= 0) { setError('All quantities must be greater than 0.'); return }
+      if (isNaN(p) || p <= 0) { setError('All unit prices must be greater than 0.'); return }
+    }
+
+    if (total <= 0) { setError('Invoice total must be greater than 0.'); return }
+
+    setIsLoading(true)
+    setError('')
+
+    try {
+      const res = await fetch('/api/invoice', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: getDefaultUsdcMint(),
+          clientName: clientName.trim() || undefined,
+          clientEmail: clientEmail.trim() || undefined,
+          dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+          memo: memo.trim() || undefined,
+          lineItems: lineItems.map((item) => ({
+            description: item.description.trim(),
+            quantity: parseFloat(item.quantity),
+            unitPrice: parseFloat(item.unitPrice),
+          })),
+        }),
+      })
+
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        throw new Error(d.error ?? 'Failed to create invoice')
+      }
+
+      const data = await res.json()
+      setResult(data)
+      onCreated()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unknown error')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const invoiceUrl = result
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/invoice/${result.id}`
+    : ''
+
+  return (
+    <>
+      <Button
+        onClick={() => setOpen(true)}
+        variant='secondary'
+        className='flex items-center rounded-xl px-3 py-2 sm:px-4 sm:py-2 text-sm font-semibold transition-all hover:opacity-90 active:scale-[0.98] shadow-sm'
+      >
+        <FileText className='h-4 w-4' />
+        <span className='hidden sm:inline-block'>New Invoice</span>
+      </Button>
+
+      {mounted &&
+        createPortal(
+          <AnimatePresence>
+            {open && (
+              <div className='fixed inset-0 z-100 overflow-y-auto'>
+                <div className='flex min-h-full items-start justify-center p-4 pt-12'>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className='fixed inset-0 bg-background/80 backdrop-blur-md'
+                  />
+                  <motion.div
+                    layout
+                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                    className='relative w-full max-w-xl rounded-3xl border border-border/40 bg-card/60 p-6 shadow-2xl ring-1 ring-white/5 backdrop-blur-xl'
+                  >
+                    {/* Header */}
+                    <div className='mb-5 flex items-center justify-between'>
+                      <div className='flex items-center gap-3'>
+                        <div className='flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10'>
+                          <FileText className='h-4 w-4 text-primary' />
+                        </div>
+                        <h2 className='text-lg font-semibold tracking-tight text-foreground'>New Invoice</h2>
+                      </div>
+                      <Button onClick={reset} variant='ghost' className='rounded-full p-2 text-muted-foreground hover:bg-muted/50'>
+                        <X className='h-4 w-4' />
+                      </Button>
+                    </div>
+
+                    {result ? (
+                      <div className='space-y-5'>
+                        <div className='flex flex-col items-center justify-center rounded-2xl border border-border/30 bg-muted/10 py-6'>
+                          <div className='mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-500/10 text-green-500'>
+                            <Check className='h-6 w-6' />
+                          </div>
+                          <p className='text-sm font-medium text-foreground'>Invoice created</p>
+                          <p className='mt-1 text-xs text-muted-foreground'>Share this link with your client</p>
+                        </div>
+                        <div className='flex items-center gap-2 rounded-2xl border border-border/50 bg-background/50 p-3'>
+                          <span className='ml-2 flex-1 truncate font-mono text-sm text-muted-foreground'>{invoiceUrl}</span>
+                          <Button
+                            onClick={() => copyText(invoiceUrl, setCopied)}
+                            variant='secondary'
+                            size='sm'
+                            className={`shrink-0 rounded-xl px-4 font-medium ${copied ? 'bg-green-500/10 text-green-500' : ''}`}
+                          >
+                            {copied ? 'Copied!' : 'Copy'}
+                          </Button>
+                        </div>
+                        <Button onClick={reset} className='w-full rounded-2xl py-3.5 text-sm font-semibold'>
+                          Done
+                        </Button>
+                      </div>
+                    ) : (
+                      <form onSubmit={(e) => void submit(e)} className='space-y-4' noValidate>
+                        {/* Client info */}
+                        <div className='space-y-3 rounded-2xl border border-border/40 bg-background/30 p-4'>
+                          <p className='text-xs font-semibold uppercase tracking-wider text-muted-foreground'>Client</p>
+                          <input
+                            type='text'
+                            value={clientName}
+                            onChange={(e) => { setClientName(e.target.value); setError('') }}
+                            placeholder='Client name (optional)'
+                            maxLength={100}
+                            className='w-full rounded-xl bg-muted/90 px-3.5 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30 transition-all'
+                          />
+                          <input
+                            type='email'
+                            value={clientEmail}
+                            onChange={(e) => { setClientEmail(e.target.value); setError('') }}
+                            placeholder='Email (optional)'
+                            className='w-full rounded-xl bg-muted/90 px-3.5 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30 transition-all'
+                          />
+                          <div className='relative'>
+                            <input
+                              type='date'
+                              value={dueDate}
+                              min={new Date().toISOString().slice(0, 10)}
+                              onChange={(e) => { setDueDate(e.target.value); setError('') }}
+                              placeholder='Due date (optional)'
+                              className='peer w-full appearance-none rounded-xl bg-muted/90 pl-3.5 pr-10 py-2.5 text-sm text-foreground outline-none focus:ring-1 focus:ring-primary/30 transition-all dark:scheme-dark [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0'
+                            />
+                            <Calendar className='pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+                            {!dueDate && (
+                              <span className='pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground'>
+                                Due date (optional)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Line items */}
+                        <div className='space-y-3 rounded-2xl border border-border/40 bg-background/30 p-4'>
+                          <p className='text-xs font-semibold uppercase tracking-wider text-muted-foreground'>Line Items</p>
+
+                          <div className='space-y-2'>
+                            <AnimatePresence initial={false}>
+                              {lineItems.map((item) => (
+                                <motion.div
+                                  key={item.id}
+                                  layout
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: 'auto' }}
+                                  exit={{ opacity: 0, height: 0 }}
+                                  transition={{ duration: 0.2 }}
+                                  className='overflow-hidden'
+                                >
+                                  <div className='flex items-center gap-2'>
+                                    <input
+                                      type='text'
+                                      value={item.description}
+                                      onChange={(e) => updateItem(item.id, 'description', e.target.value)}
+                                      placeholder='Description'
+                                      maxLength={200}
+                                      className='flex-1 rounded-xl bg-muted/90 px-3 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30 transition-all'
+                                    />
+                                    <input
+                                      type='number'
+                                      value={item.quantity}
+                                      min='0.0001'
+                                      step='any'
+                                      onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
+                                      placeholder='Qty'
+                                      className='w-16 rounded-xl bg-muted/90 px-2 py-2.5 text-center text-sm text-foreground outline-none focus:ring-1 focus:ring-primary/30 transition-all'
+                                      style={{ WebkitAppearance: 'none', MozAppearance: 'textfield' }}
+                                    />
+                                    <div className='relative w-24'>
+                                      <span className='pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground'>$</span>
+                                      <input
+                                        type='number'
+                                        value={item.unitPrice}
+                                        min='0.000001'
+                                        step='any'
+                                        onChange={(e) => updateItem(item.id, 'unitPrice', e.target.value)}
+                                        placeholder='0.00'
+                                        className='w-full rounded-xl bg-muted/90 py-2.5 pl-5 pr-2 text-sm text-foreground outline-none focus:ring-1 focus:ring-primary/30 transition-all'
+                                        style={{ WebkitAppearance: 'none', MozAppearance: 'textfield' }}
+                                      />
+                                    </div>
+                                    <span className='w-16 text-right font-mono text-xs text-muted-foreground'>
+                                      {fmt(rowTotal(item))}
+                                    </span>
+                                    <Button
+                                      type='button'
+                                      onClick={() => removeItem(item.id)}
+                                      disabled={lineItems.length === 1}
+                                      variant='ghost'
+                                      className='h-8 w-8 shrink-0 rounded-lg p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-30'
+                                    >
+                                      <Trash2 className='h-3.5 w-3.5' />
+                                    </Button>
+                                  </div>
+                                </motion.div>
+                              ))}
+                            </AnimatePresence>
+                          </div>
+
+                          <Button
+                            type='button'
+                            onClick={addItem}
+                            disabled={lineItems.length >= 50}
+                            variant='ghost'
+                            className='flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border/60 py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-border/80 transition-all'
+                          >
+                            <Plus className='h-3.5 w-3.5' /> Add Line Item
+                          </Button>
+
+                          <div className='flex items-center justify-between border-t border-border/30 pt-3'>
+                            <span className='text-xs font-semibold uppercase tracking-wider text-muted-foreground'>Total</span>
+                            <span className='font-mono text-sm font-bold text-foreground'>
+                              {fmt(total)} <span className='text-xs font-normal text-muted-foreground'>USDC</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Memo */}
+                        <textarea
+                          value={memo}
+                          onChange={(e) => setMemo(e.target.value)}
+                          placeholder='Add a note or memo (optional)'
+                          maxLength={1000}
+                          rows={2}
+                          className='w-full resize-none rounded-2xl border border-border/40 bg-background/30 px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30 transition-all'
+                        />
+
+                        {error && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className='flex items-start gap-2 rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-xs text-destructive'
+                          >
+                            <AlertCircle className='mt-0.5 h-4 w-4 shrink-0' />
+                            <p className='font-medium'>{error}</p>
+                          </motion.div>
+                        )}
+
+                        <Button
+                          type='submit'
+                          disabled={isLoading || lineItems.length === 0 || total <= 0}
+                          className='w-full rounded-2xl bg-primary py-3.5 text-sm font-semibold text-background hover:opacity-90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 dark:text-foreground'
+                        >
+                          {isLoading ? (
+                            <span className='flex items-center gap-2'>
+                              <Loader2 className='h-4 w-4 animate-spin' /> Creating...
+                            </span>
+                          ) : (
+                            `Create Invoice · ${fmt(total)} USDC`
+                          )}
+                        </Button>
+                      </form>
+                    )}
+                  </motion.div>
+                </div>
+              </div>
+            )}
+          </AnimatePresence>,
+          document.body,
+        )}
+    </>
+  )
+}

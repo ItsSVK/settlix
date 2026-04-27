@@ -9,6 +9,7 @@ import {
   DB_UNEXPECTED,
   DB_UPSERT_FAILED,
   LINK_NOT_FOUND,
+  LINK_SOLD_OUT,
   TX_NOT_FOUND,
   UNKNOWN_PAYER_WALLET,
   VERIFY_FAILED,
@@ -33,6 +34,10 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
   const link = await getPaymentLinkById(body.linkId)
   if (!link || !link.active) {
     return { ok: false, reason: 'Link not found', httpStatus: 404, code: LINK_NOT_FOUND }
+  }
+
+  if (link.maxUses !== null && link._count.executions >= link.maxUses) {
+    return { ok: false, reason: 'Payment limit reached', httpStatus: 409, code: LINK_SOLD_OUT }
   }
 
   const connection = createServerConnection()

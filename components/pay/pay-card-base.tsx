@@ -9,13 +9,13 @@ import { QuoteDisplay } from './quote-display'
 import { PayButton } from './pay-button'
 import { SuccessOverlay } from './success-overlay'
 import { SolanaQRModal } from './solana-qr-modal'
-import { ScanLine } from 'lucide-react'
+import { ScanLine, FileText } from 'lucide-react'
 
 function shorten(addr: string) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`
 }
 
-export function PayCardBase({ linkId, onPaid }: { linkId: string; onPaid?: (txSignature: string) => void }) {
+export function PayCardBase({ linkId, onPaid, allowInvoice }: { linkId: string; onPaid?: (txSignature: string) => void; allowInvoice?: boolean }) {
   const { data: link, isLoading: linkLoading, error: linkError } = usePaymentLink(linkId)
   const [selectedToken, setSelectedToken] = useState<TokenInfo | null>(null)
   const [successResult, setSuccessResult] = useState<{
@@ -99,6 +99,23 @@ export function PayCardBase({ linkId, onPaid }: { linkId: string; onPaid?: (txSi
                 <p className='text-2xl'>🎟️</p>
                 <p className='text-sm font-medium text-foreground'>Sold out</p>
                 <p className='text-xs text-muted-foreground'>This link has reached its maximum number of payments.</p>
+              </motion.div>
+            ) : !allowInvoice && link?.type === 'invoice' ? (
+              <motion.div
+                key='invoice'
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className='py-10 text-center space-y-2'
+              >
+                <div className='flex justify-center'>
+                  <div className='flex h-10 w-10 items-center justify-center rounded-xl bg-muted/60'>
+                    <FileText className='h-5 w-5 text-muted-foreground' />
+                  </div>
+                </div>
+                <p className='text-sm font-medium text-foreground'>This is an invoice link</p>
+                <p className='text-xs text-muted-foreground'>
+                  Use the invoice URL shared by your merchant to view details and complete your payment.
+                </p>
               </motion.div>
             ) : linkError || !link ? (
               <motion.div key='error' className='py-10 text-center'>

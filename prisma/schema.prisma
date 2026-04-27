@@ -23,6 +23,34 @@ model PaymentLink {
   createdAt      DateTime           @default(now())
   executions     PaymentExecution[]
   recipients     SplitRecipient[]
+  invoice        Invoice?
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  merchantWallet String
+  clientName     String?
+  clientEmail    String?
+  dueDate        DateTime?
+  memo           String?       @db.Text
+  token          String
+  lineItems      InvoiceItem[]
+  linkId         String        @unique
+  link           PaymentLink   @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+
+  @@index([merchantWallet])
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  description String
+  quantity    Decimal @db.Decimal(10, 4)
+  unitPrice   Decimal @db.Decimal(20, 6)
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
 }
 
 model SplitRecipient {
