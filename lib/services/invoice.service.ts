@@ -9,8 +9,7 @@ export type InvoiceStatus = 'paid' | 'overdue' | 'unpaid'
 
 function computeTotal(items: { quantity: number; unitPrice: number }[]): Decimal {
   return items.reduce(
-    (acc, item) =>
-      acc.plus(new Decimal(item.quantity.toString()).times(new Decimal(item.unitPrice.toString()))),
+    (acc, item) => acc.plus(new Decimal(item.quantity.toString()).times(new Decimal(item.unitPrice.toString()))),
     new Decimal(0),
   )
 }
@@ -77,8 +76,8 @@ export async function createInvoice(data: {
 
 export async function getInvoiceById(id: string) {
   try {
-    return await prisma.invoice.findUnique({
-      where: { id },
+    return await prisma.invoice.findFirst({
+      where: { id, archivedAt: null },
       include: {
         lineItems: { orderBy: { id: 'asc' } },
         link: {
@@ -105,7 +104,7 @@ export async function getInvoiceById(id: string) {
 export async function getInvoicesByWallet(merchantWallet: string) {
   try {
     return await prisma.invoice.findMany({
-      where: { merchantWallet },
+      where: { merchantWallet, archivedAt: null },
       orderBy: { createdAt: 'desc' },
       include: {
         lineItems: true,
@@ -131,12 +130,18 @@ export async function getInvoicesByWallet(merchantWallet: string) {
   }
 }
 
-export async function deleteInvoice(id: string, merchantWallet: string) {
+export async function archiveInvoice(id: string, merchantWallet: string) {
   try {
-    const invoice = await prisma.invoice.findUnique({ where: { id }, select: { merchantWallet: true } })
+    const invoice = await prisma.invoice.findFirst({
+      where: { id, archivedAt: null },
+      select: { merchantWallet: true, linkId: true },
+    })
     if (!invoice) throw new ApiError(404, 'Invoice not found', NOT_FOUND)
     if (invoice.merchantWallet !== merchantWallet) throw new ApiError(403, 'Forbidden', FORBIDDEN)
-    await prisma.invoice.delete({ where: { id } })
+    await prisma.$transaction([
+      prisma.invoice.update({ where: { id }, data: { archivedAt: new Date() } }),
+      prisma.paymentLink.update({ where: { id: invoice.linkId }, data: { archivedAt: new Date() } }),
+    ])
   } catch (e) {
     if (e instanceof ApiError) throw e
     apiLogger.error('Invoice delete failed', e, { id })

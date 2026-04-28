@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
 import { ApiError, handleApi, readJsonBody } from '@/lib/api/errors'
-import { getPaymentLinkById, updatePaymentLinkActive } from '@/lib/services/payment-link.service'
+import { getPaymentLinkById, updatePaymentLinkActive, archivePaymentLink } from '@/lib/services/payment-link.service'
 import { FORBIDDEN, LINK_EXPIRED, LINK_SOLD_OUT, NOT_FOUND, VALIDATION } from '@/lib/api/constants'
 import { paymentLinkId, updateLinkActiveBody } from '@/lib/validation'
 import { requireAuth } from '@/lib/auth/require-auth'
@@ -46,6 +46,20 @@ export async function GET(_req: Request, { params }: Params) {
         basisPoints: r.basisPoints,
       })),
     })
+  })
+}
+
+/** DELETE /api/link/[id] — protected, merchant only */
+export async function DELETE(req: NextRequest, { params }: Params) {
+  return handleApi(async () => {
+    const { wallet } = await requireAuth(req)
+    const { id } = await params
+    const parsedId = paymentLinkId.safeParse(id)
+    if (!parsedId.success) {
+      return NextResponse.json({ error: 'Not found', code: NOT_FOUND }, { status: 404 })
+    }
+    await archivePaymentLink(parsedId.data, wallet)
+    return NextResponse.json({}, { status: 200 })
   })
 }
 

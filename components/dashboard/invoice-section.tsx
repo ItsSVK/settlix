@@ -3,21 +3,13 @@
 import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'motion/react'
-import {
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-  ChevronLeft,
-  ChevronRight,
-  Copy,
-  Check,
-  ExternalLink,
-  ChevronDown,
-} from 'lucide-react'
+import { ChevronLeft, ChevronRight, Copy, Check, ExternalLink, ChevronDown } from 'lucide-react'
 import { CreateInvoiceDialog } from '@/components/dashboard/create-invoice-dialog'
 import { BackgroundBeams } from '@/components/ui/background-beams'
 import { Button } from '@/components/ui/button'
+import { ConfirmationModal } from '@/components/shared/confirmation-modal'
 import { copyText } from '@/lib/utils'
+import { toast } from 'sonner'
 import { TOKENS } from '@/lib/tokens/tokens'
 import type { Invoice } from '@/lib/hooks/use-invoices'
 
@@ -31,10 +23,30 @@ function shorten(s: string, start = 6, end = 4) {
   return `${s.slice(0, start)}…${s.slice(-end)}`
 }
 
-function InvoiceRow({ invoice }: { invoice: Invoice }) {
+function InvoiceRow({ invoice, onRefresh }: { invoice: Invoice; onRefresh: () => void }) {
   const [copied, setCopied] = useState(false)
   const [expanded, setExpanded] = useState(false)
+  const [archiving, setArchiving] = useState<string | null>(null)
+  const [confirmArchive, setConfirmArchive] = useState<string | null>(null)
   const invoiceUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/invoice/${invoice.id}`
+
+  const handleArchive = async (id: string) => {
+    setArchiving(id)
+    try {
+      const res = await fetch(`/api/invoice/${id}`, { method: 'DELETE', credentials: 'include' })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        toast.error(data.error ?? 'Failed to delete invoice')
+        return
+      }
+      onRefresh()
+    } catch {
+      toast.error('Failed to delete invoice')
+    } finally {
+      setArchiving(null)
+      setConfirmArchive(null)
+    }
+  }
 
   const isOverdue = invoice.status === 'overdue'
   const isPaid = invoice.status === 'paid'
@@ -88,7 +100,7 @@ function InvoiceRow({ invoice }: { invoice: Invoice }) {
 
         {/* Actions Strip */}
         <div
-          className='flex items-center gap-1 rounded-xl bg-muted/40 p-1 border border-border/30'
+          className='flex items-center gap-1 rounded-xl bg-muted/40 pl-2 border border-border/30'
           onClick={(e) => e.stopPropagation()}
         >
           <Button
@@ -111,6 +123,18 @@ function InvoiceRow({ invoice }: { invoice: Invoice }) {
           >
             <ExternalLink className='h-3 w-3' />
           </Button>
+
+          <div className='w-px h-4 bg-border/50 mx-1' />
+
+          <ConfirmationModal
+            className='text-red-500 h-6 w-6 rounded-lg p-0 hover:bg-background/80 hover:text-foreground transition-colors'
+            handleArchive={handleArchive}
+            archiving={archiving}
+            confirmArchive={confirmArchive}
+            setConfirmArchive={setConfirmArchive}
+            item={{ id: invoice.id }}
+            type='Archive'
+          />
         </div>
 
         <div className='hidden md:flex h-6 w-6 items-center justify-center rounded-full bg-muted/40 transition-colors group-hover:bg-muted/80 ml-2'>
@@ -237,7 +261,7 @@ export function InvoicesTable({ invoices, isLoading, onRefresh }: InvoicesTableP
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.3, delay: i * 0.05 }}
           >
-            <InvoiceRow invoice={invoice} />
+            <InvoiceRow invoice={invoice} onRefresh={onRefresh} />
           </motion.div>
         ))}
       </AnimatePresence>

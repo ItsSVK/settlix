@@ -63,8 +63,8 @@ export async function insertPaymentLink(data: {
 
 export async function getPaymentLinkById(id: string) {
   try {
-    return await prisma.paymentLink.findUnique({
-      where: { id },
+    return await prisma.paymentLink.findFirst({
+      where: { id, archivedAt: null },
       include: {
         recipients: { orderBy: { displayOrder: 'asc' } },
         _count: { select: { executions: { where: { status: PaymentExecutionStatus.paid } } } },
@@ -83,7 +83,7 @@ export async function getPaymentLinkById(id: string) {
 export async function getPaymentLinksByWallet(merchantWallet: string): Promise<PaymentLinkWithRelations[]> {
   try {
     return await prisma.paymentLink.findMany({
-      where: { merchantWallet },
+      where: { merchantWallet, archivedAt: null, NOT: { type: 'invoice' } },
       orderBy: { createdAt: 'desc' },
       include: {
         executions: {
@@ -99,6 +99,19 @@ export async function getPaymentLinksByWallet(merchantWallet: string): Promise<P
       throw new ApiError(500, 'Database error', DB_QUERY_FAILED, { prismaCode: e.message })
     }
     throw new ApiError(500, 'Database error', DB_UNEXPECTED, { error: e })
+  }
+}
+
+export async function archivePaymentLink(id: string, merchantWallet: string) {
+  try {
+    const link = await prisma.paymentLink.findFirst({ where: { id, archivedAt: null } })
+    if (!link) throw new ApiError(404, 'Payment link not found', NOT_FOUND)
+    if (link.merchantWallet !== merchantWallet) throw new ApiError(403, 'Not authorized', FORBIDDEN)
+    await prisma.paymentLink.update({ where: { id }, data: { archivedAt: new Date() } })
+  } catch (e) {
+    if (e instanceof ApiError) throw e
+    apiLogger.error('PaymentLink delete failed', e, { id })
+    throw new ApiError(500, 'Could not delete payment link', DB_UNEXPECTED, { error: e })
   }
 }
 

@@ -33,6 +33,7 @@ model PaymentLink {
   expiresAt      DateTime?
   maxUses        Int?
   createdAt      DateTime           @default(now())
+  archivedAt      DateTime?
   executions     PaymentExecution[]
   recipients     SplitRecipient[]
   invoice        Invoice?
@@ -51,6 +52,7 @@ model Invoice {
   linkId         String        @unique
   link           PaymentLink   @relation(fields: [linkId], references: [id], onDelete: Cascade)
   createdAt      DateTime      @default(now())
+  archivedAt      DateTime?
 
   @@index([merchantWallet])
 }

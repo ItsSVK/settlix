@@ -2,7 +2,8 @@ import { type NextRequest, NextResponse } from 'next/server'
 
 import { ApiError, handleApi } from '@/lib/api/errors'
 import { NOT_FOUND } from '@/lib/api/constants'
-import { getInvoiceById, deriveInvoiceStatus } from '@/lib/services/invoice.service'
+import { getInvoiceById, deriveInvoiceStatus, archiveInvoice } from '@/lib/services/invoice.service'
+import { requireAuth } from '@/lib/auth/require-auth'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -38,5 +39,15 @@ export async function GET(_req: NextRequest, { params }: Params) {
         unitPrice: item.unitPrice.toString(),
       })),
     })
+  })
+}
+
+/** DELETE /api/invoice/[id] — protected, merchant only */
+export async function DELETE(req: NextRequest, { params }: Params) {
+  return handleApi(async () => {
+    const { wallet } = await requireAuth(req)
+    const { id } = await params
+    await archiveInvoice(id, wallet)
+    return NextResponse.json({}, { status: 200 })
   })
 }

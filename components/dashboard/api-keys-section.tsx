@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { copyText } from '@/lib/utils'
 import ArchiveItem from '@/components/shared/archive-item'
+import { ConfirmationModal } from '@/components/shared/confirmation-modal'
 
 interface ApiKey {
   id: string
@@ -232,7 +233,6 @@ function CreateKeyDialogPanel({ onClose, onCreated }: Omit<CreateKeyDialogProps,
                   }}
                   placeholder='e.g. Production Server, My App'
                   maxLength={64}
-                  autoFocus
                   className='w-full bg-transparent px-3 py-1 text-sm text-foreground outline-none placeholder:text-muted-foreground'
                 />
               </div>
@@ -358,7 +358,7 @@ export function ApiKeysSection() {
               <Loader2 className='h-5 w-5 animate-spin text-muted-foreground' />
             </div>
           ) : keys.length === 0 ? (
-            <div className='flex flex-col items-center justify-center rounded-2xl border border-border/40 bg-card/40 backdrop-blur-sm py-10 text-center'>
+            <div className='flex flex-col items-center justify-center rounded-2xl border border-border/40 bg-card backdrop-blur-sm py-10 text-center shadow-[0_6px_16px_rgba(15,23,42,0.06)] dark:shadow-none'>
               <div className='flex h-10 w-10 items-center justify-center rounded-xl bg-muted/60 mb-3'>
                 <Key className='h-5 w-5 text-muted-foreground/50' />
               </div>
@@ -404,11 +404,12 @@ export function ApiKeysSection() {
                   </div>
                 </div>
 
-                <ArchiveItem
+                <ConfirmationModal
+                  className='text-red-500 h-6 w-6 rounded-lg p-0 hover:bg-background/80 hover:text-foreground transition-colors'
                   handleArchive={handleRevoke}
+                  archiving={revoking}
                   confirmArchive={confirmRevoke}
                   setConfirmArchive={setConfirmRevoke}
-                  archiving={revoking}
                   item={key}
                   type='Revoke'
                 />

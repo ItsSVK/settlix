@@ -10,6 +10,7 @@ import { DistributeButton } from '@/components/dashboard/distribute-button'
 import { useDashboard } from '@/lib/hooks/use-dashboard'
 import { useAuth } from '@/components/auth/auth-context'
 import { Switch } from '@/components/ui/switch'
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage } from '@/components/ui/breadcrumb'
 
 export default function DashboardPage() {
   const { wallet } = useAuth()
@@ -22,6 +23,15 @@ export default function DashboardPage() {
   return (
     <main className='flex-1 bg-muted/60 dark:bg-background'>
       <div className='mx-auto w-[80%] max-w-6xl px-4 pt-28 pb-10'>
+        {/* Breadcrumb */}
+        <Breadcrumb className='mb-6'>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbPage>Dashboard</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
         {/* Header */}
         <motion.div
           initial={false}

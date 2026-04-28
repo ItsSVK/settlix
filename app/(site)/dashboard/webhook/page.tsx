@@ -5,6 +5,14 @@ import Link from 'next/link'
 import { Webhook, CheckCircle2, Circle, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { WebhookModal } from '@/components/dashboard/webhook-modal'
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
+  BreadcrumbPage,
+} from '@/components/ui/breadcrumb'
 
 interface WebhookConfig {
   webhookUrl: string | null
@@ -28,14 +36,26 @@ export default function WebhookPage() {
     }
   }
 
-  useEffect(() => { void load() }, [])
+  useEffect(() => {
+    void load()
+  }, [])
 
   return (
     <main className='flex-1 bg-muted/60 dark:bg-background'>
       <div className='mx-auto w-[80%] max-w-3xl px-4 pt-28 pb-10'>
-        <Link href='/dashboard' className='mb-6 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors'>
-          ← Back to Dashboard
-        </Link>
+        <Breadcrumb className='mb-6'>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link href='/dashboard'>Dashboard</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Webhook</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
 
         <div className='mb-8 flex items-center gap-3'>
           <div className='flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10'>
@@ -43,18 +63,21 @@ export default function WebhookPage() {
           </div>
           <div>
             <h1 className='text-2xl font-bold text-foreground'>Webhook</h1>
-            <p className='text-sm text-muted-foreground'>One endpoint receives callbacks for every payment across all your links.</p>
+            <p className='text-sm text-muted-foreground'>
+              One endpoint receives callbacks for every payment across all your links.
+            </p>
           </div>
         </div>
 
-        <div className='rounded-3xl border border-border/40 bg-card/40 backdrop-blur-sm divide-y divide-border/30'>
+        {/* <div className='rounded-2xl border border-border/40 bg-card p-5 shadow-[0_6px_16px_rgba(15,23,42,0.06)] dark:shadow-none transition-all hover:scale-[1.02] hover:shadow-[0_10px_24px_rgba(15,23,42,0.1)] dark:hover:shadow-none'> */}
+        <div className='rounded-3xl border border-border/40 bg-card backdrop-blur-sm divide-y divide-border/30 shadow-[0_6px_16px_rgba(15,23,42,0.06)] dark:shadow-none'>
           <div className='flex items-center justify-between px-6 py-5'>
             <div className='space-y-1'>
               <p className='text-xs font-semibold uppercase tracking-wider text-muted-foreground'>Endpoint</p>
               {isLoading ? (
                 <div className='h-4 w-48 animate-pulse rounded bg-muted' />
               ) : config?.webhookUrl ? (
-                <p className='font-mono text-sm text-foreground break-all'>{config.webhookUrl}</p>
+                <p className='text-sm text-foreground break-all'>{config.webhookUrl}</p>
               ) : (
                 <p className='text-sm text-muted-foreground italic'>Not configured</p>
               )}
@@ -76,19 +99,27 @@ export default function WebhookPage() {
               {isLoading ? (
                 <div className='h-4 w-32 animate-pulse rounded bg-muted' />
               ) : (
-                <p className='font-mono text-sm text-foreground'>
-                  {config?.hasWebhookSecret ? '••••••••••••••••' : <span className='italic text-muted-foreground'>Not configured</span>}
+                <p className='text-sm text-foreground'>
+                  {config?.hasWebhookSecret ? (
+                    '••••••••••••••••'
+                  ) : (
+                    <span className='italic text-muted-foreground'>Not configured</span>
+                  )}
                 </p>
               )}
             </div>
-            {config?.hasWebhookSecret && (
+            {config?.hasWebhookSecret ? (
               <span className='flex items-center gap-1.5 rounded-full bg-green-500/10 px-2.5 py-1 text-xs font-bold text-green-500 ring-1 ring-green-500/20'>
                 <CheckCircle2 className='h-3 w-3' /> Enabled
+              </span>
+            ) : (
+              <span className='flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-bold text-muted-foreground ring-1 ring-border/40'>
+                <Circle className='h-3 w-3' /> Not set
               </span>
             )}
           </div>
 
-          <div className='px-6 py-4'>
+          <div className='px-6 py-4 flex justify-end'>
             <Button
               onClick={() => setOpen(true)}
               className='flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold'
@@ -104,7 +135,10 @@ export default function WebhookPage() {
         <WebhookModal
           open={open}
           onClose={() => setOpen(false)}
-          onUpdated={() => { setIsLoading(true); void load() }}
+          onUpdated={() => {
+            setIsLoading(true)
+            void load()
+          }}
           webhookUrl={config.webhookUrl}
           hasWebhookSecret={config.hasWebhookSecret}
         />

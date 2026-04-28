@@ -9,9 +9,12 @@ import { ChevronDown, Copy, Check, ExternalLink, ToggleLeft, ToggleRight, QrCode
 import type { DashboardLink } from '@/lib/hooks/use-dashboard'
 import { Button } from '@/components/ui/button'
 import { copyText } from '@/lib/utils'
+import { toast } from 'sonner'
 import { QRModal } from './qr-modal'
 import { SplitModal } from './split-modal'
 import { TOKENS } from '@/lib/tokens/tokens'
+import ArchiveItem from '@/components/shared/archive-item'
+import { ConfirmationModal } from '@/components/shared/confirmation-modal'
 
 function shorten(s: string, start = 6, end = 4) {
   return `${s.slice(0, start)}…${s.slice(-end)}`
@@ -29,11 +32,31 @@ export function LinkRow({ link, onToggle, onRefresh }: LinkRowProps) {
   const [toggling, setToggling] = useState(false)
   const [qrOpen, setQROpen] = useState(false)
   const [splitOpen, setSplitOpen] = useState(false)
+  const [archiving, setArchiving] = useState<string | null>(null)
+  const [confirmArchive, setConfirmArchive] = useState<string | null>(null)
 
   const payUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/pay/${link.id}`
 
   const isExpired = link.expiresAt && new Date(link.expiresAt) < new Date()
   const isSoldOut = link.maxUses && link.stats.paidCount >= link.maxUses
+
+  const handleArchive = async (id: string) => {
+    setArchiving(id)
+    try {
+      const res = await fetch(`/api/link/${id}`, { method: 'DELETE', credentials: 'include' })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        toast.error(data.error ?? 'Failed to delete link')
+        return
+      }
+      onRefresh()
+    } catch {
+      toast.error('Failed to delete link')
+    } finally {
+      setArchiving(null)
+      setConfirmArchive(null)
+    }
+  }
 
   const handleToggle = async () => {
     setToggling(true)
@@ -112,7 +135,7 @@ export function LinkRow({ link, onToggle, onRefresh }: LinkRowProps) {
 
         {/* Actions Strip */}
         <div
-          className='flex items-center gap-1 rounded-xl bg-muted/40 p-1 border border-border/30'
+          className='flex items-center gap-1 rounded-xl bg-muted/40 pl-2 border border-border/30'
           onClick={(e) => e.stopPropagation()}
         >
           {/* Splits */}
@@ -173,15 +196,25 @@ export function LinkRow({ link, onToggle, onRefresh }: LinkRowProps) {
           >
             {link.active ? <ToggleRight className='h-5 w-5 text-green-500' /> : <ToggleLeft className='h-5 w-5' />}
           </Button>
+
+          <ConfirmationModal
+            className='text-red-500 h-6 w-6 rounded-lg p-0 hover:bg-background/80 hover:text-foreground transition-colors'
+            handleArchive={handleArchive}
+            archiving={archiving}
+            confirmArchive={confirmArchive}
+            setConfirmArchive={setConfirmArchive}
+            item={{ id: link.id }}
+            type='Archive'
+          />
         </div>
 
-        <div className='hidden md:flex h-6 w-6 items-center justify-center rounded-full bg-muted/40 transition-colors group-hover:bg-muted/80 ml-2'>
+        {/* <div className='hidden md:flex h-6 w-6 items-center justify-center rounded-full bg-muted/40 transition-colors group-hover:bg-muted/80 ml-2'>
           <ChevronDown
             className={`h-3 w-3 text-muted-foreground transition-transform duration-300 ${
               expanded ? 'rotate-180' : ''
             }`}
           />
-        </div>
+        </div> */}
       </div>
 
       {/* Expanded view */}
