@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from 'sonner'
 import { FloatingThemeToggle } from '@/components/shared/floating-theme-toggle'
+import { Providers } from './providers'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 const fontMono = Geist_Mono({ subsets: ['latin'], variable: '--font-mono' })
@@ -23,9 +24,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className='flex min-h-full flex-col bg-background text-foreground no-scrollbar overflow-x-hidden'>
         <ThemeProvider attribute='class' defaultTheme='dark' enableSystem disableTransitionOnChange>
-          <FloatingThemeToggle />
-          <div className='flex min-h-screen flex-col bg-background'>{children}</div>
-          <Toaster richColors position='bottom-right' />
+          <Providers>
+            <FloatingThemeToggle />
+            <div className='flex min-h-screen flex-col bg-background'>{children}</div>
+            <Toaster richColors position='bottom-right' />
+          </Providers>
         </ThemeProvider>
       </body>
     </html>

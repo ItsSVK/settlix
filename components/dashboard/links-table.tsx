@@ -3,30 +3,22 @@
 import { useState, useMemo } from 'react'
 import { motion } from 'motion/react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import type { DashboardLink } from '@/lib/hooks/use-dashboard'
+import type { Link } from '@/lib/hooks/use-links'
 import { LinkRow } from './link-row'
 import { CreateLinkDialog } from './create-link-dialog'
 import { BackgroundBeams } from '@/components/ui/background-beams'
 import { Button } from '@/components/ui/button'
+import { SkeletonRow } from '@/components/shared/skeletons'
 
 interface LinksTableProps {
-  links: DashboardLink[]
+  links: Link[]
   isLoading: boolean
   onRefresh: () => void
   onToggle: (id: string, active: boolean) => Promise<void>
+  onArchive: (id: string) => Promise<void>
 }
 
-function SkeletonRow() {
-  return (
-    <div className='flex items-center gap-3 rounded-xl border border-border/30 p-4'>
-      <div className='h-2 w-2 animate-pulse rounded-full bg-muted' />
-      <div className='h-4 flex-1 animate-pulse rounded bg-muted' />
-      <div className='h-4 w-16 animate-pulse rounded bg-muted' />
-    </div>
-  )
-}
-
-export function LinksTable({ links, isLoading, onRefresh, onToggle }: LinksTableProps) {
+export function LinksTable({ links, isLoading, onRefresh, onToggle, onArchive }: LinksTableProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
@@ -72,7 +64,7 @@ export function LinksTable({ links, isLoading, onRefresh, onToggle }: LinksTable
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: i * 0.05 }}
         >
-          <LinkRow link={link} onToggle={onToggle} onRefresh={onRefresh} />
+          <LinkRow link={link} onToggle={onToggle} onRefresh={onRefresh} onArchive={onArchive} />
         </motion.div>
       ))}
 

@@ -4,9 +4,11 @@ import { motion } from 'motion/react'
 import { InvoicesTable } from '@/components/dashboard/invoice-section'
 import { CreateInvoiceDialog } from '@/components/dashboard/create-invoice-dialog'
 import { useInvoices } from '@/lib/hooks/use-invoices'
+import { SkeletonCard } from '@/components/shared/skeletons'
+import { StatsBarInvoice } from '@/components/dashboard/stats-bar-invoice'
 
 export default function InvoicesPage() {
-  const { invoices, isLoading, refresh } = useInvoices()
+  const { invoices, isLoading, refresh, archiveInvoice } = useInvoices()
 
   return (
     <div className='flex-1 bg-muted/40 dark:bg-background'>
@@ -22,6 +24,26 @@ export default function InvoicesPage() {
           <CreateInvoiceDialog onCreated={refresh} />
         </motion.div>
 
+        {/* Stats */}
+        {isLoading ? (
+          <div className='mb-8 grid grid-cols-1 gap-4 md:grid-cols-4'>
+            {[1, 2, 3, 4].map((i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        ) : (
+          invoices.length > 0 && (
+            <motion.div
+              initial={false}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className='mb-8'
+            >
+              <StatsBarInvoice invoices={invoices} />
+            </motion.div>
+          )
+        )}
+
         {/* Invoices List */}
         <motion.div initial={false} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 0.1 }}>
           <div className='mb-4 flex items-center justify-between'>
@@ -29,7 +51,12 @@ export default function InvoicesPage() {
               Invoices {!isLoading && `(${invoices.length})`}
             </h2>
           </div>
-          <InvoicesTable invoices={invoices} isLoading={isLoading} onRefresh={refresh} />
+          <InvoicesTable
+            invoices={invoices}
+            isLoading={isLoading}
+            onRefresh={refresh}
+            archiveInvoice={archiveInvoice}
+          />
         </motion.div>
       </div>
     </div>

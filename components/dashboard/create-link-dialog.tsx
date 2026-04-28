@@ -72,6 +72,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
   }, [])
 
   const reset = () => {
+    const wasCreated = !!result
     setAmount('')
     setTitle('')
     setDescription('')
@@ -84,6 +85,10 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
     setError('')
     setResult(null)
     setOpen(false)
+    
+    if (wasCreated) {
+      setTimeout(() => onCreated(), 300)
+    }
   }
 
   const partnerBpTotal = partners.reduce((sum, p) => {
@@ -178,7 +183,6 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
 
       const data = await res.json()
       setResult(data)
-      onCreated()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unknown error')
     } finally {

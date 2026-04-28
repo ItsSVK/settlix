@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import { LayoutDashboard, FileText, KeyRound, Webhook, LogOut, Sun, Moon, Copy, Check } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-context'
 import { useTheme } from 'next-themes'
@@ -20,9 +21,11 @@ import {
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar'
+import { DollarSign } from 'lucide-react'
 
 const navItems = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { title: 'Payment Links', href: '/dashboard/links', icon: DollarSign },
   { title: 'Invoices', href: '/dashboard/invoices', icon: FileText },
   { title: 'API Keys', href: '/dashboard/keys', icon: KeyRound },
   { title: 'Webhook', href: '/dashboard/webhook', icon: Webhook },
@@ -31,6 +34,8 @@ const navItems = [
 function shorten(addr: string) {
   return `${addr.slice(0, 4)}…${addr.slice(-4)}`
 }
+
+const iconTransition = { type: 'spring', stiffness: 300, damping: 25, duration: 0.3 }
 
 export function AppSidebar() {
   const pathname = usePathname()
@@ -41,7 +46,11 @@ export function AppSidebar() {
   const { setOpenMobile, isMobile } = useSidebar()
 
   const handleMobileClose = () => {
-    if (isMobile) setOpenMobile(false)
+    if (isMobile) {
+      setTimeout(() => {
+        setOpenMobile(false)
+      }, 200)
+    }
   }
 
   return (
@@ -50,7 +59,7 @@ export function AppSidebar() {
       className='border-r-0 shadow-[2px_0_16px_rgba(0,0,0,0.03)] dark:shadow-[2px_0_16px_rgba(0,0,0,0.3)] [&>div[data-sidebar=sidebar]]:bg-zinc-50 dark:[&>div[data-sidebar=sidebar]]:bg-zinc-950/50'
     >
       {/* Logo */}
-      <SidebarHeader className='px-4 py-6 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-4'>
+      <SidebarHeader className='px-4 py-6 group-data-[collapsible=icon]:px-1 group-data-[collapsible=icon]:py-4 group-data-[collapsible=icon]:items-center'>
         <Link
           href='/'
           onClick={handleMobileClose}
@@ -69,7 +78,7 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup className='pt-2 group-data-[collapsible=icon]:p-0'>
           <SidebarGroupContent>
-            <SidebarMenu className='gap-2.5 px-3 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:items-center'>
+            <SidebarMenu className='gap-2.5 px-3 group-data-[collapsible=icon]:px-1 group-data-[collapsible=icon]:items-center'>
               {navItems.map((item) => {
                 const isActive = pathname === item.href
                 return (
@@ -106,7 +115,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       {/* Footer */}
-      <SidebarFooter className='px-4 pb-6 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:pb-4 group-data-[collapsible=icon]:items-center'>
+      <SidebarFooter className='px-4 pb-6 group-data-[collapsible=icon]:px-1 group-data-[collapsible=icon]:pb-4 group-data-[collapsible=icon]:items-center'>
         <SidebarMenu className='gap-1 bg-muted/20 p-2 rounded-2xl border border-border/30 backdrop-blur-sm shadow-sm group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:border-none group-data-[collapsible=icon]:shadow-none group-data-[collapsible=icon]:p-0'>
           {/* Wallet address */}
           {wallet && (
@@ -145,11 +154,19 @@ export function AppSidebar() {
               className='h-10 w-full rounded-xl text-muted-foreground hover:bg-background hover:text-foreground hover:shadow-sm transition-all duration-200 group-data-[collapsible=icon]:size-10! group-data-[collapsible=icon]:p-0! group-data-[collapsible=icon]:justify-center'
             >
               <span className='group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center w-full group-data-[collapsible=icon]:w-auto'>
-                {isDark ? (
-                  <Sun className='h-4 w-4 shrink-0 absolute left-3 group-data-[collapsible=icon]:static' />
-                ) : (
-                  <Moon className='h-4 w-4 shrink-0 absolute left-3 group-data-[collapsible=icon]:static' />
-                )}
+                <div className='absolute left-3 grid place-items-center group-data-[collapsible=icon]:static'>
+                  <AnimatePresence mode='popLayout' initial={false}>
+                    <motion.span
+                      key={isDark ? 'sun' : 'moon'}
+                      initial={{ opacity: 0, scale: 0.5, rotate: -60 }}
+                      animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                      exit={{ opacity: 0, scale: 0.5, rotate: 60 }}
+                      className='col-start-1 row-start-1 flex items-center justify-center'
+                    >
+                      {isDark ? <Sun className='h-4 w-4 shrink-0' /> : <Moon className='h-4 w-4 shrink-0' />}
+                    </motion.span>
+                  </AnimatePresence>
+                </div>
                 <span className='font-medium tracking-wide ml-7 group-data-[collapsible=icon]:hidden'>
                   {isDark ? 'Light mode' : 'Dark mode'}
                 </span>

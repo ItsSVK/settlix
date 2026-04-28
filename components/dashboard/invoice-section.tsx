@@ -12,18 +12,28 @@ import { copyText } from '@/lib/utils'
 import { toast } from 'sonner'
 import { TOKENS } from '@/lib/tokens/tokens'
 import type { Invoice } from '@/lib/hooks/use-invoices'
+import { SkeletonRow } from '@/components/shared/skeletons'
 
 interface InvoicesTableProps {
   invoices: Invoice[]
   isLoading: boolean
   onRefresh: () => void
+  archiveInvoice: (id: string) => Promise<void>
 }
 
 function shorten(s: string, start = 6, end = 4) {
   return `${s.slice(0, start)}…${s.slice(-end)}`
 }
 
-function InvoiceRow({ invoice, onRefresh }: { invoice: Invoice; onRefresh: () => void }) {
+function InvoiceRow({
+  invoice,
+  onRefresh,
+  archiveInvoice,
+}: {
+  invoice: Invoice
+  onRefresh: () => void
+  archiveInvoice: (id: string) => Promise<void>
+}) {
   const [copied, setCopied] = useState(false)
   const [expanded, setExpanded] = useState(false)
   const [archiving, setArchiving] = useState<string | null>(null)
@@ -33,15 +43,10 @@ function InvoiceRow({ invoice, onRefresh }: { invoice: Invoice; onRefresh: () =>
   const handleArchive = async (id: string) => {
     setArchiving(id)
     try {
-      const res = await fetch(`/api/invoice/${id}`, { method: 'DELETE', credentials: 'include' })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        toast.error(data.error ?? 'Failed to delete invoice')
-        return
-      }
+      await archiveInvoice(id)
       onRefresh()
     } catch {
-      toast.error('Failed to delete invoice')
+      toast.error('Failed to archive invoice')
     } finally {
       setArchiving(null)
       setConfirmArchive(null)
@@ -203,17 +208,7 @@ function InvoiceRow({ invoice, onRefresh }: { invoice: Invoice; onRefresh: () =>
   )
 }
 
-function SkeletonRow() {
-  return (
-    <div className='flex items-center gap-3 rounded-xl border border-border/30 p-4'>
-      <div className='h-2 w-2 animate-pulse rounded-full bg-muted' />
-      <div className='h-4 flex-1 animate-pulse rounded bg-muted' />
-      <div className='h-4 w-16 animate-pulse rounded bg-muted' />
-    </div>
-  )
-}
-
-export function InvoicesTable({ invoices, isLoading, onRefresh }: InvoicesTableProps) {
+export function InvoicesTable({ invoices, isLoading, onRefresh, archiveInvoice }: InvoicesTableProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
@@ -261,7 +256,7 @@ export function InvoicesTable({ invoices, isLoading, onRefresh }: InvoicesTableP
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.3, delay: i * 0.05 }}
           >
-            <InvoiceRow invoice={invoice} onRefresh={onRefresh} />
+            <InvoiceRow invoice={invoice} onRefresh={onRefresh} archiveInvoice={archiveInvoice} />
           </motion.div>
         ))}
       </AnimatePresence>

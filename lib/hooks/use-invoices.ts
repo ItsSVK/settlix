@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 
 export interface InvoiceItem {
   id: string
@@ -26,24 +27,49 @@ export interface Invoice {
 }
 
 export function useInvoices() {
-  const [invoices, setInvoices] = useState<Invoice[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const queryClient = useQueryClient()
 
-  const load = useCallback(async () => {
-    setIsLoading(true)
-    try {
+  const {
+    data: invoices = [],
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ['invoices'],
+    queryFn: async () => {
       const res = await fetch('/api/invoice', { credentials: 'include' })
-      if (!res.ok) return
-      const data = await res.json() as { invoices: Invoice[] }
-      setInvoices(data.invoices)
-    } catch {
-      // silently fail
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+      if (!res.ok) throw new Error('Failed to fetch invoices')
+      const data = (await res.json()) as { invoices: Invoice[] }
+      return data.invoices
+    },
+  })
 
-  useEffect(() => { void load() }, [load])
+  const archiveMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/invoice/${id}`, { method: 'DELETE', credentials: 'include' })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error ?? 'Failed to archive invoice')
+      }
+    },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['invoices'] })
+      const previousInvoices = queryClient.getQueryData<Invoice[]>(['invoices'])
 
-  return { invoices, isLoading, refresh: load }
+      if (previousInvoices) {
+        queryClient.setQueryData<Invoice[]>(['invoices'], (old) => old?.filter((invoice) => invoice.id !== id))
+      }
+      return { previousInvoices }
+    },
+    onError: (err, variables, context) => {
+      toast.error(err instanceof Error ? err.message : 'Failed to archive invoice')
+      if (context?.previousInvoices) {
+        queryClient.setQueryData(['invoices'], context.previousInvoices)
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] })
+    },
+  })
+
+  return { invoices, isLoading, refresh: refetch, archiveInvoice: (id: string) => archiveMutation.mutateAsync(id) }
 }

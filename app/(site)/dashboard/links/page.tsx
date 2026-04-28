@@ -6,15 +6,13 @@ import { StatsBar } from '@/components/dashboard/stats-bar'
 import { LinksTable } from '@/components/dashboard/links-table'
 import { CreateLinkDialog } from '@/components/dashboard/create-link-dialog'
 import { SkeletonCard } from '@/components/shared/skeletons'
-import { DistributeButton } from '@/components/dashboard/distribute-button'
-import { useDashboard } from '@/lib/hooks/use-dashboard'
 import { Switch } from '@/components/ui/switch'
+import { useLinks } from '@/lib/hooks/use-links'
 
-export default function DashboardPage() {
-  const { data, isLoading, refresh, toggleLinkActive, archiveLink } = useDashboard()
+export default function LinksPage() {
+  const { links, isLoading, refresh, toggleLinkActive, archiveLink } = useLinks()
   const [activeOnly, setActiveOnly] = useState(false)
 
-  const links = data?.links ?? []
   const filteredLinks = activeOnly ? links.filter((link) => link.active) : links
 
   return (
@@ -53,7 +51,6 @@ export default function DashboardPage() {
 
         {/* Links */}
         <motion.div initial={false} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 0.2 }}>
-          <DistributeButton onDistributed={refresh} />
           <div className='mb-4 flex items-center justify-between'>
             <h2 className='text-sm font-semibold text-muted-foreground uppercase tracking-wider'>
               Payment Links {!isLoading && `(${filteredLinks.length})`}
@@ -65,7 +62,13 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
-          <LinksTable links={filteredLinks} isLoading={isLoading} onRefresh={refresh} onToggle={toggleLinkActive} onArchive={archiveLink} />
+          <LinksTable
+            links={filteredLinks}
+            isLoading={isLoading}
+            onRefresh={refresh}
+            onToggle={toggleLinkActive}
+            onArchive={archiveLink}
+          />
         </motion.div>
       </div>
     </div>

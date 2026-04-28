@@ -15,6 +15,7 @@ import {
 
 const routeLabels: Record<string, string> = {
   '/dashboard': 'Dashboard',
+  '/dashboard/links': 'Payment Links',
   '/dashboard/invoices': 'Invoices',
   '/dashboard/keys': 'API Keys',
   '/dashboard/webhook': 'Webhook',
@@ -28,7 +29,7 @@ export function DashboardTopbar() {
   return (
     <header className='sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border/40 bg-background/90 px-4 backdrop-blur-sm'>
       <SidebarTrigger className='-ml-1' />
-      <Separator orientation='vertical' className='mr-2 h-4' />
+      {/* <Separator orientation='vertical' className='mr-2 h-4' /> */}
       <Breadcrumb>
         <BreadcrumbList>
           {isRoot ? (

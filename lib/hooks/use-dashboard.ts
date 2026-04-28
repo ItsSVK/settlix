@@ -141,7 +141,15 @@ export function useDashboard() {
     }
   }, [load])
 
-  return { data, isLoading, error, refresh, toggleLinkActive }
+  const archiveLink = async (id: string) => {
+    const res = await fetch(`/api/links/${id}`, { method: 'DELETE', credentials: 'include' })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error ?? 'Failed to delete link')
+    }
+  }
+
+  return { data, isLoading, error, refresh, toggleLinkActive, archiveLink }
 }
 
 export type { DashboardLink }

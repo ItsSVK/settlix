@@ -13,7 +13,6 @@ import { toast } from 'sonner'
 import { QRModal } from './qr-modal'
 import { SplitModal } from './split-modal'
 import { TOKENS } from '@/lib/tokens/tokens'
-import ArchiveItem from '@/components/shared/archive-item'
 import { ConfirmationModal } from '@/components/shared/confirmation-modal'
 
 function shorten(s: string, start = 6, end = 4) {
@@ -24,9 +23,10 @@ interface LinkRowProps {
   link: DashboardLink
   onToggle: (id: string, active: boolean) => Promise<void>
   onRefresh: () => void
+  onArchive: (id: string) => Promise<void>
 }
 
-export function LinkRow({ link, onToggle, onRefresh }: LinkRowProps) {
+export function LinkRow({ link, onToggle, onRefresh, onArchive }: LinkRowProps) {
   const [expanded, setExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
   const [toggling, setToggling] = useState(false)
@@ -43,15 +43,11 @@ export function LinkRow({ link, onToggle, onRefresh }: LinkRowProps) {
   const handleArchive = async (id: string) => {
     setArchiving(id)
     try {
-      const res = await fetch(`/api/link/${id}`, { method: 'DELETE', credentials: 'include' })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        toast.error(data.error ?? 'Failed to delete link')
-        return
-      }
+      await onArchive(id)
+      toast.success('Link archived successfully')
       onRefresh()
     } catch {
-      toast.error('Failed to delete link')
+      toast.error('Failed to archive link')
     } finally {
       setArchiving(null)
       setConfirmArchive(null)
