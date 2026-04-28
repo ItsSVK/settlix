@@ -1,35 +1,12 @@
 'use client'
 
-import Link from 'next/link'
 import { motion } from 'motion/react'
 import { ApiKeysSection } from '@/components/dashboard/api-keys-section'
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbSeparator,
-  BreadcrumbPage,
-} from '@/components/ui/breadcrumb'
 
 export default function ApiKeysPage() {
   return (
-    <main className='flex-1 bg-muted/60 dark:bg-background'>
-      <div className='mx-auto w-[80%] max-w-6xl px-4 pt-28 pb-10'>
-        <Breadcrumb className='mb-6'>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link href='/dashboard'>Dashboard</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>API Keys</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-
+    <div className='flex-1 bg-muted/40 dark:bg-background'>
+      <div className='mx-auto max-w-6xl px-6 py-6'>
         <motion.div
           initial={false}
           animate={{ opacity: 1, y: 0 }}
@@ -46,6 +23,6 @@ export default function ApiKeysPage() {
           <ApiKeysSection />
         </motion.div>
       </div>
-    </main>
+    </div>
   )
 }

@@ -2,18 +2,14 @@
 
 import { useState } from 'react'
 import { motion } from 'motion/react'
-import { WalletAvatar } from '@/components/shared/wallet-avatar'
 import { StatsBar } from '@/components/dashboard/stats-bar'
 import { LinksTable } from '@/components/dashboard/links-table'
 import { CreateLinkDialog } from '@/components/dashboard/create-link-dialog'
 import { DistributeButton } from '@/components/dashboard/distribute-button'
 import { useDashboard } from '@/lib/hooks/use-dashboard'
-import { useAuth } from '@/components/auth/auth-context'
 import { Switch } from '@/components/ui/switch'
-import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage } from '@/components/ui/breadcrumb'
 
 export default function DashboardPage() {
-  const { wallet } = useAuth()
   const { data, isLoading, refresh, toggleLinkActive } = useDashboard()
   const [activeOnly, setActiveOnly] = useState(false)
 
@@ -21,28 +17,16 @@ export default function DashboardPage() {
   const filteredLinks = activeOnly ? links.filter((link) => link.active) : links
 
   return (
-    <main className='flex-1 bg-muted/60 dark:bg-background'>
-      <div className='mx-auto w-[80%] max-w-6xl px-4 pt-28 pb-10'>
-        {/* Breadcrumb */}
-        <Breadcrumb className='mb-6'>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbPage>Dashboard</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-
+    <div className='flex-1 bg-muted/40 dark:bg-background'>
+      <div className='mx-auto max-w-6xl px-6 py-6'>
         {/* Header */}
         <motion.div
           initial={false}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className='mb-8 flex gap-3 flex-row items-center justify-between'
+          className='mb-8 flex items-center justify-between'
         >
-          <div className='sm:flex items-center gap-2'>
-            <h1 className='text-2xl font-bold text-foreground'>Dashboard</h1>
-            {wallet && <WalletAvatar address={wallet} className='mt-1' />}
-          </div>
+          <h1 className='text-2xl font-bold text-foreground'>Payment Links</h1>
           <CreateLinkDialog onCreated={refresh} />
         </motion.div>
 
@@ -65,7 +49,6 @@ export default function DashboardPage() {
             <h2 className='text-sm font-semibold text-muted-foreground uppercase tracking-wider'>
               Payment Links {!isLoading && `(${filteredLinks.length})`}
             </h2>
-
             {links.length > 0 && (
               <div className='flex items-center gap-2'>
                 <span className='text-xs font-medium text-muted-foreground'>Active only</span>
@@ -75,8 +58,7 @@ export default function DashboardPage() {
           </div>
           <LinksTable links={filteredLinks} isLoading={isLoading} onRefresh={refresh} onToggle={toggleLinkActive} />
         </motion.div>
-
       </div>
-    </main>
+    </div>
   )
 }

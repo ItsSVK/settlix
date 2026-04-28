@@ -1,18 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { Webhook, CheckCircle2, Circle, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { WebhookModal } from '@/components/dashboard/webhook-modal'
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbSeparator,
-  BreadcrumbPage,
-} from '@/components/ui/breadcrumb'
 
 interface WebhookConfig {
   webhookUrl: string | null
@@ -41,22 +32,8 @@ export default function WebhookPage() {
   }, [])
 
   return (
-    <main className='flex-1 bg-muted/60 dark:bg-background'>
-      <div className='mx-auto w-[80%] max-w-3xl px-4 pt-28 pb-10'>
-        <Breadcrumb className='mb-6'>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link href='/dashboard'>Dashboard</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Webhook</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-
+    <div className='flex-1 bg-muted/40 dark:bg-background'>
+      <div className='mx-auto max-w-3xl px-6 py-6'>
         <div className='mb-8 flex items-center gap-3'>
           <div className='flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10'>
             <Webhook className='h-4 w-4 text-primary' />
@@ -69,7 +46,6 @@ export default function WebhookPage() {
           </div>
         </div>
 
-        {/* <div className='rounded-2xl border border-border/40 bg-card p-5 shadow-[0_6px_16px_rgba(15,23,42,0.06)] dark:shadow-none transition-all hover:scale-[1.02] hover:shadow-[0_10px_24px_rgba(15,23,42,0.1)] dark:hover:shadow-none'> */}
         <div className='rounded-3xl border border-border/40 bg-card backdrop-blur-sm divide-y divide-border/30 shadow-[0_6px_16px_rgba(15,23,42,0.06)] dark:shadow-none'>
           <div className='flex items-center justify-between px-6 py-5'>
             <div className='space-y-1'>
@@ -143,6 +119,6 @@ export default function WebhookPage() {
           hasWebhookSecret={config.hasWebhookSecret}
         />
       )}
-    </main>
+    </div>
   )
 }

@@ -38,7 +38,7 @@ export function FloatingThemeToggle() {
   const { resolvedTheme } = useTheme()
   const pathname = usePathname()
 
-  if (pathname.startsWith('/embed/')) return null
+  if (pathname.startsWith('/embed/') || pathname.startsWith('/dashboard')) return null
 
   if (!mounted) {
     return (
