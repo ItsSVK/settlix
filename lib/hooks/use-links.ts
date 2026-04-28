@@ -46,7 +46,11 @@ interface Link {
 export function useLinks() {
   const queryClient = useQueryClient()
 
-  const { data: links = [], isLoading, refetch } = useQuery({
+  const {
+    data: links = [],
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ['links'],
     queryFn: async () => {
       const res = await fetch('/api/links', { credentials: 'include' })
@@ -69,10 +73,10 @@ export function useLinks() {
     onMutate: async ({ id, active }) => {
       await queryClient.cancelQueries({ queryKey: ['links'] })
       const previousLinks = queryClient.getQueryData<Link[]>(['links'])
-      
+
       if (previousLinks) {
-        queryClient.setQueryData<Link[]>(['links'], (old) => 
-          old?.map((link) => (link.id === id ? { ...link, active } : link))
+        queryClient.setQueryData<Link[]>(['links'], (old) =>
+          old?.map((link) => (link.id === id ? { ...link, active } : link)),
         )
       }
       return { previousLinks }
@@ -101,11 +105,9 @@ export function useLinks() {
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['links'] })
       const previousLinks = queryClient.getQueryData<Link[]>(['links'])
-      
+
       if (previousLinks) {
-        queryClient.setQueryData<Link[]>(['links'], (old) => 
-          old?.filter((link) => link.id !== id)
-        )
+        queryClient.setQueryData<Link[]>(['links'], (old) => old?.filter((link) => link.id !== id))
       }
       return { previousLinks }
     },

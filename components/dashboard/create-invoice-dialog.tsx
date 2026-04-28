@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'motion/react'
-import { Plus, Loader2, X, Trash2, AlertCircle, Check, Calendar, FileText } from 'lucide-react'
+import { Plus, Loader2, X, Trash2, AlertCircle, Check, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { copyText } from '@/lib/utils'
 import { getDefaultUsdcMint } from '@/lib/solana/constants'

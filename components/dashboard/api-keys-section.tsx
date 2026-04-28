@@ -1,14 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { createPortal } from 'react-dom'
-import { AnimatePresence, motion } from 'motion/react'
-import { AlertCircle, Check, Copy, Key, Loader2, Plus, X } from 'lucide-react'
+import { useState } from 'react'
+import { motion } from 'motion/react'
+import { Key, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { Button } from '@/components/ui/button'
-import { copyText } from '@/lib/utils'
-import ArchiveItem from '@/components/shared/archive-item'
 import { ConfirmationModal } from '@/components/shared/confirmation-modal'
 import type { ApiKey } from '@/lib/hooks/use-keys'
 
@@ -25,18 +21,15 @@ function timeAgo(dateStr: string | null): string {
   return new Date(dateStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-
-
 // ─── Main section ─────────────────────────────────────────────────────────────
 
 interface ApiKeysSectionProps {
   keys: ApiKey[]
   isLoading: boolean
-  refresh: () => void
   revokeKey: (id: string) => Promise<void>
 }
 
-export function ApiKeysSection({ keys, isLoading, refresh, revokeKey }: ApiKeysSectionProps) {
+export function ApiKeysSection({ keys, isLoading, revokeKey }: ApiKeysSectionProps) {
   const [revoking, setRevoking] = useState<string | null>(null)
   const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null)
 

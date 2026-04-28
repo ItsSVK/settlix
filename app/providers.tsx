@@ -13,7 +13,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             refetchOnWindowFocus: true,
           },
         },
-      })
+      }),
   )
 
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>

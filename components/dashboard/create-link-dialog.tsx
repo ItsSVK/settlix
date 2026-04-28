@@ -67,7 +67,6 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
   }, [])
 
@@ -85,7 +84,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
     setError('')
     setResult(null)
     setOpen(false)
-    
+
     if (wasCreated) {
       setTimeout(() => onCreated(), 300)
     }

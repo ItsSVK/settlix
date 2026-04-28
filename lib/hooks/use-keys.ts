@@ -13,12 +13,16 @@ export interface ApiKey {
 export function useKeys() {
   const queryClient = useQueryClient()
 
-  const { data: keys = [], isLoading, refetch } = useQuery({
+  const {
+    data: keys = [],
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ['keys'],
     queryFn: async () => {
       const res = await fetch('/api/keys', { credentials: 'include' })
       if (!res.ok) throw new Error('Failed to fetch API keys')
-      const data = await res.json() as { keys: ApiKey[] }
+      const data = (await res.json()) as { keys: ApiKey[] }
       return data.keys
     },
   })
@@ -34,11 +38,9 @@ export function useKeys() {
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['keys'] })
       const previousKeys = queryClient.getQueryData<ApiKey[]>(['keys'])
-      
+
       if (previousKeys) {
-        queryClient.setQueryData<ApiKey[]>(['keys'], (old) => 
-          old?.filter((key) => key.id !== id)
-        )
+        queryClient.setQueryData<ApiKey[]>(['keys'], (old) => old?.filter((key) => key.id !== id))
       }
       return { previousKeys }
     },
@@ -53,10 +55,10 @@ export function useKeys() {
     },
   })
 
-  return { 
-    keys, 
-    isLoading, 
-    refresh: refetch, 
-    revokeKey: (id: string) => revokeMutation.mutateAsync(id) 
+  return {
+    keys,
+    isLoading,
+    refresh: refetch,
+    revokeKey: (id: string) => revokeMutation.mutateAsync(id),
   }
 }

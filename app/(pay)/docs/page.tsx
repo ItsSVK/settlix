@@ -25,7 +25,7 @@ import { Button } from '@/components/ui/button'
 
 function useClientMounted() {
   const [mounted, setMounted] = useState(false)
-  // eslint-disable-next-line react-hooks/set-state-in-effect
+
   useEffect(() => setMounted(true), [])
   return mounted
 }
@@ -451,7 +451,7 @@ export default function EmbedDocsPage() {
 
   useEffect(() => {
     const saved = sessionStorage.getItem('settlix_test_link_id')
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+
     if (saved) setLinkId(saved)
 
     const activeSections = new Set<string>()

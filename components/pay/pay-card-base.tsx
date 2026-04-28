@@ -15,7 +15,15 @@ function shorten(addr: string) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`
 }
 
-export function PayCardBase({ linkId, onPaid, allowInvoice }: { linkId: string; onPaid?: (txSignature: string) => void; allowInvoice?: boolean }) {
+export function PayCardBase({
+  linkId,
+  onPaid,
+  allowInvoice,
+}: {
+  linkId: string
+  onPaid?: (txSignature: string) => void
+  allowInvoice?: boolean
+}) {
   const { data: link, isLoading: linkLoading, error: linkError } = usePaymentLink(linkId)
   const [selectedToken, setSelectedToken] = useState<TokenInfo | null>(null)
   const [successResult, setSuccessResult] = useState<{

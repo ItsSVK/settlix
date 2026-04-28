@@ -27,8 +27,8 @@ export async function upsertMerchantWebhook(
 
     const nextSecret = params.webhookUrl
       ? params.replaceSecret
-        ? (params.webhookSecret ?? null)
-        : (merchant?.webhookSecret ?? null)
+        ? params.webhookSecret ?? null
+        : merchant?.webhookSecret ?? null
       : null
 
     return await prisma.merchant.update({

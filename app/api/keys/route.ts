@@ -37,12 +37,18 @@ export async function POST(req: NextRequest) {
     const json = await readJsonBody(req)
     const parsed = createKeyBody.safeParse(json)
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Validation failed', code: VALIDATION, issues: parsed.error.issues }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Validation failed', code: VALIDATION, issues: parsed.error.issues },
+        { status: 400 },
+      )
     }
 
     const count = await prisma.apiKey.count({ where: { merchantWallet: wallet } })
     if (count >= MAX_KEYS_PER_WALLET) {
-      return NextResponse.json({ error: `Maximum ${MAX_KEYS_PER_WALLET} API keys allowed`, code: 'KEY_LIMIT' }, { status: 400 })
+      return NextResponse.json(
+        { error: `Maximum ${MAX_KEYS_PER_WALLET} API keys allowed`, code: 'KEY_LIMIT' },
+        { status: 400 },
+      )
     }
 
     const rawKey = 'sk_live_' + randomBytes(32).toString('hex')

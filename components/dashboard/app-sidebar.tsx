@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { LayoutDashboard, FileText, KeyRound, Webhook, LogOut, Sun, Moon, Copy, Check } from 'lucide-react'
+import { LayoutDashboard, FileText, KeyRound, Webhook, LogOut, Sun, Moon, Copy, Check, BookOpen } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-context'
 import { useTheme } from 'next-themes'
 import { copyText } from '@/lib/utils'
@@ -34,8 +34,6 @@ const navItems = [
 function shorten(addr: string) {
   return `${addr.slice(0, 4)}…${addr.slice(-4)}`
 }
-
-const iconTransition = { type: 'spring', stiffness: 300, damping: 25, duration: 0.3 }
 
 export function AppSidebar() {
   const pathname = usePathname()
@@ -171,6 +169,24 @@ export function AppSidebar() {
                   {isDark ? 'Light mode' : 'Dark mode'}
                 </span>
               </span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          {/* Docs */}
+          <SidebarMenuItem className='w-full'>
+            <SidebarMenuButton
+              asChild
+              tooltip='Documentation'
+              className='h-10 w-full rounded-xl text-muted-foreground hover:bg-background hover:text-foreground hover:shadow-sm transition-all duration-200 group-data-[collapsible=icon]:size-10! group-data-[collapsible=icon]:p-0! group-data-[collapsible=icon]:justify-center'
+            >
+              <Link href='/docs' onClick={handleMobileClose} target='_blank'>
+                <span className='group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center w-full group-data-[collapsible=icon]:w-auto'>
+                  <BookOpen className='h-4 w-4 shrink-0 absolute left-3 group-data-[collapsible=icon]:static' />
+                  <span className='font-medium tracking-wide ml-7 group-data-[collapsible=icon]:hidden'>
+                    Documentation
+                  </span>
+                </span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
 

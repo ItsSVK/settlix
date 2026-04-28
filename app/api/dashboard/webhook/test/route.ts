@@ -14,7 +14,10 @@ export async function POST(req: NextRequest) {
     const json = await readJsonBody(req)
     const parsed = webhookTestBody.safeParse(json)
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Validation failed', code: VALIDATION, issues: parsed.error.issues }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Validation failed', code: VALIDATION, issues: parsed.error.issues },
+        { status: 400 },
+      )
     }
 
     const result = await deliverPaymentWebhook({

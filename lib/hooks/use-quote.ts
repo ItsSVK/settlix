@@ -109,7 +109,6 @@ export function useQuote(
   // Initial fetch (debounced 400ms) whenever the selected token changes.
   // Runs for both same-mint and swap cases — we still need the confirmed raw amount.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setQuote(null)
     setError(null)
     if (!inputMint || options.disabled) return

@@ -1,5 +1,4 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
 
 import { handleApi, readJsonBody } from '@/lib/api/errors'
 import { requireAuth } from '@/lib/auth/require-auth'
@@ -52,7 +51,10 @@ export async function POST(req: NextRequest) {
     const json = await readJsonBody(req)
     const parsed = createInvoiceBody.safeParse(json)
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Validation failed', code: VALIDATION, issues: parsed.error.issues }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Validation failed', code: VALIDATION, issues: parsed.error.issues },
+        { status: 400 },
+      )
     }
 
     const cluster = getSolanaCluster()

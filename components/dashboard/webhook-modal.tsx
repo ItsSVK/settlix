@@ -154,13 +154,19 @@ function WebhookModalPanel({
           </div>
 
           <form
-            onSubmit={(e) => { e.preventDefault(); void saveWebhook() }}
+            onSubmit={(e) => {
+              e.preventDefault()
+              void saveWebhook()
+            }}
             className='space-y-4'
             noValidate
           >
             <div className='space-y-4 rounded-2xl border border-border/40 bg-background/30 p-4'>
               <div className='space-y-1.5'>
-                <label htmlFor='webhook-url-modal' className='text-xs font-medium uppercase tracking-wider text-muted-foreground'>
+                <label
+                  htmlFor='webhook-url-modal'
+                  className='text-xs font-medium uppercase tracking-wider text-muted-foreground'
+                >
                   Webhook URL
                 </label>
                 <div className='flex items-center gap-2 rounded-xl bg-muted/90 p-1.5 focus-within:ring-1 focus-within:ring-primary/30 transition-all'>
@@ -184,14 +190,18 @@ function WebhookModalPanel({
                     size='sm'
                     onClick={() => void testWebhook()}
                     className={`shrink-0 h-8 rounded-lg px-3 text-xs font-medium transition-all min-w-[75px] ${
-                      webhookUrlTested ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20 disabled:opacity-100' : ''
+                      webhookUrlTested
+                        ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20 disabled:opacity-100'
+                        : ''
                     }`}
                     disabled={!webhookUrl || webhookUrlTested || isTestingWebhook}
                   >
                     {isTestingWebhook ? (
                       <Loader2 className='h-3 w-3 animate-spin' />
                     ) : webhookUrlTested ? (
-                      <><Check className='mr-1 h-3 w-3' /> Verified</>
+                      <>
+                        <Check className='mr-1 h-3 w-3' /> Verified
+                      </>
                     ) : (
                       'Test'
                     )}
@@ -203,7 +213,10 @@ function WebhookModalPanel({
               </div>
 
               <div className='space-y-1.5'>
-                <label htmlFor='webhook-secret' className='text-xs font-medium uppercase tracking-wider text-muted-foreground'>
+                <label
+                  htmlFor='webhook-secret'
+                  className='text-xs font-medium uppercase tracking-wider text-muted-foreground'
+                >
                   Signing Secret
                 </label>
                 <div className='flex items-center gap-2 rounded-xl bg-muted/90 p-1.5 focus-within:ring-1 focus-within:ring-primary/30 transition-all'>
@@ -213,7 +226,10 @@ function WebhookModalPanel({
                     autoComplete='new-password'
                     spellCheck='false'
                     value={webhookSecret}
-                    onChange={(e) => { setWebhookSecret(e.target.value); setError('') }}
+                    onChange={(e) => {
+                      setWebhookSecret(e.target.value)
+                      setError('')
+                    }}
                     placeholder='Signing Secret (Optional HMAC)'
                     className='flex-1 bg-transparent px-3 font-mono text-sm text-foreground outline-none placeholder:text-muted-foreground min-w-0'
                   />
@@ -222,7 +238,10 @@ function WebhookModalPanel({
                       type='button'
                       variant='secondary'
                       size='sm'
-                      onClick={() => { setWebhookSecret(generateWebhookSecret()); setError('') }}
+                      onClick={() => {
+                        setWebhookSecret(generateWebhookSecret())
+                        setError('')
+                      }}
                       className='shrink-0 h-8 rounded-lg px-3 text-xs font-medium'
                     >
                       Generate
@@ -267,7 +286,13 @@ function WebhookModalPanel({
                 disabled={!webhookUrlTested || isLoading}
                 className='w-full rounded-2xl bg-primary py-3.5 text-sm font-semibold text-background hover:opacity-90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 dark:text-foreground'
               >
-                {isLoading ? <><Loader2 className='h-5 w-5 animate-spin' /> Saving...</> : 'Save Webhook'}
+                {isLoading ? (
+                  <>
+                    <Loader2 className='h-5 w-5 animate-spin' /> Saving...
+                  </>
+                ) : (
+                  'Save Webhook'
+                )}
               </Button>
 
               {initialWebhookUrl && (

@@ -36,8 +36,8 @@ export default function ArchiveItem({
   }, [isConfirming, setConfirmArchive])
 
   return (
-    <div 
-      ref={containerRef} 
+    <div
+      ref={containerRef}
       className='relative z-10 flex h-10 w-10 shrink-0 items-center justify-end overflow-visible'
       onBlur={(e) => {
         if (isConfirming && !e.currentTarget.contains(e.relatedTarget)) {

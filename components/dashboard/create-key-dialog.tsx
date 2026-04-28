@@ -3,10 +3,9 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'motion/react'
-import { AlertCircle, Check, Copy, Key, Loader2, Plus, X } from 'lucide-react'
+import { AlertCircle, Key, Loader2, Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { copyText } from '@/lib/utils'
-import type { ApiKey } from '@/lib/hooks/use-keys'
 
 interface CreateKeyDialogProps {
   onCreated: () => void
@@ -105,9 +104,7 @@ function CreateKeyDialogPanel({ onClose, onCreated }: { onClose: () => void; onC
               </div>
 
               <div className='mb-6 flex items-center gap-3 rounded-2xl border border-border/50 bg-background/50 p-3 ring-1 ring-border/20'>
-                <span className='ml-2 flex-1 break-all font-mono text-sm text-muted-foreground'>
-                  {revealData.raw}
-                </span>
+                <span className='ml-2 flex-1 break-all font-mono text-sm text-muted-foreground'>{revealData.raw}</span>
                 <Button
                   onClick={() => copyText(revealData.raw, setCopied)}
                   title='Copy API Key'
@@ -152,7 +149,10 @@ function CreateKeyDialogPanel({ onClose, onCreated }: { onClose: () => void; onC
 
               <form onSubmit={(e) => void handleSubmit(e)} className='space-y-4'>
                 <div className='space-y-1.5 rounded-2xl border border-border/40 bg-background/30 p-4'>
-                  <label htmlFor='key-name' className='text-xs font-medium uppercase tracking-wider text-muted-foreground'>
+                  <label
+                    htmlFor='key-name'
+                    className='text-xs font-medium uppercase tracking-wider text-muted-foreground'
+                  >
                     Key Name
                   </label>
                   <div className='rounded-xl bg-muted/90 p-1.5 focus-within:ring-1 focus-within:ring-primary/30 transition-all'>
@@ -225,7 +225,7 @@ export function CreateKeyDialog({ onCreated }: CreateKeyDialogProps) {
           <AnimatePresence>
             {open && <CreateKeyDialogPanel onClose={() => setOpen(false)} onCreated={onCreated} />}
           </AnimatePresence>,
-          document.body
+          document.body,
         )}
     </>
   )

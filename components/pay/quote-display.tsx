@@ -30,7 +30,6 @@ function RefreshTimer({ isRefreshing }: { isRefreshing: boolean }) {
 
   useEffect(() => {
     if (isRefreshing) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCountdown(REFRESH_INTERVAL_MS / 1000)
       return
     }

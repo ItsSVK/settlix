@@ -24,7 +24,10 @@ export async function POST(req: NextRequest) {
     const json = await readJsonBody(req)
     const parsed = paymentLinkWebhookBody.safeParse(json)
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Validation failed', code: VALIDATION, issues: parsed.error.issues }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Validation failed', code: VALIDATION, issues: parsed.error.issues },
+        { status: 400 },
+      )
     }
 
     const updated = await upsertMerchantWebhook(wallet, {

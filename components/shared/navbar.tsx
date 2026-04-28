@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation'
 import { AnimatedThemeButton } from '@/components/shared/animated-theme-button'
 import { useTheme } from 'next-themes'
 import { SendButton } from '@/components/shared/send-button'
-import { AvatarDropdown } from '@/components/shared/avater-dropdown'
+import { LayoutDashboard } from 'lucide-react'
 
 export function Navbar({ className }: { className?: string }) {
   const { wallet, isLoading } = useAuth()
@@ -38,7 +38,13 @@ export function Navbar({ className }: { className?: string }) {
         <>
           <SendButton />
           <AnimatedThemeButton className='md:hidden' isDark={isDark} />
-          <AvatarDropdown />
+          <Link
+            href='/dashboard'
+            className='flex h-[36px] items-center justify-center rounded-[15px] border-0 border-foreground bg-background px-5 text-[13px] font-medium text-foreground transition-colors hover:bg-muted/60'
+          >
+            <LayoutDashboard className='mr-2 h-4 w-4' />
+            <span className='hidden md:flex'>Dashboard</span>
+          </Link>
         </>
       ) : (
         <span className='flex items-center gap-2'>

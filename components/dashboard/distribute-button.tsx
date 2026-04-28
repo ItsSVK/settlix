@@ -57,7 +57,6 @@ export function DistributeButton({ onDistributed }: DistributeButtonProps) {
   }, [])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadPending()
   }, [loadPending])
 
