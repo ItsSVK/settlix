@@ -551,7 +551,7 @@ export default function EmbedDocsPage() {
           </aside>
 
           {/* ── Main content ───────────────────────────────────────────────── */}
-          <main className='min-w-0 flex-1 space-y-16 pb-24'>
+          <main className='min-w-0 flex-1 space-y-16 pb-24 pt-16'>
             {/* Hero */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
               <div className='mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-500/20 dark:border-indigo-400/20 bg-indigo-500/10 dark:bg-indigo-400/10 px-4 py-1.5 backdrop-blur-md'>

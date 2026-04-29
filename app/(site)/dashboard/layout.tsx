@@ -12,7 +12,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const session = token ? await verifySession(token) : null
 
   if (!session) {
-    redirect('/')
+    redirect('/auth')
   }
 
   const sidebarOpen = cookieStore.get('sidebar_state')?.value !== 'false'

@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation'
 import { AnimatedThemeButton } from '@/components/shared/animated-theme-button'
 import { useTheme } from 'next-themes'
 import { SendButton } from '@/components/shared/send-button'
-import { LayoutDashboard } from 'lucide-react'
+import { Blocks, LayoutDashboard } from 'lucide-react'
 
 export function Navbar({ className }: { className?: string }) {
   const { wallet, isLoading } = useAuth()
@@ -29,8 +29,18 @@ export function Navbar({ className }: { className?: string }) {
       </Link>
 
       <div className='flex-1' />
+      <AnimatedThemeButton className='md:hidden' isDark={isDark} />
+      {(pathname == '/' || pathname == '/docs') && (
+        <Link
+          href='/dashboard'
+          className='flex h-8 w-8 items-center justify-center rounded-[15px] border-0 border-foreground bg-background font-medium text-foreground transition-colors hover:bg-muted md:h-[36px] md:w-[100px] text-[13px] dark:text-background dark:bg-foreground'
+        >
+          <Blocks className='h-4 w-4 md:mr-2' />
+          <span className='hidden md:flex'>App</span>
+        </Link>
+      )}
 
-      {pathname.startsWith('/pay') || pathname.startsWith('/send') ? (
+      {/* {pathname.startsWith('/pay') || pathname.startsWith('/send') ? (
         <AnimatedThemeButton className='md:hidden' isDark={isDark} />
       ) : isLoading ? (
         <div className='h-[36px] w-28 rounded-[15px] bg-muted/60' aria-hidden />
@@ -52,7 +62,7 @@ export function Navbar({ className }: { className?: string }) {
           <AnimatedThemeButton className='md:hidden' isDark={isDark} />
           <ConnectButton className='h-[36px] rounded-[15px] border-0 bg-white px-5 py-0 text-[13px] text-black hover:bg-neutral-200 hover:shadow-none' />
         </span>
-      )}
+      )} */}
     </nav>
   )
 }
