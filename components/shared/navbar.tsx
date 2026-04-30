@@ -1,17 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { useAuth } from '@/components/auth/auth-context'
-import { ConnectButton } from '@/components/auth/connect-button'
 import { cn } from '@/lib/utils'
 import { usePathname } from 'next/navigation'
 import { AnimatedThemeButton } from '@/components/shared/animated-theme-button'
 import { useTheme } from 'next-themes'
-import { SendButton } from '@/components/shared/send-button'
-import { Blocks, LayoutDashboard } from 'lucide-react'
+import { Blocks, BookOpen } from 'lucide-react'
 
 export function Navbar({ className }: { className?: string }) {
-  const { wallet, isLoading } = useAuth()
   const pathname = usePathname()
 
   const { resolvedTheme } = useTheme()
@@ -30,39 +26,26 @@ export function Navbar({ className }: { className?: string }) {
 
       <div className='flex-1' />
       <AnimatedThemeButton className='md:hidden' isDark={isDark} />
-      {(pathname == '/' || pathname == '/docs') && (
-        <Link
-          href='/dashboard'
-          className='flex h-8 w-8 items-center justify-center rounded-[15px] border-0 border-foreground bg-background font-medium text-foreground transition-colors hover:bg-muted md:h-[36px] md:w-[100px] text-[13px] dark:text-background dark:bg-foreground'
-        >
-          <Blocks className='h-4 w-4 md:mr-2' />
-          <span className='hidden md:flex'>App</span>
-        </Link>
-      )}
-
-      {/* {pathname.startsWith('/pay') || pathname.startsWith('/send') ? (
-        <AnimatedThemeButton className='md:hidden' isDark={isDark} />
-      ) : isLoading ? (
-        <div className='h-[36px] w-28 rounded-[15px] bg-muted/60' aria-hidden />
-      ) : wallet ? (
-        <>
-          <SendButton />
-          <AnimatedThemeButton className='md:hidden' isDark={isDark} />
+      <>
+        {(pathname == '/' || pathname == '/auth') && (
+          <Link
+            href='/docs'
+            className='flex h-8 w-8 items-center justify-center rounded-[15px] border-0 border-foreground md:bg-gray-200 font-medium md:text-foreground transition-colors hover:bg-muted md:h-[36px] md:w-[100px] text-[13px] dark:text-foreground dark:bg-background'
+          >
+            <BookOpen className='h-4 w-4 md:mr-2' />
+            <span className='hidden md:flex'>Docs</span>
+          </Link>
+        )}
+        {(pathname == '/' || pathname == '/docs') && (
           <Link
             href='/dashboard'
-            className='flex h-[36px] items-center justify-center rounded-[15px] border-0 border-foreground bg-background px-5 text-[13px] font-medium text-foreground transition-colors hover:bg-muted/60'
+            className='flex h-8 w-8 items-center justify-center rounded-[15px] border-0 border-foreground md:bg-primary font-medium md:text-primary-foreground transition-colors hover:bg-primary/80 md:h-[36px] md:w-[100px] text-[13px]'
           >
-            <LayoutDashboard className='mr-2 h-4 w-4' />
-            <span className='hidden md:flex'>Dashboard</span>
+            <Blocks className='h-4 w-4 md:mr-2' />
+            <span className='hidden md:flex'>App</span>
           </Link>
-        </>
-      ) : (
-        <span className='flex items-center gap-2'>
-          <SendButton />
-          <AnimatedThemeButton className='md:hidden' isDark={isDark} />
-          <ConnectButton className='h-[36px] rounded-[15px] border-0 bg-white px-5 py-0 text-[13px] text-black hover:bg-neutral-200 hover:shadow-none' />
-        </span>
-      )} */}
+        )}
+      </>
     </nav>
   )
 }

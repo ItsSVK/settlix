@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { BackgroundBeams } from '@/components/ui/background-beams'
 import { AddressAmountForm } from './address-amount-form'
 import { DirectPayCard } from './direct-pay-card'
+import { cn } from '@/lib/utils'
 
 type Step = 'form' | 'pay'
 
@@ -13,9 +14,16 @@ interface PayTarget {
   amount: string
 }
 
-export function SendCard() {
+interface SendCardProps {
+  variant?: 'page' | 'embedded'
+  className?: string
+}
+
+export function SendCard({ variant = 'page', className }: SendCardProps) {
   const [step, setStep] = useState<Step>('form')
   const [target, setTarget] = useState<PayTarget | null>(null)
+  const isEmbedded = variant === 'embedded'
+  const Title = isEmbedded ? 'h3' : 'h1'
 
   const handleContinue = (receiverWallet: string, amount: string) => {
     setTarget({ receiverWallet, amount })
@@ -23,8 +31,14 @@ export function SendCard() {
   }
 
   return (
-    <div className='relative flex flex-1 w-full items-center justify-center bg-background px-4 py-20'>
-      <BackgroundBeams className='opacity-40' />
+    <div
+      className={cn(
+        'relative flex w-full items-center justify-center px-4',
+        isEmbedded ? 'py-0' : 'flex-1 py-20',
+        className,
+      )}
+    >
+      {!isEmbedded && <BackgroundBeams className='opacity-40' />}
 
       <div className='relative z-10 flex w-full max-w-sm flex-col items-center'>
         <AnimatePresence mode='wait'>
@@ -39,7 +53,7 @@ export function SendCard() {
             >
               <div className='rounded-2xl border border-border/50 bg-card/80 p-6 shadow-2xl backdrop-blur-sm'>
                 <div className='mb-6 text-center'>
-                  <h1 className='text-xl font-bold text-foreground'>Send to anyone</h1>
+                  <Title className='text-xl font-bold text-foreground'>Send to anyone</Title>
                   <p className='mt-1 text-xs text-muted-foreground'>
                     Pay any Solana wallet with any token. They receive USDC.
                   </p>

@@ -19,7 +19,7 @@ export function usePaymentLink(id: string) {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch(`/api/link/${id}`)
+    fetch(`/api/links/${id}`)
       .then(async (res) => {
         if (res.status === 410) {
           const body = await res.json().catch(() => ({}))

@@ -8,7 +8,7 @@ import { requireAuth } from '@/lib/auth/require-auth'
 
 type Params = { params: Promise<{ id: string }> }
 
-/** GET /api/link/[id] — public endpoint used by buyers */
+/** GET /api/links/[id] — public endpoint used by buyers */
 export async function GET(_req: Request, { params }: Params) {
   return handleApi(async () => {
     const { id } = await params
@@ -49,7 +49,7 @@ export async function GET(_req: Request, { params }: Params) {
   })
 }
 
-/** DELETE /api/link/[id] — protected, merchant only */
+/** DELETE /api/links/[id] — protected, merchant only */
 export async function DELETE(req: NextRequest, { params }: Params) {
   return handleApi(async () => {
     const { wallet } = await requireAuth(req)
@@ -63,7 +63,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   })
 }
 
-/** PATCH /api/link/[id] — protected, merchant only */
+/** PATCH /api/links/[id] — protected, merchant only */
 export async function PATCH(req: NextRequest, { params }: Params) {
   return handleApi(async () => {
     // Authenticate the merchant

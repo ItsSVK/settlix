@@ -1,9 +1,11 @@
 'use client'
 
 import { motion } from 'motion/react'
-import { ArrowDown } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowRight, Blocks, LayoutDashboard } from 'lucide-react'
 import { BackgroundBeams } from '@/components/ui/background-beams'
 import { TypewriterEffect } from '@/components/ui/typewriter-effect'
+import { Button } from '@/components/ui/button'
 
 const heroWords = [
   { text: 'Accept' },
@@ -12,6 +14,49 @@ const heroWords = [
   { text: 'Receive' },
   { text: 'USDC.' },
 ]
+
+// function scrollToSend() {
+//   const section = document.getElementById('send-showcase')
+//   if (!section) return
+//   const sectionTop = section.getBoundingClientRect().top + window.scrollY
+//   const paddingTop = parseFloat(getComputedStyle(section).paddingTop)
+//   const vh = window.innerHeight
+//   // ContainerScroll is h-[280vh] with offset ['start start','end end'].
+//   // Full scroll range = 1.8vh. Card is flat at 72%; target 80% for margin.
+//   window.scrollTo({ top: sectionTop + paddingTop + 0.8 * 1.8 * vh, behavior: 'smooth' })
+// }
+
+function scrollToSend() {
+  const section = document.getElementById('send-showcase')
+  const duration = 2000
+  if (!section) return
+
+  const sectionTop = section.getBoundingClientRect().top + window.scrollY
+  const paddingTop = parseFloat(getComputedStyle(section).paddingTop)
+  const vh = window.innerHeight
+
+  const target = sectionTop + paddingTop + 0.8 * 1.8 * vh
+  const start = window.scrollY
+  const startTime = performance.now()
+
+  function easeInOutQuad(t: number) {
+    return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
+  }
+
+  function animateScroll(currentTime: number) {
+    const elapsed = currentTime - startTime
+    const progress = Math.min(elapsed / duration, 1)
+    const eased = easeInOutQuad(progress)
+
+    window.scrollTo(0, start + (target - start) * eased)
+
+    if (progress < 1) {
+      requestAnimationFrame(animateScroll)
+    }
+  }
+
+  requestAnimationFrame(animateScroll)
+}
 
 export function HeroSection() {
   return (
@@ -55,35 +100,25 @@ export function HeroSection() {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.6 }}
-          className='flex flex-col items-center gap-4 sm:flex-row'
+          className='flex flex-col items-center gap-3 sm:flex-row'
         >
-          {/* <MovingBorder
-            containerClassName='rounded-xl'
-            className='px-8 py-3 text-sm font-semibold text-foreground'
-            duration={2500}
-            as='div'
+          <Button
+            onClick={scrollToSend}
+            className='inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-[opacity,transform] duration-100 hover:opacity-90 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background'
           >
-            <ConnectButton className='border-0 bg-transparent hover:bg-transparent hover:shadow-none p-0 text-foreground font-semibold' />
-          </MovingBorder> */}
+            Try it
+            <ArrowRight className='h-4 w-4' />
+          </Button>
 
-          <a
-            href='#'
-            className='text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline'
+          <Button
+            onClick={() => (window.location.href = '/dashboard')}
+            className='inline-flex items-center gap-2 rounded-xl border border-border bg-background/50 px-6 py-3 text-sm font-semibold text-foreground backdrop-blur-sm transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background'
           >
-            Learn how it works ↓
-          </a>
+            <Blocks className='h-4 w-4' />
+            Open App
+          </Button>
         </motion.div>
       </div>
-
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.5, duration: 1 }}
-        className='absolute bottom-10 flex flex-col items-center gap-2 text-xs text-muted-foreground'
-      >
-        <ArrowDown className='h-4 w-4 animate-bounce' />
-        Scroll to explore
-      </motion.div>
     </section>
   )
 }

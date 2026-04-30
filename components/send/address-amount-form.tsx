@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { PublicKey } from '@solana/web3.js'
 import { ArrowRight } from 'lucide-react'
 import { motion } from 'motion/react'
@@ -19,6 +19,7 @@ function isValidSolanaAddress(addr: string): boolean {
 }
 
 export function AddressAmountForm({ onContinue }: AddressAmountFormProps) {
+  const formId = useId()
   const [receiver, setReceiver] = useState('')
   const [amount, setAmount] = useState('')
   const [errors, setErrors] = useState<{ receiver?: string; amount?: string }>({})
@@ -58,8 +59,11 @@ export function AddressAmountForm({ onContinue }: AddressAmountFormProps) {
     >
       {/* Receiver */}
       <div className='space-y-1.5'>
-        <label className='text-xs font-medium text-muted-foreground'>Send to</label>
+        <label htmlFor={`${formId}-receiver`} className='text-xs font-medium text-muted-foreground'>
+          Send to
+        </label>
         <input
+          id={`${formId}-receiver`}
           type='text'
           value={receiver}
           onChange={(e) => {
@@ -67,7 +71,7 @@ export function AddressAmountForm({ onContinue }: AddressAmountFormProps) {
             if (errors.receiver) setErrors((p) => ({ ...p, receiver: undefined }))
           }}
           placeholder='Solana wallet address'
-          className='w-full rounded-xl border border-border/50 bg-muted/20 px-4 py-3 font-mono text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-colors'
+          className='w-full rounded-xl border border-border/50 bg-muted/20 px-4 py-3 font-mono text-sm text-foreground transition-colors placeholder:text-muted-foreground/50 focus-visible:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30'
           spellCheck={false}
           autoComplete='off'
         />
@@ -76,10 +80,14 @@ export function AddressAmountForm({ onContinue }: AddressAmountFormProps) {
 
       {/* Amount */}
       <div className='space-y-1.5'>
-        <label className='text-xs font-medium text-muted-foreground'>Amount</label>
+        <label htmlFor={`${formId}-amount`} className='text-xs font-medium text-muted-foreground'>
+          Amount
+        </label>
         <div className='relative'>
           <input
+            id={`${formId}-amount`}
             type='number'
+            inputMode='decimal'
             value={amount}
             onChange={(e) => {
               setAmount(e.target.value)
@@ -88,7 +96,8 @@ export function AddressAmountForm({ onContinue }: AddressAmountFormProps) {
             placeholder='0.00'
             min='0.01'
             step='0.01'
-            className='w-full rounded-xl border border-border/50 bg-muted/20 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-colors pr-16'
+            autoComplete='off'
+            className='w-full rounded-xl border border-border/50 bg-muted/20 px-4 py-3 pr-16 text-sm text-foreground transition-colors placeholder:text-muted-foreground/50 focus-visible:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30'
           />
           <span className='absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-green-500'>USDC</span>
         </div>
@@ -97,7 +106,7 @@ export function AddressAmountForm({ onContinue }: AddressAmountFormProps) {
 
       <button
         type='submit'
-        className='flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90 active:scale-[0.98]'
+        className='flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-semibold text-primary-foreground transition-[opacity,transform] duration-100 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98]'
       >
         Preview Payment
         <ArrowRight className='h-4 w-4' />

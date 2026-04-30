@@ -393,16 +393,16 @@ curl ${ORIGIN}/api/dashboard \\
   -H "Authorization: Bearer sk_live_..."`,
 
   getLink: `# Get a single payment link (public — no auth needed)
-curl ${ORIGIN}/api/link/clxyz1234abcd`,
+curl ${ORIGIN}/api/links/clxyz1234abcd`,
 
   toggleLink: `# Deactivate a link
-curl -X PATCH ${ORIGIN}/api/link/clxyz1234abcd \\
+curl -X PATCH ${ORIGIN}/api/links/clxyz1234abcd \\
   -H "Authorization: Bearer sk_live_..." \\
   -H "Content-Type: application/json" \\
   -d '{ "active": false }'`,
 
   configWebhook: `# Set a webhook URL + signing secret on a link
-curl -X POST ${ORIGIN}/api/link/clxyz1234abcd/webhook \\
+curl -X POST ${ORIGIN}/api/links/clxyz1234abcd/webhook \\
   -H "Authorization: Bearer sk_live_..." \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -1009,7 +1009,7 @@ Settlix.open({ linkId: "clxyz1234abcd", metadata: { orderId: "1234" } })`}
               subtitle='Get details or toggle a link active/inactive.'
             >
               <div className='space-y-4'>
-                <Method method='GET' path='/api/link/:id' />
+                <Method method='GET' path='/api/links/:id' />
                 <CodeBlock label='bash' code={API_SNIPPETS.getLink} />
                 <p className='text-sm text-muted-foreground'>
                   Public endpoint — no auth required. Used by buyers before paying.
@@ -1017,7 +1017,7 @@ Settlix.open({ linkId: "clxyz1234abcd", metadata: { orderId: "1234" } })`}
 
                 <div className='h-px bg-border/30' />
 
-                <Method method='PATCH' path='/api/link/:id' />
+                <Method method='PATCH' path='/api/links/:id' />
                 <CodeBlock label='bash' code={API_SNIPPETS.toggleLink} />
               </div>
             </Section>
@@ -1030,7 +1030,7 @@ Settlix.open({ linkId: "clxyz1234abcd", metadata: { orderId: "1234" } })`}
               subtitle='Configure a webhook on a link — Settlix POSTs to your URL on every confirmed payment.'
             >
               <div className='space-y-4'>
-                <Method method='POST' path='/api/link/:id/webhook' />
+                <Method method='POST' path='/api/links/:id/webhook' />
                 <CodeBlock label='bash' code={API_SNIPPETS.configWebhook} />
 
                 <div className='h-px bg-border/30' />

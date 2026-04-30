@@ -75,7 +75,7 @@ export function useDashboard() {
     })
 
     try {
-      const res = await fetch(`/api/link/${id}`, {
+      const res = await fetch(`/api/links/${id}`, {
         method: 'PATCH',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
