@@ -93,7 +93,7 @@ model PaymentLink {
 - `prisma/schema.prisma` — add two nullable fields
 - `app/api/create-link/route.ts` — accept and validate `expiresAt` and `maxUses`
 - `lib/services/payment-link.service.ts` — persist them
-- `app/api/link/[id]/route.ts` — enforce expiry and max uses when loading pay page
+- `app/api/links/[id]/route.ts` — enforce expiry and max uses when loading pay page
 - `app/(pay)/pay/[id]/page.tsx` — show "This link has expired" or "Sold out" state
 - `components/dashboard/create-link-dialog.tsx` — optional expiry date picker + max uses input
 - `components/dashboard/link-row.tsx` — show expiry badge or uses remaining

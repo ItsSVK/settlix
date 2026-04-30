@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from 'motion/react'
 import { X, GitFork } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import type { DashboardLink } from '@/lib/hooks/use-dashboard'
+import type { Link } from '@/lib/hooks/use-links'
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -16,7 +16,7 @@ function shorten(s: string, start = 6, end = 4) {
 interface SplitModalProps {
   open: boolean
   onClose: () => void
-  link: DashboardLink
+  link: Link
 }
 
 export function SplitModal({ open, onClose, link }: SplitModalProps) {

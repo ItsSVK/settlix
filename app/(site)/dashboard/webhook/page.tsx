@@ -1,35 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Webhook, CheckCircle2, Circle, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { WebhookModal } from '@/components/dashboard/webhook-modal'
-
-interface WebhookConfig {
-  webhookUrl: string | null
-  hasWebhookSecret: boolean
-}
+import { useWebhook } from '@/lib/hooks/use-webhook'
 
 export default function WebhookPage() {
-  const [config, setConfig] = useState<WebhookConfig | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
   const [open, setOpen] = useState(false)
 
-  const load = async () => {
-    try {
-      const res = await fetch('/api/dashboard/webhook', { credentials: 'include' })
-      if (!res.ok) return
-      setConfig(await res.json())
-    } catch {
-      // silently fail
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    void load()
-  }, [])
+  const { webhook, isLoading } = useWebhook()
 
   return (
     <div className='flex-1 bg-muted/40 dark:bg-background'>
@@ -52,13 +32,13 @@ export default function WebhookPage() {
               <p className='text-xs font-semibold uppercase tracking-wider text-muted-foreground'>Endpoint</p>
               {isLoading ? (
                 <div className='h-4 w-48 animate-pulse rounded bg-muted' />
-              ) : config?.webhookUrl ? (
-                <p className='text-sm text-foreground break-all'>{config.webhookUrl}</p>
+              ) : webhook?.webhookUrl ? (
+                <p className='text-sm text-foreground break-all'>{webhook.webhookUrl}</p>
               ) : (
                 <p className='text-sm text-muted-foreground italic'>Not configured</p>
               )}
             </div>
-            {config?.webhookUrl ? (
+            {webhook?.webhookUrl ? (
               <span className='flex items-center gap-1.5 rounded-full bg-green-500/10 px-2.5 py-1 text-xs font-bold text-green-500 ring-1 ring-green-500/20'>
                 <CheckCircle2 className='h-3 w-3' /> Active
               </span>
@@ -76,7 +56,7 @@ export default function WebhookPage() {
                 <div className='h-4 w-32 animate-pulse rounded bg-muted' />
               ) : (
                 <p className='text-sm text-foreground'>
-                  {config?.hasWebhookSecret ? (
+                  {webhook?.hasWebhookSecret ? (
                     '••••••••••••••••'
                   ) : (
                     <span className='italic text-muted-foreground'>Not configured</span>
@@ -84,7 +64,7 @@ export default function WebhookPage() {
                 </p>
               )}
             </div>
-            {config?.hasWebhookSecret ? (
+            {webhook?.hasWebhookSecret ? (
               <span className='flex items-center gap-1.5 rounded-full bg-green-500/10 px-2.5 py-1 text-xs font-bold text-green-500 ring-1 ring-green-500/20'>
                 <CheckCircle2 className='h-3 w-3' /> Enabled
               </span>
@@ -101,22 +81,18 @@ export default function WebhookPage() {
               className='flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold'
             >
               <Pencil className='h-3.5 w-3.5' />
-              {config?.webhookUrl ? 'Edit Webhook' : 'Configure Webhook'}
+              {webhook?.webhookUrl ? 'Edit Webhook' : 'Configure Webhook'}
             </Button>
           </div>
         </div>
       </div>
 
-      {config !== null && (
+      {webhook && (
         <WebhookModal
           open={open}
           onClose={() => setOpen(false)}
-          onUpdated={() => {
-            setIsLoading(true)
-            void load()
-          }}
-          webhookUrl={config.webhookUrl}
-          hasWebhookSecret={config.hasWebhookSecret}
+          webhookUrl={webhook?.webhookUrl}
+          hasWebhookSecret={webhook?.hasWebhookSecret}
         />
       )}
     </div>

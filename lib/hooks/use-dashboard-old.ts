@@ -61,43 +61,6 @@ export function useDashboard() {
     }
   }, [])
 
-  const refresh = useCallback(() => load({ silent: true }), [load])
-
-  const toggleLinkActive = async (id: string, active: boolean) => {
-    const previousActive = data?.links.find((link) => link.id === id)?.active
-
-    setData((prev) => {
-      if (!prev) return prev
-      return {
-        ...prev,
-        links: prev.links.map((link) => (link.id === id ? { ...link, active } : link)),
-      }
-    })
-
-    try {
-      const res = await fetch(`/api/links/${id}`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ active }),
-      })
-      if (!res.ok) throw new Error('Failed to update link status')
-      toast.success(active ? 'Link activated' : 'Link deactivated')
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Failed to update link status')
-      if (typeof previousActive === 'boolean') {
-        setData((prev) => {
-          if (!prev) return prev
-          return {
-            ...prev,
-            links: prev.links.map((link) => (link.id === id ? { ...link, active: previousActive } : link)),
-          }
-        })
-      }
-      throw e
-    }
-  }
-
   useEffect(() => {
     load()
   }, [load])
@@ -139,16 +102,6 @@ export function useDashboard() {
       eventSource.close()
     }
   }, [load])
-
-  const archiveLink = async (id: string) => {
-    const res = await fetch(`/api/links/${id}`, { method: 'DELETE', credentials: 'include' })
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}))
-      throw new Error(data.error ?? 'Failed to delete link')
-    }
-  }
-
-  return { data, isLoading, error, refresh, toggleLinkActive, archiveLink }
 }
 
 export type { DashboardLink }

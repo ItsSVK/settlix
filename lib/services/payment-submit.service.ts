@@ -1,5 +1,4 @@
 import { PaymentExecutionStatus, Prisma } from '@/lib/generated/prisma/client'
-import { Decimal } from '@/lib/generated/prisma/internal/prismaNamespace'
 import { getMint } from '@solana/spl-token'
 import { PublicKey } from '@solana/web3.js'
 
@@ -17,7 +16,6 @@ import {
 import { ApiError } from '@/lib/api/errors'
 import { apiLogger } from '@/lib/api/logger'
 import { prisma } from '@/lib/db'
-import { decimalFromOptionalString } from '@/lib/money'
 import { humanToRawAmount } from '@/lib/solana/amount'
 import { createServerConnection } from '@/lib/solana/connection'
 import { RPC_COMMITMENT } from '@/lib/solana/constants'
@@ -60,8 +58,8 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
       txSignature: body.txSignature,
       userWallet: body.userWallet ?? UNKNOWN_PAYER_WALLET,
       inputToken: body.inputToken ?? link.token,
-      inputAmount: decimalFromOptionalString(body.inputAmount, new Decimal(0)),
-      outputAmount: decimalFromOptionalString(body.outputAmount, new Decimal(0)),
+      inputAmount: BigInt(body.inputAmount ?? '0'),
+      outputAmount: BigInt(body.outputAmount ?? '0'),
       status: PaymentExecutionStatus.failed,
       settlementToken: link.token,
       metadata: body.metadata ?? null,
@@ -88,8 +86,13 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
   })
 
   const inputToken = body.inputToken ?? link.token
-  const inputAmountDec = decimalFromOptionalString(body.inputAmount, new Decimal(0))
-  const outputAmountDec = decimalFromOptionalString(body.outputAmount, link.amount)
+  const inputAmountBig = BigInt(body.inputAmount ?? '0')
+  // Fall back to the link's expected amount (converted to raw units) when the
+  // client didn't report outputAmount — avoids a zero recorded for paid txs.
+  const outputAmountBig =
+    body.outputAmount !== undefined && body.outputAmount !== ''
+      ? BigInt(body.outputAmount)
+      : humanToRawAmount(link.amount, mintInfo.decimals)
 
   const status = verify.ok ? PaymentExecutionStatus.paid : PaymentExecutionStatus.failed
 
@@ -100,8 +103,8 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
     txSignature: body.txSignature,
     userWallet,
     inputToken,
-    inputAmount: inputAmountDec,
-    outputAmount: outputAmountDec,
+    inputAmount: inputAmountBig,
+    outputAmount: outputAmountBig,
     status,
     settlementToken: link.token,
     metadata: body.metadata ?? null,
@@ -131,8 +134,8 @@ async function upsertPaymentExecution(data: {
   txSignature: string
   userWallet: string
   inputToken: string
-  inputAmount: Decimal
-  outputAmount: Decimal
+  inputAmount: bigint
+  outputAmount: bigint
   status: PaymentExecutionStatus
   settlementToken: string
   metadata?: Record<string, unknown> | null

@@ -160,7 +160,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
         recipients = [{ wallet: wallet, basisPoints: merchantBp }, ...partnerEntries]
       }
 
-      const res = await fetch('/api/create-link', {
+      const res = await fetch('/api/links', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

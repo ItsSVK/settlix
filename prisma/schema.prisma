@@ -85,8 +85,8 @@ model PaymentExecution {
   linkId            String
   userWallet        String
   inputToken        String
-  inputAmount       Decimal                @db.Decimal(30, 18)
-  outputAmount      Decimal                @db.Decimal(30, 18)
+  inputAmount       BigInt
+  outputAmount      BigInt
   txSignature       String                 @unique
   status            PaymentExecutionStatus
   metadata          Json?

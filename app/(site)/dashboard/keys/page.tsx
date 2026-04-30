@@ -26,7 +26,7 @@ export default function ApiKeysPage() {
         </motion.div>
 
         <motion.div initial={false} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 0.1 }}>
-          <ApiKeysSection keys={keys} isLoading={isLoading} refresh={refresh} revokeKey={revokeKey} />
+          <ApiKeysSection keys={keys} isLoading={isLoading} revokeKey={revokeKey} />
         </motion.div>
       </div>
     </div>

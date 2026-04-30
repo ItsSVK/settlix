@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
       const paidCount = executions.filter((e: PaymentExecution) => e.status === 'paid').length
       const totalVolume = executions
         .filter((e: PaymentExecution) => e.status === 'paid')
-        .reduce((sum: number, e: PaymentExecution) => sum + Number(e.outputAmount), 0)
+        .reduce((sum: number, e: PaymentExecution) => sum + Number(e.outputAmount) / 1_000_000, 0)
 
       return {
         id: link.id,

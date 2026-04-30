@@ -6,13 +6,13 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'motion/react'
 import { Copy, Check, ExternalLink, ToggleLeft, ToggleRight, QrCode, GitFork } from 'lucide-react'
-import type { DashboardLink } from '@/lib/hooks/use-dashboard'
+import type { Link } from '@/lib/hooks/use-links'
 import { Button } from '@/components/ui/button'
 import { copyText } from '@/lib/utils'
 import { toast } from 'sonner'
 import { QRModal } from './qr-modal'
 import { SplitModal } from './split-modal'
-import { TOKENS } from '@/lib/tokens/tokens'
+import { getDecimalsByMint, getNameByMint, TOKENS } from '@/lib/tokens/tokens'
 import { ConfirmationModal } from '@/components/shared/confirmation-modal'
 
 function shorten(s: string, start = 6, end = 4) {
@@ -20,7 +20,7 @@ function shorten(s: string, start = 6, end = 4) {
 }
 
 interface LinkRowProps {
-  link: DashboardLink
+  link: Link
   onToggle: (id: string, active: boolean) => Promise<void>
   onRefresh: () => void
   onArchive: (id: string) => Promise<void>
@@ -285,8 +285,19 @@ export function LinkRow({ link, onToggle, onRefresh, onArchive }: LinkRowProps) 
                           )}
                         </div>
                         <span className='font-bold text-xs text-foreground'>
-                          {Number(ex.outputAmount) / 1e6}{' '}
-                          <span className='text-[10px] font-normal text-muted-foreground'>USDC</span>
+                          <Image
+                            src={TOKENS.find((t) => t.mint === ex.inputToken)?.logoURI as string}
+                            alt={getNameByMint(ex.inputToken)}
+                            width={16}
+                            height={16}
+                            className='inline-block rounded-full'
+                          />{' '}
+                          {(Number(ex.inputAmount) * (1 / Math.pow(10, getDecimalsByMint(ex.inputToken)))).toFixed(
+                            getDecimalsByMint(ex.inputToken),
+                          )}
+                          {/* <span className='text-[10px] font-normal text-muted-foreground'>
+                            {getNameByMint(ex.inputToken)}
+                          </span> */}
                         </span>
 
                         <div className='w-px h-2.5 bg-border/60 mx-1' />

@@ -4,15 +4,14 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { AlertCircle, Check, Loader2, Webhook, X } from 'lucide-react'
-import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { copyText } from '@/lib/utils'
+import { useWebhook } from '@/lib/hooks/use-webhook'
 
 interface WebhookModalProps {
   open: boolean
   onClose: () => void
-  onUpdated: () => void
   webhookUrl: string | null
   hasWebhookSecret: boolean
 }
@@ -25,7 +24,6 @@ function generateWebhookSecret() {
 
 function WebhookModalPanel({
   onClose,
-  onUpdated,
   webhookUrl: initialWebhookUrl,
   hasWebhookSecret,
 }: Omit<WebhookModalProps, 'open'>) {
@@ -36,6 +34,7 @@ function WebhookModalPanel({
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isTestingWebhook, setIsTestingWebhook] = useState(false)
+  const { updateWebhook } = useWebhook()
 
   const saveWebhook = async ({ clear = false }: { clear?: boolean } = {}) => {
     const trimmedUrl = clear ? '' : webhookUrl.trim()
@@ -60,23 +59,10 @@ function WebhookModalPanel({
     setError('')
 
     try {
-      const res = await fetch('/api/dashboard/webhook', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          webhookUrl: trimmedUrl || undefined,
-          webhookSecret: trimmedSecret || undefined,
-        }),
+      await updateWebhook({
+        webhookUrl: trimmedUrl,
+        webhookSecret: trimmedSecret,
       })
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data.error ?? 'Failed to save webhook')
-      }
-
-      toast.success(trimmedUrl ? 'Webhook saved' : 'Webhook cleared')
-      onUpdated()
       onClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
@@ -89,7 +75,7 @@ function WebhookModalPanel({
     setIsTestingWebhook(true)
     setError('')
     try {
-      const res = await fetch('/api/dashboard/webhook/test', {
+      const res = await fetch('/api/webhook/test', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -314,7 +300,7 @@ function WebhookModalPanel({
   )
 }
 
-export function WebhookModal({ open, onClose, onUpdated, webhookUrl, hasWebhookSecret }: WebhookModalProps) {
+export function WebhookModal({ open, onClose, webhookUrl, hasWebhookSecret }: WebhookModalProps) {
   if (typeof document === 'undefined') return null
 
   return createPortal(
@@ -323,7 +309,6 @@ export function WebhookModal({ open, onClose, onUpdated, webhookUrl, hasWebhookS
         <WebhookModalPanel
           key={`${webhookUrl ?? ''}:${hasWebhookSecret ? '1' : '0'}`}
           onClose={onClose}
-          onUpdated={onUpdated}
           webhookUrl={webhookUrl}
           hasWebhookSecret={hasWebhookSecret}
         />

@@ -18,6 +18,12 @@ const nextConfig: NextConfig = {
       { hostname: 'raw.githubusercontent.com' },
       { hostname: 'assets.coingecko.com' },
       { hostname: 'coin-images.coingecko.com' },
+      { hostname: 'ipfs.io' },
+      { hostname: 'www.circle.com' },
+      { hostname: 'arweave.net' },
+      { hostname: '*.arweave.net' },
+      { hostname: '*.ipfs.nftstorage.link' },
+      { hostname: 'gateway.irys.xyz' },
     ],
   },
 }

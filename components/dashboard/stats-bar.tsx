@@ -2,10 +2,10 @@
 
 import { useEffect } from 'react'
 import { motion, useMotionValue, useTransform, animate } from 'motion/react'
-import type { DashboardLink } from '@/lib/hooks/use-dashboard'
+import type { Link } from '@/lib/hooks/use-links'
 
 interface StatsBarProps {
-  links: DashboardLink[]
+  links: Link[]
 }
 
 function CountCard({ label, value }: { label: string; value: number }) {

@@ -5,8 +5,8 @@ import { z } from 'zod'
 
 import { handleApi, readJsonBody } from '@/lib/api/errors'
 import { requireAuth } from '@/lib/auth/require-auth'
-import { prisma } from '@/lib/db'
 import { VALIDATION } from '@/lib/api/constants'
+import { createApiKey, getApiKeysByWallet } from '@/lib/services/apikey.service'
 
 const MAX_KEYS_PER_WALLET = 10
 
@@ -19,11 +19,7 @@ export async function GET(req: NextRequest) {
   return handleApi(async () => {
     const { wallet } = await requireAuth(req)
 
-    const keys = await prisma.apiKey.findMany({
-      where: { merchantWallet: wallet },
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, name: true, lastUsedAt: true, createdAt: true },
-    })
+    const keys = await getApiKeysByWallet(wallet)
 
     return NextResponse.json({ keys })
   })
@@ -43,7 +39,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const count = await prisma.apiKey.count({ where: { merchantWallet: wallet } })
+    const count = (await getApiKeysByWallet(wallet))?.length ?? 0
     if (count >= MAX_KEYS_PER_WALLET) {
       return NextResponse.json(
         { error: `Maximum ${MAX_KEYS_PER_WALLET} API keys allowed`, code: 'KEY_LIMIT' },
@@ -54,9 +50,10 @@ export async function POST(req: NextRequest) {
     const rawKey = 'sk_live_' + randomBytes(32).toString('hex')
     const keyHash = createHash('sha256').update(rawKey).digest('hex')
 
-    const apiKey = await prisma.apiKey.create({
-      data: { merchantWallet: wallet, keyHash, name: parsed.data.name },
-      select: { id: true, name: true, createdAt: true },
+    const apiKey = await createApiKey({
+      wallet,
+      name: parsed.data.name,
+      keyHash,
     })
 
     // Raw key is returned ONCE and never stored — merchant must save it now

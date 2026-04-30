@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   })
 }
 
-export async function POST(req: NextRequest) {
+export async function PATCH(req: NextRequest) {
   return handleApi(async () => {
     const { wallet } = await requireAuth(req)
 

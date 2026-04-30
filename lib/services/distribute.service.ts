@@ -50,8 +50,7 @@ export async function getPendingDistributions(merchantWallet: string): Promise<P
     const partnerTotals = new Map<string, bigint>()
 
     for (const exec of executions) {
-      // outputAmount is stored in raw USDC units (integer)
-      const outputRaw = BigInt(exec.outputAmount.toFixed(0))
+      const outputRaw = exec.outputAmount
       for (const recipient of exec.link.recipients) {
         const owed = (outputRaw * BigInt(recipient.basisPoints)) / BigInt(10000)
         partnerTotals.set(recipient.wallet, (partnerTotals.get(recipient.wallet) ?? BigInt(0)) + owed)
