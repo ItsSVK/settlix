@@ -8,7 +8,7 @@ import { RPC_COMMITMENT } from '@/lib/solana/constants'
 import { directPaySendBody } from '@/lib/validation'
 
 /**
- * POST /api/direct-pay/send
+ * POST /api/checkout/transfer/submit
  *
  * Submits a signed direct USDC transfer for the pay-any-address flow.
  * No DB recording — on-chain tx is the full record.

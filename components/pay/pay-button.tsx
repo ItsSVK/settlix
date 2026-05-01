@@ -75,7 +75,7 @@ export function PayButton({ linkId, selectedToken, quoteReady, onSuccess, classN
     try {
       // 1. Build the order (Jupiter swap OR direct transfer if same-mint)
       setStep('building')
-      const orderRaw = await fetch('/api/jupiter/order', {
+      const orderRaw = await fetch('/api/checkout/pay/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -115,7 +115,7 @@ export function PayButton({ linkId, selectedToken, quoteReady, onSuccess, classN
       let execData: { status: string; signature: string; inputAmountResult?: string; outputAmountResult?: string }
 
       if (isDirect) {
-        const res = await fetch('/api/solana/send', {
+        const res = await fetch('/api/checkout/pay/submit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ signedTransaction: signedBase64, ...paymentContext }),
@@ -129,7 +129,7 @@ export function PayButton({ linkId, selectedToken, quoteReady, onSuccess, classN
           outputAmountResult: outAmount,
         }
       } else {
-        const res = await fetch('/api/jupiter/execute', {
+        const res = await fetch('/api/checkout/pay/execute', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ signedTransaction: signedBase64, requestId, ...paymentContext }),

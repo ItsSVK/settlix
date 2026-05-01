@@ -9,7 +9,7 @@ import { RPC_COMMITMENT } from '@/lib/solana/constants'
 import { sendTxBody } from '@/lib/validation'
 
 /**
- * POST /api/solana/send
+ * POST /api/checkout/pay/submit
  *
  * Submits a signed VersionedTransaction directly to the Solana RPC.
  * Used for same-mint payments where no Jupiter swap is involved.

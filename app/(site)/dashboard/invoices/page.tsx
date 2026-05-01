@@ -1,8 +1,8 @@
 'use client'
 
 import { motion } from 'motion/react'
-import { InvoicesTable } from '@/components/dashboard/invoice-section'
-import { CreateInvoiceDialog } from '@/components/dashboard/create-invoice-dialog'
+import { InvoicesTable } from '@/components/dashboard/invoices/invoices-table'
+import { CreateInvoiceDialog } from '@/components/dashboard/invoices/create-invoice-dialog'
 import { useInvoices } from '@/lib/hooks/use-invoices'
 import { SkeletonCard } from '@/components/shared/skeletons'
 import { StatsBar } from '@/components/dashboard/stats-bar'

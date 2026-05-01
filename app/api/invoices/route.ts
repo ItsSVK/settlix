@@ -8,7 +8,7 @@ import { VALIDATION } from '@/lib/api/constants'
 import { createInvoiceBody } from '@/lib/validation'
 import { createInvoice, getInvoicesByWallet, deriveInvoiceStatus } from '@/lib/services/invoice.service'
 
-/** GET /api/invoice — list invoices for the authenticated merchant */
+/** GET /api/invoices — list invoices for the authenticated merchant */
 export async function GET(req: NextRequest) {
   return handleApi(async () => {
     const { wallet } = await requireAuth(req)
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
   })
 }
 
-/** POST /api/invoice — create a new invoice */
+/** POST /api/invoices — create a new invoice */
 export async function POST(req: NextRequest) {
   return handleApi(async () => {
     const { wallet } = await requireAuth(req)

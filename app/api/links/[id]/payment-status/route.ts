@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 /**
- * GET /api/pay/[id]/status?session=<sessionId>
+ * GET /api/links/[id]/payment-status?session=<sessionId>
  *
  * Polled by the SolanaQRModal every 2 seconds.
  * Returns the current status of the background watcher for this session.

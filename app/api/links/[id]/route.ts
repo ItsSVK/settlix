@@ -59,7 +59,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Not found', code: NOT_FOUND }, { status: 404 })
     }
     await archivePaymentLink(parsedId.data, wallet)
-    return NextResponse.json({}, { status: 200 })
+    return NextResponse.json({ success: true })
   })
 }
 

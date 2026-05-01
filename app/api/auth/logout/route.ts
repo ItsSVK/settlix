@@ -9,7 +9,7 @@ import { SESSION_COOKIE } from '@/lib/auth/session'
  */
 export async function POST() {
   return handleApi(async () => {
-    const res = NextResponse.json({ ok: true })
+    const res = NextResponse.json({ success: true })
     res.cookies.set(SESSION_COOKIE, '', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

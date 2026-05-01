@@ -11,7 +11,7 @@ import { buildInvoiceEmailHtml, buildInvoiceEmailSubject, type InvoiceEmailData 
 
 type Params = { params: Promise<{ id: string }> }
 
-/** POST /api/invoice/[id]/send — sends the invoice to the client's email */
+/** POST /api/invoices/[id]/send — sends the invoice to the client's email */
 export async function POST(req: NextRequest, { params }: Params) {
   return handleApi(async () => {
     const { wallet } = await requireAuth(req)
@@ -59,6 +59,6 @@ export async function POST(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Failed to send email', detail: error.message }, { status: 502 })
     }
 
-    return NextResponse.json({ sent: true })
+    return NextResponse.json({ success: true })
   })
 }

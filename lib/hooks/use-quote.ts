@@ -69,7 +69,7 @@ export function useQuote(
       }
 
       try {
-        const res = await fetch('/api/jupiter/quote', {
+        const res = await fetch('/api/checkout/pay/quote', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ inputMint, payId }),

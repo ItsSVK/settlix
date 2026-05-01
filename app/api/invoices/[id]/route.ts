@@ -7,7 +7,7 @@ import { requireAuth } from '@/lib/auth/require-auth'
 
 type Params = { params: Promise<{ id: string }> }
 
-/** GET /api/invoice/[id] — public; used by the invoice pay page */
+/** GET /api/invoices/[id] — public; used by the invoice pay page */
 export async function GET(_req: NextRequest, { params }: Params) {
   return handleApi(async () => {
     const { id } = await params
@@ -42,12 +42,12 @@ export async function GET(_req: NextRequest, { params }: Params) {
   })
 }
 
-/** DELETE /api/invoice/[id] — protected, merchant only */
+/** DELETE /api/invoices/[id] — protected, merchant only */
 export async function DELETE(req: NextRequest, { params }: Params) {
   return handleApi(async () => {
     const { wallet } = await requireAuth(req)
     const { id } = await params
     await archiveInvoice(id, wallet)
-    return NextResponse.json({}, { status: 200 })
+    return NextResponse.json({ success: true })
   })
 }

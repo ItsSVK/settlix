@@ -1,8 +1,8 @@
 'use client'
 
 import { motion } from 'motion/react'
-import { ApiKeysSection } from '@/components/dashboard/api-keys-section'
-import { CreateKeyDialog } from '@/components/dashboard/create-key-dialog'
+import { ApiKeysSection } from '@/components/dashboard/settings/api-keys-section'
+import { CreateKeyDialog } from '@/components/dashboard/settings/create-key-dialog'
 import { useKeys } from '@/lib/hooks/use-keys'
 
 export default function ApiKeysPage() {

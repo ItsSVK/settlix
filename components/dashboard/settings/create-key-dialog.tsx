@@ -5,7 +5,8 @@ import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { AlertCircle, Key, Loader2, Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { copyText } from '@/lib/utils'
+import { CopyBox } from '@/components/ui/copy-box'
+import { FormErrorBanner } from '@/components/ui/form-error'
 
 interface CreateKeyDialogProps {
   onCreated: () => void
@@ -16,7 +17,6 @@ function CreateKeyDialogPanel({ onClose, onCreated }: { onClose: () => void; onC
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [revealData, setRevealData] = useState<{ raw: string; name: string } | null>(null)
-  const [copied, setCopied] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -103,19 +103,8 @@ function CreateKeyDialogPanel({ onClose, onCreated }: { onClose: () => void; onC
                 </div>
               </div>
 
-              <div className='mb-6 flex items-center gap-3 rounded-2xl border border-border/50 bg-background/50 p-3 ring-1 ring-border/20'>
-                <span className='ml-2 flex-1 break-all font-mono text-sm text-muted-foreground'>{revealData.raw}</span>
-                <Button
-                  onClick={() => copyText(revealData.raw, setCopied)}
-                  title='Copy API Key'
-                  variant='secondary'
-                  size='sm'
-                  className={`shrink-0 rounded-xl px-4 font-medium transition-all ${
-                    copied ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20' : ''
-                  }`}
-                >
-                  {copied ? 'Copied!' : 'Copy'}
-                </Button>
+              <div className='mb-6'>
+                <CopyBox value={revealData.raw} wrap />
               </div>
 
               <Button
@@ -174,16 +163,7 @@ function CreateKeyDialogPanel({ onClose, onCreated }: { onClose: () => void; onC
                   </p>
                 </div>
 
-                {error && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className='flex items-start gap-2 rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-xs text-destructive'
-                  >
-                    <AlertCircle className='mt-0.5 h-4 w-4 shrink-0' />
-                    <p className='font-medium'>{error}</p>
-                  </motion.div>
-                )}
+                <FormErrorBanner error={error} />
 
                 <Button
                   type='submit'

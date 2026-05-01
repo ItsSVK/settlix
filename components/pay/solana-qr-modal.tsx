@@ -50,7 +50,7 @@ export function SolanaQRModal({ linkId, selectedToken, onClose, onSuccess }: Sol
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/pay/${linkId}/status?session=${sessionId}`)
+        const res = await fetch(`/api/links/${linkId}/payment-status?session=${sessionId}`)
         if (!res.ok) return
 
         const data = (await res.json()) as {

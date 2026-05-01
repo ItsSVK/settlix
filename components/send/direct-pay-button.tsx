@@ -81,7 +81,7 @@ export function DirectPayButton({
     try {
       // 1. Build order
       setStep('building')
-      const orderRaw = await fetch('/api/direct-pay/order', {
+      const orderRaw = await fetch('/api/checkout/transfer/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -108,7 +108,7 @@ export function DirectPayButton({
       let inputAmountResult: string
 
       if (isDirect) {
-        const res = await fetch('/api/direct-pay/send', {
+        const res = await fetch('/api/checkout/transfer/submit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ signedTransaction: signedBase64 }),
@@ -118,7 +118,7 @@ export function DirectPayButton({
         signature = body.signature
         inputAmountResult = inAmount
       } else {
-        const res = await fetch('/api/direct-pay/execute', {
+        const res = await fetch('/api/checkout/transfer/execute', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ signedTransaction: signedBase64, requestId }),

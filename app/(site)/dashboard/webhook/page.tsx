@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Webhook, CheckCircle2, Circle, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { WebhookModal } from '@/components/dashboard/webhook-modal'
+import { WebhookModal } from '@/components/dashboard/settings/webhook-modal'
 import { useWebhook } from '@/lib/hooks/use-webhook'
 
 export default function WebhookPage() {

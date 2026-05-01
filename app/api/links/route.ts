@@ -5,7 +5,7 @@ import { ApiError, handleApi, readJsonBody } from '@/lib/api/errors'
 import { getSolanaCluster } from '@/lib/env/server'
 import { decimalFromCreateLinkAmount } from '@/lib/money'
 import { isAllowedSettlementMint } from '@/lib/solana/constants'
-import { insertPaymentLink } from '@/lib/services/payment-link.service'
+import { createPaymentLink } from '@/lib/services/payment-link.service'
 import { createLinkBody } from '@/lib/validation'
 import { INVALID_AMOUNT, UNSUPPORTED_SETTLEMENT_TOKEN, VALIDATION } from '@/lib/api/constants'
 import { requireAuth } from '@/lib/auth/require-auth'
@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const link = await insertPaymentLink({
+    const link = await createPaymentLink({
       merchantWallet,
       token: parsed.data.token,
       amount,

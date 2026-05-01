@@ -36,7 +36,7 @@ export function useInvoices() {
   } = useQuery({
     queryKey: ['invoices'],
     queryFn: async () => {
-      const res = await fetch('/api/invoice', { credentials: 'include' })
+      const res = await fetch('/api/invoices', { credentials: 'include' })
       if (!res.ok) throw new Error('Failed to fetch invoices')
       const data = (await res.json()) as { invoices: Invoice[] }
       return data.invoices
@@ -45,7 +45,7 @@ export function useInvoices() {
 
   const sendMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/invoice/${id}/send`, { method: 'POST', credentials: 'include' })
+      const res = await fetch(`/api/invoices/${id}/send`, { method: 'POST', credentials: 'include' })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         throw new Error(data.error ?? 'Failed to send invoice')
@@ -61,7 +61,7 @@ export function useInvoices() {
 
   const archiveMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/invoice/${id}`, { method: 'DELETE', credentials: 'include' })
+      const res = await fetch(`/api/invoices/${id}`, { method: 'DELETE', credentials: 'include' })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         throw new Error(data.error ?? 'Failed to archive invoice')

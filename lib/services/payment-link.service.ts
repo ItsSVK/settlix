@@ -17,7 +17,7 @@ type PaymentLinkWithRelations = Prisma.PaymentLinkGetPayload<{
   include: { executions: true; recipients: true }
 }>
 
-export async function insertPaymentLink(data: {
+export async function createPaymentLink(data: {
   merchantWallet: string
   token: string
   amount: Decimal

@@ -20,6 +20,6 @@ export async function DELETE(req: NextRequest, { params }: Params) {
 
     await prisma.apiKey.delete({ where: { id } })
 
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({ success: true })
   })
 }

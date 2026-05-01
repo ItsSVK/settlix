@@ -58,7 +58,7 @@ export function useDirectQuote(
       }
 
       try {
-        const res = await fetch('/api/direct-pay/quote', {
+        const res = await fetch('/api/checkout/transfer/quote', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ inputMint, receiverWallet, amount }),

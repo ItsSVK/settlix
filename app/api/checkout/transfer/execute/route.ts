@@ -6,7 +6,7 @@ import { executeSwap } from '@/lib/solana/jupiter'
 import { directPayExecuteBody } from '@/lib/validation'
 
 /**
- * POST /api/direct-pay/execute
+ * POST /api/checkout/transfer/execute
  *
  * Executes a Jupiter swap for the direct-pay (pay any address) flow.
  * No payment link, no DB recording — the on-chain tx is the full record.
