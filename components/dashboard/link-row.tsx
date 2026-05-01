@@ -12,7 +12,7 @@ import { copyText } from '@/lib/utils'
 import { toast } from 'sonner'
 import { QRModal } from './qr-modal'
 import { SplitModal } from './split-modal'
-import { getDecimalsByMint, getNameByMint, TOKENS } from '@/lib/tokens/tokens'
+import { getDecimalsByMint, getLogoByMint, getNameByMint, TOKENS } from '@/lib/tokens/tokens'
 import { ConfirmationModal } from '@/components/shared/confirmation-modal'
 
 function shorten(s: string, start = 6, end = 4) {
@@ -73,8 +73,8 @@ export function LinkRow({ link, onToggle, onRefresh, onArchive }: LinkRowProps) 
             isExpired || isSoldOut
               ? 'bg-destructive/10 text-destructive'
               : link.active
-              ? 'bg-green-500/10 text-green-500'
-              : 'bg-muted text-muted-foreground'
+                ? 'bg-green-500/10 text-green-500'
+                : 'bg-muted text-muted-foreground'
           }`}
         >
           <span
@@ -97,7 +97,7 @@ export function LinkRow({ link, onToggle, onRefresh, onArchive }: LinkRowProps) 
           <div className='flex items-center gap-1.5 flex-wrap'>
             <span className='text-xs font-bold text-foreground flex items-center gap-1'>
               <Image
-                src={TOKENS.find((t) => t.mint === link.token)?.logoURI as string}
+                src={getLogoByMint(link.token) ?? ''}
                 alt='token'
                 width={16}
                 height={16}
@@ -286,7 +286,7 @@ export function LinkRow({ link, onToggle, onRefresh, onArchive }: LinkRowProps) 
                         </div>
                         <span className='font-bold text-xs text-foreground'>
                           <Image
-                            src={TOKENS.find((t) => t.mint === ex.inputToken)?.logoURI as string}
+                            src={getLogoByMint(ex.inputToken) ?? ''}
                             alt={getNameByMint(ex.inputToken)}
                             width={16}
                             height={16}

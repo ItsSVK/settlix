@@ -21,7 +21,7 @@ export function PayCardBase({
   allowInvoice,
 }: {
   linkId: string
-  onPaid?: (txSignature: string) => void
+  onPaid?: (txSignature: string, details?: { swap?: { inputAmount: string; inputDecimals: number; inputSymbol: string }, tokenMint?: string }) => void
   allowInvoice?: boolean
 }) {
   const { data: link, isLoading: linkLoading, error: linkError } = usePaymentLink(linkId)
@@ -164,7 +164,7 @@ export function PayCardBase({
                   quoteReady={!!quote && !quoteLoading && !isRefreshing}
                   onSuccess={(sig, swap) => {
                     setSuccessResult({ sig, swap })
-                    onPaid?.(sig)
+                    onPaid?.(sig, { swap, tokenMint: selectedToken?.mint })
                   }}
                 />
 
@@ -193,6 +193,7 @@ export function PayCardBase({
           onSuccess={(sig) => {
             setShowSolanaPayQR(false)
             setSuccessResult({ sig })
+            onPaid?.(sig, { tokenMint: selectedToken?.mint })
           }}
         />
       )}

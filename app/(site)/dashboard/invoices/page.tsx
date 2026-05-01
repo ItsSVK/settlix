@@ -8,7 +8,7 @@ import { SkeletonCard } from '@/components/shared/skeletons'
 import { StatsBarInvoice } from '@/components/dashboard/stats-bar-invoice'
 
 export default function InvoicesPage() {
-  const { invoices, isLoading, refresh, archiveInvoice } = useInvoices()
+  const { invoices, isLoading, refresh, archiveInvoice, sendInvoice } = useInvoices()
 
   return (
     <div className='flex-1 bg-muted/40 dark:bg-background'>
@@ -56,6 +56,7 @@ export default function InvoicesPage() {
             isLoading={isLoading}
             onRefresh={refresh}
             archiveInvoice={archiveInvoice}
+            sendInvoice={sendInvoice}
           />
         </motion.div>
       </div>

@@ -21,3 +21,11 @@ export function getAuthSecret(): string {
   }
   return secret
 }
+
+export function getResendApiKey(): string {
+  const key = process.env.RESEND_API_KEY?.trim()
+  if (!key) {
+    throw new ConfigurationError('RESEND_API_KEY is not configured')
+  }
+  return key
+}

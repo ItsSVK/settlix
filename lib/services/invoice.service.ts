@@ -130,6 +130,27 @@ export async function getInvoicesByWallet(merchantWallet: string) {
   }
 }
 
+export async function getInvoiceByLinkId(linkId: string) {
+  try {
+    return await prisma.invoice.findFirst({
+      where: { linkId, archivedAt: null },
+      select: {
+        id: true,
+        clientName: true,
+        clientEmail: true,
+        merchantWallet: true,
+        memo: true,
+        token: true,
+        lineItems: { select: { description: true, quantity: true, unitPrice: true }, orderBy: { id: 'asc' } },
+        link: { select: { amount: true } },
+      },
+    })
+  } catch (e) {
+    apiLogger.warn('getInvoiceByLinkId failed', { linkId, error: String(e) })
+    return null
+  }
+}
+
 export async function archiveInvoice(id: string, merchantWallet: string) {
   try {
     const invoice = await prisma.invoice.findFirst({

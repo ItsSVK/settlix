@@ -43,6 +43,22 @@ export function useInvoices() {
     },
   })
 
+  const sendMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/invoice/${id}/send`, { method: 'POST', credentials: 'include' })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error ?? 'Failed to send invoice')
+      }
+    },
+    onSuccess: () => {
+      toast.success('Invoice sent to client')
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : 'Failed to send invoice')
+    },
+  })
+
   const archiveMutation = useMutation({
     mutationFn: async (id: string) => {
       const res = await fetch(`/api/invoice/${id}`, { method: 'DELETE', credentials: 'include' })
@@ -71,5 +87,12 @@ export function useInvoices() {
     },
   })
 
-  return { invoices, isLoading, refresh: refetch, archiveInvoice: (id: string) => archiveMutation.mutateAsync(id) }
+  return {
+    invoices,
+    isLoading,
+    refresh: refetch,
+    archiveInvoice: (id: string) => archiveMutation.mutateAsync(id),
+    sendInvoice: (id: string) => sendMutation.mutateAsync(id),
+    isSending: sendMutation.isPending,
+  }
 }

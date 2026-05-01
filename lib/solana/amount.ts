@@ -9,3 +9,8 @@ export function humanToRawAmount(human: Decimal, decimals: number): bigint {
 export function decimalToBigIntUSDC(amount: Decimal): bigint {
   return BigInt(amount.mul(1_000_000).toFixed(0))
 }
+
+export function rawToHumanAmount(raw: bigint, decimals: number): string {
+  const scale = new Decimal(10).pow(decimals)
+  return new Decimal(raw.toString()).div(scale).toFixed(decimals > 4 ? 4 : decimals)
+}

@@ -21,3 +21,18 @@ export function getDecimalsByMint(mint: string) {
   const token = TOKENS.find((t) => t.mint === mint)
   return token?.decimals ?? 6
 }
+
+export function getLogoByMint(mint: string) {
+  const token = TOKENS.find((t) => t.mint === mint)
+  return token?.logoURI ?? null
+}
+
+export function getSymbolByMint(mint: string) {
+  const token = TOKENS.find((t) => t.mint === mint)
+  return token?.symbol ?? null
+}
+
+export function getTokenByMint(mint: string) {
+  const token = TOKENS.find((t) => t.mint === mint)
+  return token ?? null
+}

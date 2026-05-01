@@ -3,14 +3,14 @@
 import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'motion/react'
-import { ChevronLeft, ChevronRight, Copy, Check, ExternalLink, ChevronDown } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Copy, Check, ExternalLink, ChevronDown, Mail, Loader2 } from 'lucide-react'
 import { CreateInvoiceDialog } from '@/components/dashboard/create-invoice-dialog'
 import { BackgroundBeams } from '@/components/ui/background-beams'
 import { Button } from '@/components/ui/button'
 import { ConfirmationModal } from '@/components/shared/confirmation-modal'
 import { copyText } from '@/lib/utils'
 import { toast } from 'sonner'
-import { TOKENS } from '@/lib/tokens/tokens'
+import { getLogoByMint, TOKENS } from '@/lib/tokens/tokens'
 import type { Invoice } from '@/lib/hooks/use-invoices'
 import { SkeletonRow } from '@/components/shared/skeletons'
 
@@ -19,6 +19,7 @@ interface InvoicesTableProps {
   isLoading: boolean
   onRefresh: () => void
   archiveInvoice: (id: string) => Promise<void>
+  sendInvoice: (id: string) => Promise<void>
 }
 
 function shorten(s: string, start = 6, end = 4) {
@@ -29,15 +30,27 @@ function InvoiceRow({
   invoice,
   onRefresh,
   archiveInvoice,
+  sendInvoice,
 }: {
   invoice: Invoice
   onRefresh: () => void
   archiveInvoice: (id: string) => Promise<void>
+  sendInvoice: (id: string) => Promise<void>
 }) {
   const [copied, setCopied] = useState(false)
   const [expanded, setExpanded] = useState(false)
   const [archiving, setArchiving] = useState<string | null>(null)
   const [confirmArchive, setConfirmArchive] = useState<string | null>(null)
+  const [sending, setSending] = useState(false)
+
+  const handleSendMail = async () => {
+    setSending(true)
+    try {
+      await sendInvoice(invoice.id)
+    } finally {
+      setSending(false)
+    }
+  }
   const invoiceUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/invoice/${invoice.id}`
 
   const handleArchive = async (id: string) => {
@@ -65,8 +78,8 @@ function InvoiceRow({
             isOverdue
               ? 'bg-destructive/10 text-destructive'
               : isPaid
-              ? 'bg-green-500/10 text-green-500'
-              : 'bg-amber-500/10 text-amber-500'
+                ? 'bg-green-500/10 text-green-500'
+                : 'bg-amber-500/10 text-amber-500'
           }`}
         >
           <span
@@ -87,7 +100,7 @@ function InvoiceRow({
           <div className='flex items-center gap-1.5 flex-wrap'>
             <span className='text-xs font-bold text-foreground flex items-center gap-1'>
               <Image
-                src={(TOKENS.find((t) => t.mint === invoice.token)?.logoURI as string) || TOKENS[0].logoURI}
+                src={getLogoByMint(invoice.token) || TOKENS[0].logoURI}
                 alt='token'
                 width={16}
                 height={16}
@@ -128,6 +141,20 @@ function InvoiceRow({
           >
             <ExternalLink className='h-3 w-3' />
           </Button>
+
+          {/* Send mail — only if client email exists and not yet paid */}
+          {invoice.clientEmail && !isPaid && (
+            <Button
+              onClick={handleSendMail}
+              disabled={sending}
+              title={`Send invoice to ${invoice.clientEmail}`}
+              variant='ghost'
+              size='sm'
+              className='hidden md:flex h-6 w-6 rounded-lg p-0 text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors'
+            >
+              {sending ? <Loader2 className='h-3 w-3 animate-spin' /> : <Mail className='h-3 w-3' />}
+            </Button>
+          )}
 
           <div className='w-px h-4 bg-border/50 mx-1' />
 
@@ -208,7 +235,7 @@ function InvoiceRow({
   )
 }
 
-export function InvoicesTable({ invoices, isLoading, onRefresh, archiveInvoice }: InvoicesTableProps) {
+export function InvoicesTable({ invoices, isLoading, onRefresh, archiveInvoice, sendInvoice }: InvoicesTableProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
@@ -256,7 +283,12 @@ export function InvoicesTable({ invoices, isLoading, onRefresh, archiveInvoice }
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.3, delay: i * 0.05 }}
           >
-            <InvoiceRow invoice={invoice} onRefresh={onRefresh} archiveInvoice={archiveInvoice} />
+            <InvoiceRow
+              invoice={invoice}
+              onRefresh={onRefresh}
+              archiveInvoice={archiveInvoice}
+              sendInvoice={sendInvoice}
+            />
           </motion.div>
         ))}
       </AnimatePresence>

@@ -29,7 +29,7 @@ export function StatsBarInvoice({ invoices }: StatsBarInvoiceProps) {
   const totalInvoices = invoices.length
   const totalPaid = invoices.reduce((s, i) => s + (i.status === 'paid' ? 1 : 0), 0)
   const totalOverdue = invoices.reduce((s, i) => s + (i.status === 'overdue' ? 1 : 0), 0)
-  const totalRevenue = invoices.reduce((s, i) => s + parseFloat(i.amount), 0) / 1_000_000
+  const totalRevenue = invoices.reduce((s, i) => s + parseFloat(i.amount), 0)
 
   return (
     <div className='grid grid-cols-2 gap-4 sm:grid-cols-4'>

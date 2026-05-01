@@ -25,6 +25,7 @@ import { publishDashboardPaymentPaid } from '@/lib/realtime/dashboard-stream'
 
 import { getPaymentLinkById } from './payment-link.service'
 import { deliverPaymentWebhook } from './payment-webhook.service'
+import { sendInvoiceReceiptIfApplicable } from './invoice-email.service'
 
 export type SubmitTxOutcome = { ok: true } | { ok: false; reason: string; httpStatus: number; code: string }
 
@@ -200,6 +201,8 @@ async function upsertPaymentExecution(data: {
           },
         })
       }
+
+      void sendInvoiceReceiptIfApplicable(data.linkId, data.txSignature, data.inputToken, data.inputAmount)
     }
 
     return 'ok'
