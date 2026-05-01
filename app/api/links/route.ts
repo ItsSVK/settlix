@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
       const paidCount = executions.filter((e: PaymentExecution) => e.status === 'paid').length
       const totalVolume = executions
         .filter((e: PaymentExecution) => e.status === 'paid')
-        .reduce((sum: number, e: PaymentExecution) => sum + Number(e.outputAmount) / 1_000_000, 0)
+        .reduce((sum: number, e: PaymentExecution) => sum + Number(e.outputAmount), 0)
 
       return {
         id: link.id,
@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
           paidCount,
           failedCount: executions.filter((e: PaymentExecution) => e.status === 'failed').length,
           pendingCount: executions.filter((e: PaymentExecution) => e.status === 'pending').length,
-          totalVolume: totalVolume.toFixed(2),
+          totalVolume: totalVolume,
           successRate: executions.length > 0 ? Math.round((paidCount / executions.length) * 100) : null,
         },
         recentExecutions: executions.slice(0, 5).map((e: PaymentExecution) => ({

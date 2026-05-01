@@ -56,4 +56,4 @@ test-ledger
 server.ts
 webhook.log
 backup.dump
-# backup.json
+backup.json
