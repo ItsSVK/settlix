@@ -4,7 +4,7 @@ import { motion } from 'motion/react'
 import { InvoicesTable } from '@/components/dashboard/invoices/invoices-table'
 import { CreateInvoiceDialog } from '@/components/dashboard/invoices/create-invoice-dialog'
 import { useInvoices } from '@/lib/hooks/use-invoices'
-import { SkeletonCard } from '@/components/shared/skeletons'
+import { SkeletonGrid } from '@/components/shared/skeletons'
 import { StatsBar } from '@/components/dashboard/stats-bar'
 
 export default function InvoicesPage() {
@@ -37,11 +37,7 @@ export default function InvoicesPage() {
 
         {/* Stats */}
         {isLoading ? (
-          <div className='mb-8 grid grid-cols-1 gap-4 md:grid-cols-4'>
-            {[1, 2, 3, 4].map((i) => (
-              <SkeletonCard key={i} />
-            ))}
-          </div>
+          <SkeletonGrid />
         ) : (
           invoices.length > 0 && (
             <motion.div

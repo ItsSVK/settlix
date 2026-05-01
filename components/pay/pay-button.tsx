@@ -1,19 +1,12 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
-import { useWallet } from '@solana/wallet-adapter-react'
-import { useWalletModal } from '@solana/wallet-adapter-react-ui'
-import { VersionedTransaction } from '@solana/web3.js'
+import { useCallback } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { AlertCircle, Loader2, Zap } from 'lucide-react'
 import type { TokenInfo } from './token-selector'
 import { cn } from '@/lib/utils'
-
-interface SwapReceipt {
-  inputAmount: string
-  inputDecimals: number
-  inputSymbol: string
-}
+import { usePaymentFlow, PAY_STEP_LABELS } from '@/lib/hooks/use-payment-flow'
+import type { SwapReceipt } from '@/lib/hooks/use-payment-flow'
 
 interface PayButtonProps {
   linkId: string
@@ -23,157 +16,63 @@ interface PayButtonProps {
   className?: string
 }
 
-type PayStep = 'idle' | 'building' | 'signing' | 'executing' | 'done' | 'error'
-
-const stepLabels: Record<PayStep, string> = {
-  idle: 'Pay Now',
-  building: 'Building transaction…',
-  signing: 'Waiting for signature…',
-  executing: 'Submitting to network…',
-  done: 'Payment complete!',
-  error: 'Transaction failed',
-}
-
 export function PayButton({ linkId, selectedToken, quoteReady, onSuccess, className }: PayButtonProps) {
-  const { wallet, publicKey, signTransaction, connected, connecting, connect } = useWallet()
-  const { visible, setVisible } = useWalletModal()
-  const [step, setStep] = useState<PayStep>('idle')
-  const [errorMsg, setErrorMsg] = useState('')
-  const [connectRequested, setConnectRequested] = useState(false)
-
-  const showConnectError = useCallback((message: string) => {
-    setErrorMsg(message)
-    setStep('error')
-    setConnectRequested(false)
-    setTimeout(() => setStep('idle'), 4000)
-  }, [])
-
-  const requestWalletConnection = useCallback(async () => {
-    setErrorMsg('')
-    setConnectRequested(true)
-
-    if (!wallet) {
-      setVisible(true)
-      return
-    }
-
-    try {
-      await connect()
-    } catch (e) {
-      showConnectError(e instanceof Error ? e.message : 'Wallet connection failed')
-    }
-  }, [wallet, setVisible, connect, showConnectError])
+  const { step, setStep, errorMsg, isLoading, connected, publicKey, requestWalletConnection, signAndExecute, handleError } =
+    usePaymentFlow({ onSuccess })
 
   const pay = useCallback(async () => {
     if (!connected || !publicKey) {
       requestWalletConnection()
       return
     }
-    if (!selectedToken || !quoteReady || !signTransaction) return
+    if (!selectedToken || !quoteReady) return
 
-    setErrorMsg('')
     try {
-      // 1. Build the order (Jupiter swap OR direct transfer if same-mint)
+      // 1. Build order
       setStep('building')
-      const orderRaw = await fetch('/api/checkout/pay/order', {
+      const orderRes = await fetch('/api/checkout/pay/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          inputMint: selectedToken.mint,
-          taker: publicKey.toBase58(),
-          payId: linkId,
-        }),
+        body: JSON.stringify({ inputMint: selectedToken.mint, taker: publicKey.toBase58(), payId: linkId }),
       })
-      const orderData = await orderRaw.json()
-      if (!orderRaw.ok) throw new Error(orderData.error || 'Failed to build transaction')
+      const orderData = await orderRes.json()
+      if (!orderRes.ok) throw new Error(orderData.error || 'Failed to build transaction')
 
       const { transaction: txBase64, requestId, isDirect, inAmount, outAmount } = orderData
-
-      // 2. Deserialise + sign
-      setStep('signing')
-      const txBytes = Buffer.from(txBase64, 'base64')
-      const vTx = VersionedTransaction.deserialize(txBytes)
-      const signedTx = await signTransaction(vTx)
-      const signedBase64 = Buffer.from(signedTx.serialize()).toString('base64')
-
-      // Payment context sent with execute/send so the server records atomically.
-      // No separate /api/submit-tx call — eliminates the race where a closed tab
-      // leaves a confirmed on-chain tx unrecorded.
       const executionId = crypto.randomUUID()
-      const paymentContext = {
-        executionId,
-        linkId,
-        userWallet: publicKey.toBase58(),
-        inputToken: selectedToken.mint,
-        inAmount,
-      }
+      const paymentContext = { executionId, linkId, userWallet: publicKey.toBase58(), inputToken: selectedToken.mint, inAmount }
 
-      // 3. Execute:
-      //    isDirect = true  → same-mint payment, submit straight to Solana RPC (no Jupiter swap needed)
-      //    isDirect = false → Jupiter swap, go through Jupiter's /execute
-      setStep('executing')
-      let execData: { status: string; signature: string; inputAmountResult?: string; outputAmountResult?: string }
-
-      if (isDirect) {
-        const res = await fetch('/api/checkout/pay/submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ signedTransaction: signedBase64, ...paymentContext }),
-        })
-        const body = await res.json()
-        if (!res.ok || body.status !== 'Success') throw new Error(body.error || 'Direct transfer failed')
-        execData = {
-          status: 'Success',
-          signature: body.signature,
-          inputAmountResult: inAmount,
-          outputAmountResult: outAmount,
-        }
-      } else {
-        const res = await fetch('/api/checkout/pay/execute', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ signedTransaction: signedBase64, requestId, ...paymentContext }),
-        })
-        if (!res.ok) throw new Error('Execution failed')
-        execData = await res.json()
-        if (execData.status !== 'Success') throw new Error('Transaction did not succeed')
-      }
-
-      setStep('done')
-      onSuccess(execData.signature, {
-        inputAmount: execData.inputAmountResult ?? inAmount,
-        inputDecimals: selectedToken.decimals,
-        inputSymbol: selectedToken.symbol,
-      })
+      // 2 + 3. Sign and execute
+      await signAndExecute(
+        txBase64,
+        async (signedBase64) => {
+          if (isDirect) {
+            const res = await fetch('/api/checkout/pay/submit', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ signedTransaction: signedBase64, ...paymentContext }),
+            })
+            const body = await res.json()
+            if (!res.ok || body.status !== 'Success') throw new Error(body.error || 'Direct transfer failed')
+            return { status: 'Success', signature: body.signature, inputAmountResult: inAmount, outputAmountResult: outAmount }
+          } else {
+            const res = await fetch('/api/checkout/pay/execute', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ signedTransaction: signedBase64, requestId, ...paymentContext }),
+            })
+            if (!res.ok) throw new Error('Execution failed')
+            return res.json()
+          }
+        },
+        { selectedToken, inAmount },
+      )
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : 'Something went wrong')
-      setStep('error')
-      setTimeout(() => setStep('idle'), 4000)
+      handleError(e)
     }
-  }, [connected, publicKey, selectedToken, quoteReady, signTransaction, linkId, onSuccess, requestWalletConnection])
+  }, [connected, publicKey, selectedToken, quoteReady, linkId, requestWalletConnection, signAndExecute, handleError, setStep])
 
-  useEffect(() => {
-    if (!connectRequested || connected) return
-
-    if (!visible && !wallet && !connecting) {
-      queueMicrotask(() => {
-        setConnectRequested(false)
-        setStep('idle')
-      })
-    }
-  }, [connectRequested, connected, visible, wallet, connecting])
-
-  useEffect(() => {
-    if (!connectRequested || !connected) return
-
-    queueMicrotask(() => {
-      setConnectRequested(false)
-      setStep('idle')
-    })
-  }, [connectRequested, connected])
-
-  const isLoading = ['building', 'signing', 'executing'].includes(step)
-  const isDisabled = isLoading || step === 'done' || (!connected && false) || !selectedToken || !quoteReady
+  const isDisabled = isLoading || step === 'done' || !selectedToken || !quoteReady
 
   if (!connected) {
     return (
@@ -205,10 +104,9 @@ export function PayButton({ linkId, selectedToken, quoteReady, onSuccess, classN
       >
         {isLoading && <Loader2 className='h-4 w-4 animate-spin' />}
         {step === 'idle' && <Zap className='h-4 w-4' />}
-        {stepLabels[step]}
+        {PAY_STEP_LABELS[step]}
       </button>
 
-      {/* Error message — fades + slides in for the same 4s window the button is red */}
       <AnimatePresence>
         {step === 'error' && errorMsg && (
           <motion.div

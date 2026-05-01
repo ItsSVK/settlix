@@ -6,9 +6,9 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { Link } from '@/lib/hooks/use-links'
 import { LinkRow } from './link-row'
 import { CreateLinkDialog } from './create-link-dialog'
-import { BackgroundBeams } from '@/components/ui/background-beams'
 import { Button } from '@/components/ui/button'
 import { SkeletonRow } from '@/components/shared/skeletons'
+import { EmptyState } from '@/components/shared/empty-state'
 
 interface LinksTableProps {
   links: Link[]
@@ -42,16 +42,11 @@ export function LinksTable({ links, isLoading, onRefresh, onToggle, onArchive }:
 
   if (links.length === 0) {
     return (
-      <div className='relative flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/50 py-20 text-center overflow-hidden'>
-        <BackgroundBeams className='opacity-20' />
-        <div className='relative z-10'>
-          <p className='text-lg font-semibold text-foreground'>No payment links yet</p>
-          <p className='mt-2 text-sm text-muted-foreground'>Create your first link and start accepting payments.</p>
-          <div className='mt-5 flex justify-center'>
-            <CreateLinkDialog onCreated={onRefresh} />
-          </div>
-        </div>
-      </div>
+      <EmptyState
+        title='No payment links yet'
+        description='Create your first link and start accepting payments.'
+        action={<CreateLinkDialog onCreated={onRefresh} />}
+      />
     )
   }
 

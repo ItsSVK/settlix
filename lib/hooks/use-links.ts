@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { apiClient } from '@/lib/api/client'
 
 export interface InvoiceItem {
   id: string
@@ -53,23 +54,14 @@ export function useLinks() {
   } = useQuery({
     queryKey: ['links'],
     queryFn: async () => {
-      const res = await fetch('/api/links', { credentials: 'include' })
-      if (!res.ok) throw new Error('Failed to fetch links')
-      const data = (await res.json()) as { links: Link[] }
+      const data = await apiClient.get<{ links: Link[] }>('/api/links')
       return data.links
     },
   })
 
   const toggleMutation = useMutation({
-    mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
-      const res = await fetch(`/api/links/${id}`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ active }),
-      })
-      if (!res.ok) throw new Error('Failed to update link status')
-    },
+    mutationFn: ({ id, active }: { id: string; active: boolean }) =>
+      apiClient.patch(`/api/links/${id}`, { active }),
     onMutate: async ({ id, active }) => {
       await queryClient.cancelQueries({ queryKey: ['links'] })
       const previousLinks = queryClient.getQueryData<Link[]>(['links'])
@@ -95,13 +87,7 @@ export function useLinks() {
   })
 
   const archiveMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(`/api/links/${id}`, { method: 'DELETE', credentials: 'include' })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data.error ?? 'Failed to delete link')
-      }
-    },
+    mutationFn: (id: string) => apiClient.delete(`/api/links/${id}`),
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['links'] })
       const previousLinks = queryClient.getQueryData<Link[]>(['links'])
@@ -126,8 +112,8 @@ export function useLinks() {
     links,
     isLoading,
     refresh: refetch,
-    toggleLinkActive: (id: string, active: boolean) => toggleMutation.mutateAsync({ id, active }),
-    archiveLink: (id: string) => archiveMutation.mutateAsync(id),
+    toggleLinkActive: async (id: string, active: boolean) => { await toggleMutation.mutateAsync({ id, active }) },
+    archiveLink: async (id: string) => { await archiveMutation.mutateAsync(id) },
   }
 }
 

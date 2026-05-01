@@ -5,7 +5,7 @@ import { motion } from 'motion/react'
 import { StatsBar } from '@/components/dashboard/stats-bar'
 import { LinksTable } from '@/components/dashboard/links/links-table'
 import { CreateLinkDialog } from '@/components/dashboard/links/create-link-dialog'
-import { SkeletonCard } from '@/components/shared/skeletons'
+import { SkeletonGrid } from '@/components/shared/skeletons'
 import { Switch } from '@/components/ui/switch'
 import { useLinks } from '@/lib/hooks/use-links'
 
@@ -42,11 +42,7 @@ export default function LinksPage() {
 
         {/* Stats */}
         {isLoading ? (
-          <div className='mb-8 grid grid-cols-1 gap-4 md:grid-cols-4'>
-            {[1, 2, 3, 4].map((i) => (
-              <SkeletonCard key={i} />
-            ))}
-          </div>
+          <SkeletonGrid />
         ) : (
           links.length > 0 && (
             <motion.div

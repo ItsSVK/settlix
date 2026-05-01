@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Plus, Loader2, Trash2, ChevronDown, Calendar } from 'lucide-react'
+import { Plus, Loader2, Trash2, ChevronDown } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-context'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
@@ -10,6 +10,8 @@ import { FormErrorBanner } from '@/components/ui/form-error'
 import { DialogShell } from '@/components/shared/dialog-shell'
 import { DialogSuccess } from '@/components/shared/dialog-success'
 import { getDefaultUsdcMint } from '@/lib/solana/constants'
+import { DatePickerInput } from '@/components/ui/date-picker-input'
+import { apiClient } from '@/lib/api/client'
 
 interface Partner {
   id: string
@@ -152,27 +154,15 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
         recipients = [{ wallet: wallet, basisPoints: merchantBp }, ...partnerEntries]
       }
 
-      const res = await fetch('/api/links', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token: getDefaultUsdcMint(),
-          amount,
-          title: title.trim() || undefined,
-          description: description.trim() || undefined,
-          recipients,
-          expiresAt: expiresAt ? new Date(expiresAt).toISOString() : undefined,
-          maxUses: maxUses ? parseInt(maxUses, 10) : undefined,
-        }),
+      const data = await apiClient.post<{ id: string; payPath: string }>('/api/links', {
+        token: getDefaultUsdcMint(),
+        amount,
+        title: title.trim() || undefined,
+        description: description.trim() || undefined,
+        recipients,
+        expiresAt: expiresAt ? new Date(expiresAt).toISOString() : undefined,
+        maxUses: maxUses ? parseInt(maxUses, 10) : undefined,
       })
-
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error(d.error ?? 'Failed to create link')
-      }
-
-      const data = await res.json()
       setResult(data)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unknown error')
@@ -321,19 +311,13 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
                     className='overflow-hidden'
                   >
                     <div className='space-y-4 border-t border-border/40 px-4 pb-4 pt-3'>
-                      <div>
-                        <label className='mb-1.5 block text-xs font-medium text-muted-foreground'>Expires at</label>
-                        <div className='relative'>
-                          <input
-                            type='datetime-local'
-                            value={expiresAt}
-                            min={new Date().toISOString().slice(0, 16)}
-                            onChange={(e) => setExpiresAt(e.target.value)}
-                            className='peer relative w-full appearance-none rounded-xl border-none bg-muted/90 pl-3.5 pr-10 py-3 text-sm font-medium text-foreground outline-none transition-all focus:ring-1 focus:ring-primary/30 dark:scheme-dark [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0'
-                          />
-                          <Calendar className='pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors peer-focus:text-primary' />
-                        </div>
-                      </div>
+                      <DatePickerInput
+                        label='Expires at'
+                        type='datetime-local'
+                        value={expiresAt}
+                        min={new Date().toISOString().slice(0, 16)}
+                        onChange={setExpiresAt}
+                      />
                       <div>
                         <label className='mb-1.5 block text-xs font-medium text-muted-foreground'>Max uses</label>
                         <input

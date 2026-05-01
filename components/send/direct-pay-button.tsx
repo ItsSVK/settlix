@@ -1,19 +1,21 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
-import { useWallet } from '@solana/wallet-adapter-react'
-import { useWalletModal } from '@solana/wallet-adapter-react-ui'
-import { VersionedTransaction } from '@solana/web3.js'
+import { useCallback } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { AlertCircle, Loader2, Zap } from 'lucide-react'
 import type { TokenInfo } from '@/components/pay/token-selector'
 import { cn } from '@/lib/utils'
+import { usePaymentFlow } from '@/lib/hooks/use-payment-flow'
+import type { SwapReceipt } from '@/lib/hooks/use-payment-flow'
 
-interface SwapReceipt {
-  inputAmount: string
-  inputDecimals: number
-  inputSymbol: string
-}
+const STEP_LABELS = {
+  idle: 'Send Now',
+  building: 'Building transaction…',
+  signing: 'Waiting for signature…',
+  executing: 'Submitting to network…',
+  done: 'Sent!',
+  error: 'Transaction failed',
+} as const
 
 interface DirectPayButtonProps {
   receiverWallet: string
@@ -24,17 +26,6 @@ interface DirectPayButtonProps {
   className?: string
 }
 
-type PayStep = 'idle' | 'building' | 'signing' | 'executing' | 'done' | 'error'
-
-const stepLabels: Record<PayStep, string> = {
-  idle: 'Send Now',
-  building: 'Building transaction…',
-  signing: 'Waiting for signature…',
-  executing: 'Submitting to network…',
-  done: 'Sent!',
-  error: 'Transaction failed',
-}
-
 export function DirectPayButton({
   receiverWallet,
   amount,
@@ -43,136 +34,61 @@ export function DirectPayButton({
   onSuccess,
   className,
 }: DirectPayButtonProps) {
-  const { wallet, publicKey, signTransaction, connected, connecting, connect } = useWallet()
-  const { visible, setVisible } = useWalletModal()
-  const [step, setStep] = useState<PayStep>('idle')
-  const [errorMsg, setErrorMsg] = useState('')
-  const [connectRequested, setConnectRequested] = useState(false)
-
-  const showConnectError = useCallback((message: string) => {
-    setErrorMsg(message)
-    setStep('error')
-    setConnectRequested(false)
-    setTimeout(() => setStep('idle'), 4000)
-  }, [])
-
-  const requestWalletConnection = useCallback(async () => {
-    setErrorMsg('')
-    setConnectRequested(true)
-    if (!wallet) {
-      setVisible(true)
-      return
-    }
-    try {
-      await connect()
-    } catch (e) {
-      showConnectError(e instanceof Error ? e.message : 'Wallet connection failed')
-    }
-  }, [wallet, setVisible, connect, showConnectError])
+  const { step, setStep, errorMsg, isLoading, connected, publicKey, requestWalletConnection, signAndExecute, handleError } =
+    usePaymentFlow({ onSuccess })
 
   const send = useCallback(async () => {
     if (!connected || !publicKey) {
       requestWalletConnection()
       return
     }
-    if (!selectedToken || !quoteReady || !signTransaction) return
+    if (!selectedToken || !quoteReady) return
 
-    setErrorMsg('')
     try {
       // 1. Build order
       setStep('building')
-      const orderRaw = await fetch('/api/checkout/transfer/order', {
+      const orderRes = await fetch('/api/checkout/transfer/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          inputMint: selectedToken.mint,
-          taker: publicKey.toBase58(),
-          receiverWallet,
-          amount,
-        }),
+        body: JSON.stringify({ inputMint: selectedToken.mint, taker: publicKey.toBase58(), receiverWallet, amount }),
       })
-      const orderData = await orderRaw.json()
-      if (!orderRaw.ok) throw new Error(orderData.error || 'Failed to build transaction')
+      const orderData = await orderRes.json()
+      if (!orderRes.ok) throw new Error(orderData.error || 'Failed to build transaction')
 
       const { transaction: txBase64, requestId, isDirect, inAmount } = orderData
 
-      // 2. Deserialise + sign
-      setStep('signing')
-      const vTx = VersionedTransaction.deserialize(Buffer.from(txBase64, 'base64'))
-      const signedTx = await signTransaction(vTx)
-      const signedBase64 = Buffer.from(signedTx.serialize()).toString('base64')
-
-      // 3. Execute
-      setStep('executing')
-      let signature: string
-      let inputAmountResult: string
-
-      if (isDirect) {
-        const res = await fetch('/api/checkout/transfer/submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ signedTransaction: signedBase64 }),
-        })
-        const body = await res.json()
-        if (!res.ok || body.status !== 'Success') throw new Error(body.error || 'Transfer failed')
-        signature = body.signature
-        inputAmountResult = inAmount
-      } else {
-        const res = await fetch('/api/checkout/transfer/execute', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ signedTransaction: signedBase64, requestId }),
-        })
-        if (!res.ok) throw new Error('Execution failed')
-        const execData = await res.json()
-        if (execData.status !== 'Success') throw new Error('Transaction did not succeed')
-        signature = execData.signature
-        inputAmountResult = execData.inputAmountResult ?? inAmount
-      }
-
-      setStep('done')
-      onSuccess(signature, {
-        inputAmount: inputAmountResult,
-        inputDecimals: selectedToken.decimals,
-        inputSymbol: selectedToken.symbol,
-      })
+      // 2 + 3. Sign and execute
+      await signAndExecute(
+        txBase64,
+        async (signedBase64) => {
+          if (isDirect) {
+            const res = await fetch('/api/checkout/transfer/submit', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ signedTransaction: signedBase64 }),
+            })
+            const body = await res.json()
+            if (!res.ok || body.status !== 'Success') throw new Error(body.error || 'Transfer failed')
+            return { status: 'Success', signature: body.signature, inputAmountResult: inAmount }
+          } else {
+            const res = await fetch('/api/checkout/transfer/execute', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ signedTransaction: signedBase64, requestId }),
+            })
+            if (!res.ok) throw new Error('Execution failed')
+            const execData = await res.json()
+            if (execData.status !== 'Success') throw new Error('Transaction did not succeed')
+            return execData
+          }
+        },
+        { selectedToken, inAmount },
+      )
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : 'Something went wrong')
-      setStep('error')
-      setTimeout(() => setStep('idle'), 4000)
+      handleError(e)
     }
-  }, [
-    connected,
-    publicKey,
-    selectedToken,
-    quoteReady,
-    signTransaction,
-    receiverWallet,
-    amount,
-    onSuccess,
-    requestWalletConnection,
-  ])
+  }, [connected, publicKey, selectedToken, quoteReady, receiverWallet, amount, requestWalletConnection, signAndExecute, handleError, setStep])
 
-  // Auto-trigger pay after wallet connects if user had clicked Send
-  useEffect(() => {
-    if (!connectRequested || connected) return
-    if (!visible && !wallet && !connecting) {
-      queueMicrotask(() => {
-        setConnectRequested(false)
-        setStep('idle')
-      })
-    }
-  }, [connectRequested, connected, visible, wallet, connecting])
-
-  useEffect(() => {
-    if (!connectRequested || !connected) return
-    queueMicrotask(() => {
-      setConnectRequested(false)
-      setStep('idle')
-    })
-  }, [connectRequested, connected])
-
-  const isLoading = ['building', 'signing', 'executing'].includes(step)
   const isDisabled = isLoading || step === 'done' || !selectedToken || !quoteReady
 
   if (!connected) {
@@ -205,7 +121,7 @@ export function DirectPayButton({
       >
         {isLoading && <Loader2 className='h-4 w-4 animate-spin' />}
         {step === 'idle' && <Zap className='h-4 w-4' />}
-        {stepLabels[step]}
+        {STEP_LABELS[step]}
       </button>
 
       <AnimatePresence>

@@ -2,12 +2,14 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Plus, Loader2, Trash2, Calendar } from 'lucide-react'
+import { Plus, Loader2, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { FormErrorBanner } from '@/components/ui/form-error'
 import { DialogShell } from '@/components/shared/dialog-shell'
 import { DialogSuccess } from '@/components/shared/dialog-success'
 import { getDefaultUsdcMint } from '@/lib/solana/constants'
+import { DatePickerInput } from '@/components/ui/date-picker-input'
+import { apiClient } from '@/lib/api/client'
 
 interface LineItem {
   id: string
@@ -104,30 +106,18 @@ export function CreateInvoiceDialog({ onCreated }: CreateInvoiceDialogProps) {
     setError('')
 
     try {
-      const res = await fetch('/api/invoices', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token: getDefaultUsdcMint(),
-          clientName: clientName.trim() || undefined,
-          clientEmail: clientEmail.trim() || undefined,
-          dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
-          memo: memo.trim() || undefined,
-          lineItems: lineItems.map((item) => ({
-            description: item.description.trim(),
-            quantity: parseFloat(item.quantity),
-            unitPrice: parseFloat(item.unitPrice),
-          })),
-        }),
+      const data = await apiClient.post<{ id: string; invoicePath: string }>('/api/invoices', {
+        token: getDefaultUsdcMint(),
+        clientName: clientName.trim() || undefined,
+        clientEmail: clientEmail.trim() || undefined,
+        dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+        memo: memo.trim() || undefined,
+        lineItems: lineItems.map((item) => ({
+          description: item.description.trim(),
+          quantity: parseFloat(item.quantity),
+          unitPrice: parseFloat(item.unitPrice),
+        })),
       })
-
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error(d.error ?? 'Failed to create invoice')
-      }
-
-      const data = await res.json()
       setResult(data)
       onCreated()
     } catch (e) {
@@ -187,19 +177,13 @@ export function CreateInvoiceDialog({ onCreated }: CreateInvoiceDialogProps) {
                     className='w-full rounded-xl border-none bg-muted/90 px-3.5 py-3 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30'
                   />
                 </div>
-                <div>
-                  <label className='mb-1.5 block text-xs font-medium text-muted-foreground'>Due date</label>
-                  <div className='relative'>
-                    <input
-                      type='date'
-                      value={dueDate}
-                      min={new Date().toISOString().slice(0, 10)}
-                      onChange={(e) => { setDueDate(e.target.value); setError('') }}
-                      className='peer relative w-full appearance-none rounded-xl border-none bg-muted/90 pl-3.5 pr-10 py-3 text-sm font-medium text-foreground outline-none transition-all focus:ring-1 focus:ring-primary/30 dark:scheme-dark [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0'
-                    />
-                    <Calendar className='pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors peer-focus:text-primary' />
-                  </div>
-                </div>
+                <DatePickerInput
+                  label='Due date'
+                  type='date'
+                  value={dueDate}
+                  min={new Date().toISOString().slice(0, 10)}
+                  onChange={(v) => { setDueDate(v); setError('') }}
+                />
               </div>
             </div>
 

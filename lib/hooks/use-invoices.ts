@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { apiClient } from '@/lib/api/client'
 
 export interface InvoiceItem {
   id: string
@@ -36,21 +37,13 @@ export function useInvoices() {
   } = useQuery({
     queryKey: ['invoices'],
     queryFn: async () => {
-      const res = await fetch('/api/invoices', { credentials: 'include' })
-      if (!res.ok) throw new Error('Failed to fetch invoices')
-      const data = (await res.json()) as { invoices: Invoice[] }
+      const data = await apiClient.get<{ invoices: Invoice[] }>('/api/invoices')
       return data.invoices
     },
   })
 
   const sendMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(`/api/invoices/${id}/send`, { method: 'POST', credentials: 'include' })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data.error ?? 'Failed to send invoice')
-      }
-    },
+    mutationFn: (id: string) => apiClient.post(`/api/invoices/${id}/send`, {}),
     onSuccess: () => {
       toast.success('Invoice sent to client')
     },
@@ -60,13 +53,7 @@ export function useInvoices() {
   })
 
   const archiveMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(`/api/invoices/${id}`, { method: 'DELETE', credentials: 'include' })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data.error ?? 'Failed to archive invoice')
-      }
-    },
+    mutationFn: (id: string) => apiClient.delete(`/api/invoices/${id}`),
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['invoices'] })
       const previousInvoices = queryClient.getQueryData<Invoice[]>(['invoices'])
@@ -91,8 +78,8 @@ export function useInvoices() {
     invoices,
     isLoading,
     refresh: refetch,
-    archiveInvoice: (id: string) => archiveMutation.mutateAsync(id),
-    sendInvoice: (id: string) => sendMutation.mutateAsync(id),
+    archiveInvoice: async (id: string) => { await archiveMutation.mutateAsync(id) },
+    sendInvoice: async (id: string) => { await sendMutation.mutateAsync(id) },
     isSending: sendMutation.isPending,
   }
 }

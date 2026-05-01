@@ -5,8 +5,8 @@ import Image from 'next/image'
 import { motion, AnimatePresence } from 'motion/react'
 import { ChevronLeft, ChevronRight, Copy, Check, ExternalLink, ChevronDown, Mail, Loader2 } from 'lucide-react'
 import { CreateInvoiceDialog } from '@/components/dashboard/invoices/create-invoice-dialog'
-import { BackgroundBeams } from '@/components/ui/background-beams'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/shared/empty-state'
 import { ConfirmationModal } from '@/components/shared/confirmation-modal'
 import { copyText } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -259,16 +259,11 @@ export function InvoicesTable({ invoices, isLoading, onRefresh, archiveInvoice, 
 
   if (invoices.length === 0) {
     return (
-      <div className='relative flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/50 py-20 text-center overflow-hidden'>
-        <BackgroundBeams className='opacity-20' />
-        <div className='relative z-10'>
-          <p className='text-lg font-semibold text-foreground'>No invoices yet</p>
-          <p className='mt-2 text-sm text-muted-foreground'>Create an invoice to bill your clients in USDC.</p>
-          <div className='mt-5 flex justify-center'>
-            <CreateInvoiceDialog onCreated={onRefresh} />
-          </div>
-        </div>
-      </div>
+      <EmptyState
+        title='No invoices yet'
+        description='Create an invoice to bill your clients in USDC.'
+        action={<CreateInvoiceDialog onCreated={onRefresh} />}
+      />
     )
   }
 

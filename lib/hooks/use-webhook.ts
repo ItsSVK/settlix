@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import type { MerchantModel } from '@/lib/generated/prisma/models'
+import { apiClient } from '@/lib/api/client'
 
 export type Webhook = Pick<MerchantModel, 'webhookSecret' | 'webhookUrl'>
 export type WebhookResponse = {
@@ -15,24 +16,11 @@ export function useWebhook() {
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['webhook-config'],
-    queryFn: async () => {
-      const res = await fetch('/api/webhook', { credentials: 'include' })
-      if (!res.ok) throw new Error('Failed to fetch webhook')
-      const data = (await res.json()) as WebhookResponse
-      return data
-    },
+    queryFn: () => apiClient.get<WebhookResponse>('/api/webhook'),
   })
 
   const toggleMutation = useMutation({
-    mutationFn: async (data: Webhook) => {
-      const res = await fetch(`/api/webhook`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
-      if (!res.ok) throw new Error('Failed to update webhook status')
-    },
+    mutationFn: (data: Webhook) => apiClient.patch('/api/webhook', data),
     onMutate: async (data) => {
       await queryClient.cancelQueries({ queryKey: ['webhook-config'] })
       const previousWebhookResponse = queryClient.getQueryData<WebhookResponse>(['webhook-config'])

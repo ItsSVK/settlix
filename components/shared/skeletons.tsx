@@ -16,3 +16,13 @@ export function SkeletonCard() {
     </div>
   )
 }
+
+export function SkeletonGrid({ count = 4, cols = 4 }: { count?: number; cols?: number }) {
+  return (
+    <div className={`mb-8 grid grid-cols-1 gap-4 md:grid-cols-${cols}`}>
+      {Array.from({ length: count }, (_, i) => (
+        <SkeletonCard key={i} />
+      ))}
+    </div>
+  )
+}

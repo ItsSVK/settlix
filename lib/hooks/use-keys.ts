@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { apiClient } from '@/lib/api/client'
 
 export interface ApiKey {
   id: string
@@ -20,21 +21,13 @@ export function useKeys() {
   } = useQuery({
     queryKey: ['keys'],
     queryFn: async () => {
-      const res = await fetch('/api/keys', { credentials: 'include' })
-      if (!res.ok) throw new Error('Failed to fetch API keys')
-      const data = (await res.json()) as { keys: ApiKey[] }
+      const data = await apiClient.get<{ keys: ApiKey[] }>('/api/keys')
       return data.keys
     },
   })
 
   const revokeMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(`/api/keys/${id}`, { method: 'DELETE', credentials: 'include' })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data.error ?? 'Failed to revoke key')
-      }
-    },
+    mutationFn: (id: string) => apiClient.delete(`/api/keys/${id}`),
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['keys'] })
       const previousKeys = queryClient.getQueryData<ApiKey[]>(['keys'])
@@ -59,6 +52,6 @@ export function useKeys() {
     keys,
     isLoading,
     refresh: refetch,
-    revokeKey: (id: string) => revokeMutation.mutateAsync(id),
+    revokeKey: async (id: string) => { await revokeMutation.mutateAsync(id) },
   }
 }
