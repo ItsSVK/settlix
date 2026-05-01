@@ -5,10 +5,21 @@ import { InvoicesTable } from '@/components/dashboard/invoice-section'
 import { CreateInvoiceDialog } from '@/components/dashboard/create-invoice-dialog'
 import { useInvoices } from '@/lib/hooks/use-invoices'
 import { SkeletonCard } from '@/components/shared/skeletons'
-import { StatsBarInvoice } from '@/components/dashboard/stats-bar-invoice'
+import { StatsBar } from '@/components/dashboard/stats-bar'
 
 export default function InvoicesPage() {
   const { invoices, isLoading, refresh, archiveInvoice, sendInvoice } = useInvoices()
+
+  const invoiceStats = [
+    { label: 'Total invoices', value: invoices.length },
+    { label: 'Total successful payments', value: invoices.reduce((s, i) => s + (i.status === 'paid' ? 1 : 0), 0) },
+    { label: 'Total overdue invoices', value: invoices.reduce((s, i) => s + (i.status === 'overdue' ? 1 : 0), 0) },
+    {
+      label: 'Revenue (USDC)',
+      value: invoices.reduce((s, i) => s + parseFloat(i.amount), 0),
+      format: 'usdc' as const,
+    },
+  ]
 
   return (
     <div className='flex-1 bg-muted/40 dark:bg-background'>
@@ -39,7 +50,7 @@ export default function InvoicesPage() {
               transition={{ duration: 0.4, delay: 0.1 }}
               className='mb-8'
             >
-              <StatsBarInvoice invoices={invoices} />
+              <StatsBar stats={invoiceStats} />
             </motion.div>
           )
         )}

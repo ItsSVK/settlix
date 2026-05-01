@@ -15,6 +15,17 @@ export default function LinksPage() {
 
   const filteredLinks = activeOnly ? links.filter((link) => link.active) : links
 
+  const linkStats = [
+    { label: 'Total links', value: links.length },
+    { label: 'Total successful payments', value: links.reduce((s, l) => s + l.stats.paidCount, 0) },
+    { label: 'Total failed payments', value: links.reduce((s, l) => s + l.stats.failedCount, 0) },
+    {
+      label: 'Revenue (USDC)',
+      value: links.reduce((s, l) => s + parseFloat(l.stats.totalVolume), 0) / 1_000_000,
+      format: 'usdc' as const,
+    },
+  ]
+
   return (
     <div className='flex-1 bg-muted/40 dark:bg-background'>
       <div className='mx-auto max-w-6xl px-6 py-6'>
@@ -44,7 +55,7 @@ export default function LinksPage() {
               transition={{ duration: 0.4, delay: 0.1 }}
               className='mb-8'
             >
-              <StatsBar links={links} />
+              <StatsBar stats={linkStats} />
             </motion.div>
           )
         )}
