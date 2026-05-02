@@ -1,5 +1,10 @@
 interface SettlixCheckout {
-  open(opts: { linkId: string; onSuccess?: (txSignature: string) => void; onClose?: () => void }): void
+  open(opts: {
+    linkId: string
+    metadata?: Record<string, unknown>
+    onSuccess?: (txSignature: string, metadata: Record<string, unknown> | null) => void
+    onClose?:   (metadata: Record<string, unknown> | null) => void
+  }): void
   close(): void
 }
 

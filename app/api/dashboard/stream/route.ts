@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server'
 
-import { requireAuth } from '@/lib/auth/require-auth'
+import { requireSession } from '@/lib/auth/require-auth'
 import { toApiResponse } from '@/lib/api/errors'
 import { subscribeDashboardStream, type DashboardPaymentPaidEvent } from '@/lib/realtime/dashboard-stream'
 
@@ -22,7 +22,7 @@ const MAX_STREAM_MS = 5 * 60_000
 
 export async function GET(req: NextRequest) {
   try {
-    const { wallet } = await requireAuth(req)
+    const { wallet } = await requireSession(req)
 
     let unsubscribe = () => {}
     let heartbeat: ReturnType<typeof setInterval> | null = null

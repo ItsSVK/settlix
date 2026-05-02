@@ -1,5 +1,4 @@
 /* Settlix Checkout Widget v1
- * Drop this script on any page to open a Razorpay-style payment modal.
  *
  * Usage:
  *   <script src="https://settlix.itssvk.dev/checkout.js"></script>
@@ -7,9 +6,10 @@
  *
  * Full API:
  *   Settlix.open({
- *     linkId: 'abc123',
- *     onSuccess: function(txSignature) { ... },  // called when payment confirmed
- *     onClose:   function() { ... },             // called when user dismisses
+ *     linkId:   'abc123',
+ *     metadata: { orderId: '1234', userId: 'u_567' },   // echoed back in callbacks
+ *     onSuccess: function(txSignature, metadata) { ... }, // called when payment confirmed
+ *     onClose:   function(metadata) { ... },              // called when user dismisses
  *   })
  *   Settlix.close()  // programmatically close
  */

@@ -2,13 +2,13 @@ import { type NextRequest, NextResponse } from 'next/server'
 
 import { getPaymentLinksByWallet } from '@/lib/services/payment-link.service'
 import { handleApi } from '@/lib/api/errors'
-import { requireAuth } from '@/lib/auth/require-auth'
+import { requireSession } from '@/lib/auth/require-auth'
 import { PaymentExecution, SplitRecipient } from '@/lib/generated/prisma/client'
 
 export async function GET(req: NextRequest) {
   return handleApi(async () => {
     // Wallet comes from the authenticated session — not from a query param
-    const { wallet } = await requireAuth(req)
+    const { wallet } = await requireSession(req)
 
     const links = await getPaymentLinksByWallet(wallet)
 

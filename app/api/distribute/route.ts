@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { handleApi, readJsonBody } from '@/lib/api/errors'
-import { requireAuth } from '@/lib/auth/require-auth'
+import { requireSession } from '@/lib/auth/require-auth'
 import { VALIDATION } from '@/lib/api/constants'
 import { getPendingDistributions, markAsDistributed } from '@/lib/services/distribute.service'
 import { createServerConnection } from '@/lib/solana/connection'
@@ -10,7 +10,7 @@ import { createServerConnection } from '@/lib/solana/connection'
 /** GET /api/distribute — returns pending partner amounts for the authenticated merchant */
 export async function GET(req: NextRequest) {
   return handleApi(async () => {
-    const { wallet } = await requireAuth(req)
+    const { wallet } = await requireSession(req)
     const pending = await getPendingDistributions(wallet)
     return NextResponse.json(pending)
   })
@@ -29,7 +29,7 @@ const confirmBody = z.object({
  */
 export async function POST(req: NextRequest) {
   return handleApi(async () => {
-    const { wallet } = await requireAuth(req)
+    const { wallet } = await requireSession(req)
 
     const json = await readJsonBody(req)
     const parsed = confirmBody.safeParse(json)

@@ -9,7 +9,7 @@ import {
 } from '@solana/spl-token'
 
 import { handleApi, readJsonBody, ApiError } from '@/lib/api/errors'
-import { requireAuth } from '@/lib/auth/require-auth'
+import { requireSession } from '@/lib/auth/require-auth'
 import { VALIDATION } from '@/lib/api/constants'
 import { createServerConnection } from '@/lib/solana/connection'
 import { getDefaultUsdcMint } from '@/lib/solana/constants'
@@ -41,7 +41,7 @@ const buildTxBody = z.object({
  */
 export async function POST(req: NextRequest) {
   return handleApi(async () => {
-    const { wallet: merchantWallet } = await requireAuth(req)
+    const { wallet: merchantWallet } = await requireSession(req)
 
     const json = await readJsonBody(req)
     const parsed = buildTxBody.safeParse(json)

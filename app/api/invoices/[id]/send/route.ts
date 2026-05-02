@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
 import { ApiError, handleApi } from '@/lib/api/errors'
-import { NOT_FOUND } from '@/lib/api/constants'
+import { NOT_FOUND, INVOICE_ALREADY_PAID } from '@/lib/api/constants'
 import { requireAuth } from '@/lib/auth/require-auth'
 import { getInvoiceById } from '@/lib/services/invoice.service'
 import { getResendApiKey } from '@/lib/env/server'
@@ -20,6 +20,10 @@ export async function POST(req: NextRequest, { params }: Params) {
     const invoice = await getInvoiceById(id)
     if (!invoice) throw new ApiError(404, 'Invoice not found', NOT_FOUND)
     if (invoice.merchantWallet !== wallet) throw new ApiError(403, 'Forbidden', 'FORBIDDEN')
+
+    const isPaid = !!invoice.link.executions[0]
+    if (isPaid) throw new ApiError(409, 'Invoice is already paid — receipt was sent automatically at payment time', INVOICE_ALREADY_PAID)
+
     if (!invoice.clientEmail) {
       return NextResponse.json({ error: 'Invoice has no client email' }, { status: 400 })
     }

@@ -34,3 +34,12 @@ export async function requireAuth(req: NextRequest): Promise<{ wallet: string }>
   if (!session) throw new ApiError(401, 'Unauthorized', UNAUTHORIZED)
   return session
 }
+
+// Session-cookie-only auth — rejects API key Bearer tokens.
+// Use this on routes that must run in the dashboard context (SSE streams,
+// wallet-signing flows, internal operations that have no headless use case).
+export async function requireSession(req: NextRequest): Promise<{ wallet: string }> {
+  const session = await getSessionFromRequest(req)
+  if (!session) throw new ApiError(401, 'Unauthorized', UNAUTHORIZED)
+  return session
+}
