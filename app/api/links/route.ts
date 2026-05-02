@@ -132,6 +132,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       id: link.id,
       payPath: `/pay/${link.id}`,
-    })
+    }, { status: 201 })
   })
 }

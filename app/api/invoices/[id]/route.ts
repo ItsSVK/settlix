@@ -48,6 +48,6 @@ export async function DELETE(req: NextRequest, { params }: Params) {
     const { wallet } = await requireAuth(req)
     const { id } = await params
     await archiveInvoice(id, wallet)
-    return NextResponse.json({ success: true })
+    return new NextResponse(null, { status: 204 })
   })
 }

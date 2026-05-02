@@ -17,9 +17,15 @@ export function SkeletonCard() {
   )
 }
 
+const COLS_CLASS: Record<number, string> = {
+  2: 'md:grid-cols-2',
+  3: 'md:grid-cols-3',
+  4: 'md:grid-cols-4',
+}
+
 export function SkeletonGrid({ count = 4, cols = 4 }: { count?: number; cols?: number }) {
   return (
-    <div className={`mb-8 grid grid-cols-1 gap-4 md:grid-cols-${cols}`}>
+    <div className={`mb-8 grid grid-cols-1 gap-4 ${COLS_CLASS[cols] ?? 'md:grid-cols-4'}`}>
       {Array.from({ length: count }, (_, i) => (
         <SkeletonCard key={i} />
       ))}
