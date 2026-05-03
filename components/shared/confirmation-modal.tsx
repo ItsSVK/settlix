@@ -2,7 +2,6 @@ import { Trash2Icon, Loader2 } from 'lucide-react'
 
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -36,13 +35,16 @@ export function ConfirmationModal({
   const isConfirming = confirmArchive === item.id
 
   return (
-    <AlertDialog open={isConfirming} onOpenChange={(open) => setConfirmArchive(open ? item.id : null)}>
+    <AlertDialog open={isConfirming} onOpenChange={(open) => {
+      if (!open && archiving === item.id) return
+      setConfirmArchive(open ? item.id : null)
+    }}>
       <AlertDialogTrigger asChild>
         <Button variant='ghost' size='sm' className={className}>
           <Trash2Icon />
         </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent size='sm' onEscapeKeyDown={(e) => e.preventDefault()}>
+      <AlertDialogContent size='sm' onEscapeKeyDown={(e) => { if (archiving === item.id) e.preventDefault() }}>
         <AlertDialogHeader>
           <AlertDialogMedia className='bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive'>
             <Trash2Icon />
@@ -55,16 +57,13 @@ export function ConfirmationModal({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel variant='outline'>Cancel</AlertDialogCancel>
-          <AlertDialogAction
+          <Button
             variant='destructive'
-            onClick={(e) => {
-              e.preventDefault()
-              void handleArchive(item.id)
-            }}
+            onClick={() => void handleArchive(item.id)}
             disabled={archiving === item.id}
           >
             {archiving === item.id ? <Loader2 className='h-4 w-4 animate-spin' /> : type}
-          </AlertDialogAction>
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

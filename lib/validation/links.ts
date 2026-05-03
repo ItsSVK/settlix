@@ -19,8 +19,8 @@ export const createLinkBody = z.object({
    * If omitted the merchant wallet receives 100% of every payment.
    */
   recipients: z.array(splitRecipientInput).min(1).max(10).optional(),
-  /** ISO 8601 datetime string — link stops accepting payments after this time. */
-  expiresAt: z.string().datetime({ offset: true }).optional(),
+  /** YYYY-MM-DD date string — link stops accepting payments after end of this day (UTC). */
+  expiresAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expiresAt must be YYYY-MM-DD').optional(),
   /** Maximum number of successful payments the link will accept. */
   maxUses: z.number().int().min(1).max(100_000).optional(),
 })

@@ -9,7 +9,15 @@ import { QuoteDisplay } from './quote-display'
 import { PayButton } from './pay-button'
 import { SuccessOverlay } from './success-overlay'
 import { SolanaQRModal } from './solana-qr-modal'
-import { ScanLine, FileText } from 'lucide-react'
+import { ScanLine, FileText, CheckCircle } from 'lucide-react'
+import { SubscribeButton } from './subscribe-button'
+import type { SubscribeResult } from '@/lib/hooks/use-subscription-flow'
+
+const INTERVAL_LABELS: Record<string, string> = {
+  weekly: 'week',
+  monthly: 'month',
+  yearly: 'year',
+}
 
 function shorten(addr: string) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`
@@ -30,6 +38,7 @@ export function PayCardBase({
     sig: string
     swap?: { inputAmount: string; inputDecimals: number; inputSymbol: string }
   } | null>(null)
+  const [subscribeResult, setSubscribeResult] = useState<SubscribeResult | null>(null)
   const {
     quote,
     isLoading: quoteLoading,
@@ -128,6 +137,49 @@ export function PayCardBase({
             ) : linkError || !link ? (
               <motion.div key='error' className='py-10 text-center'>
                 <p className='text-sm text-muted-foreground'>This payment link is not available.</p>
+              </motion.div>
+            ) : link.type === 'subscription' ? (
+              <motion.div key='subscription' className='space-y-4'>
+                {subscribeResult ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className='py-6 text-center space-y-3'
+                  >
+                    <div className='flex justify-center'>
+                      <CheckCircle className='h-12 w-12 text-green-500' />
+                    </div>
+                    <p className='text-sm font-semibold text-foreground'>You&apos;re subscribed!</p>
+                    <p className='text-xs text-muted-foreground'>
+                      Next billing:{' '}
+                      {new Date(subscribeResult.currentPeriodEnd).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </p>
+                  </motion.div>
+                ) : (
+                  <>
+                    <div className='rounded-xl border border-border/30 bg-muted/20 p-4 text-center'>
+                      <p className='text-xs text-muted-foreground'>Billed every {INTERVAL_LABELS[link.interval ?? 'month'] ?? link.interval}</p>
+                      <p className='mt-1 text-4xl font-bold tracking-tight text-foreground'>
+                        {Number(link.amount).toFixed(2)}
+                      </p>
+                      <p className='text-sm text-muted-foreground'>USDC</p>
+                    </div>
+                    <p className='text-center text-xs text-muted-foreground'>
+                      You authorize Settlix to pull {Number(link.amount).toFixed(2)} USDC up to 12 times. Cancel anytime.
+                    </p>
+                    <SubscribeButton
+                      linkId={linkId}
+                      onSuccess={(result) => {
+                        setSubscribeResult(result)
+                        onPaid?.(result.txSignature)
+                      }}
+                    />
+                  </>
+                )}
               </motion.div>
             ) : (
               <motion.div key='form' className='space-y-4'>

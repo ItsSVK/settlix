@@ -19,6 +19,7 @@ interface Link {
   title?: string
   description?: string
   type: string
+  interval?: string | null
   active: boolean
   expiresAt?: string | null
   maxUses?: number | null
@@ -88,20 +89,8 @@ export function useLinks() {
 
   const archiveMutation = useMutation({
     mutationFn: (id: string) => apiClient.delete(`/api/links/${id}`),
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: ['links'] })
-      const previousLinks = queryClient.getQueryData<Link[]>(['links'])
-
-      if (previousLinks) {
-        queryClient.setQueryData<Link[]>(['links'], (old) => old?.filter((link) => link.id !== id))
-      }
-      return { previousLinks }
-    },
-    onError: (err, variables, context) => {
+    onError: (err) => {
       toast.error(err instanceof Error ? err.message : 'Failed to delete link')
-      if (context?.previousLinks) {
-        queryClient.setQueryData(['links'], context.previousLinks)
-      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['links'] })

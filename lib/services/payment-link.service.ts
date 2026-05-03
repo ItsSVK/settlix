@@ -26,6 +26,7 @@ export async function createPaymentLink(data: {
   recipients?: SplitRecipientInput[]
   expiresAt?: Date | null
   maxUses?: number | null
+  interval?: string | null
 }) {
   try {
     return await prisma.paymentLink.create({
@@ -33,7 +34,8 @@ export async function createPaymentLink(data: {
         merchantWallet: data.merchantWallet,
         token: data.token,
         amount: data.amount,
-        type: 'fixed',
+        type: data.interval ? 'subscription' : 'fixed',
+        interval: data.interval ?? null,
         active: true,
         title: data.title ?? null,
         description: data.description ?? null,
@@ -83,7 +85,7 @@ export async function getPaymentLinkById(id: string) {
 export async function getPaymentLinksByWallet(merchantWallet: string): Promise<PaymentLinkWithRelations[]> {
   try {
     return await prisma.paymentLink.findMany({
-      where: { merchantWallet, archivedAt: null, NOT: { type: 'invoice' } },
+      where: { merchantWallet, archivedAt: null, NOT: { type: { in: ['invoice', 'subscription'] } } },
       orderBy: { createdAt: 'desc' },
       include: {
         executions: {

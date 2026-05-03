@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
         title: link.title ?? undefined,
         description: link.description ?? undefined,
         type: link.type,
+        interval: link.interval ?? null,
         active: link.active,
         expiresAt: link.expiresAt?.toISOString() ?? null,
         maxUses: link.maxUses ?? null,
@@ -125,7 +126,7 @@ export async function POST(req: NextRequest) {
       title: parsed.data.title,
       description: parsed.data.description,
       recipients,
-      expiresAt: parsed.data.expiresAt ? new Date(parsed.data.expiresAt) : undefined,
+      expiresAt: parsed.data.expiresAt ? new Date(parsed.data.expiresAt + 'T23:59:59.999Z') : undefined,
       maxUses: parsed.data.maxUses,
     })
 

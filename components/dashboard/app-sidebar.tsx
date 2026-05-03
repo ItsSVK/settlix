@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { LayoutDashboard, FileText, KeyRound, Webhook, LogOut, Sun, Moon, Copy, Check, BookOpen } from 'lucide-react'
+import { LayoutDashboard, FileText, KeyRound, Webhook, LogOut, Sun, Moon, Copy, Check, BookOpen, RefreshCw } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-context'
 import { useTheme } from 'next-themes'
 import { copyText } from '@/lib/utils'
@@ -27,6 +27,7 @@ const navItems = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { title: 'Payment Links', href: '/dashboard/links', icon: DollarSign },
   { title: 'Invoices', href: '/dashboard/invoices', icon: FileText },
+  { title: 'Subscriptions', href: '/dashboard/subscriptions', icon: RefreshCw },
   { title: 'API Keys', href: '/dashboard/keys', icon: KeyRound },
   { title: 'Webhook', href: '/dashboard/webhook', icon: Webhook },
 ]

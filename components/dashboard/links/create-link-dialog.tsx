@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Plus, Loader2, Trash2, ChevronDown } from 'lucide-react'
+import { Plus, Loader2, Trash2 } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-context'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
@@ -54,8 +54,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
   const [amount, setAmount] = useState('')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [detailsOpen, setDetailsOpen] = useState(false)
-  const [limitsOpen, setLimitsOpen] = useState(false)
+  const [limitsEnabled, setLimitsEnabled] = useState(false)
   const [expiresAt, setExpiresAt] = useState('')
   const [maxUses, setMaxUses] = useState('')
   const [splitEnabled, setSplitEnabled] = useState(false)
@@ -69,8 +68,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
     setAmount('')
     setTitle('')
     setDescription('')
-    setDetailsOpen(false)
-    setLimitsOpen(false)
+    setLimitsEnabled(false)
     setExpiresAt('')
     setMaxUses('')
     setSplitEnabled(false)
@@ -160,8 +158,8 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
         title: title.trim() || undefined,
         description: description.trim() || undefined,
         recipients,
-        expiresAt: expiresAt ? new Date(expiresAt).toISOString() : undefined,
-        maxUses: maxUses ? parseInt(maxUses, 10) : undefined,
+        expiresAt: limitsEnabled && expiresAt ? expiresAt : undefined,
+        maxUses: limitsEnabled && maxUses ? parseInt(maxUses, 10) : undefined,
       })
       setResult(data)
     } catch (e) {
@@ -184,7 +182,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
         <span className='hidden sm:inline-block'>Create Link</span>
       </Button>
 
-      <DialogShell open={open} onClose={reset} title='New Payment'>
+      <DialogShell open={open} onClose={reset} title='New Payment Link' align='top'>
         {result ? (
           <DialogSuccess
             title='Your link is ready'
@@ -194,7 +192,7 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
           />
         ) : (
           <form onSubmit={submit} className='space-y-5' noValidate>
-            <div className='flex flex-col items-center justify-center rounded-3xl border border-border/30 bg-muted/90 px-4 py-6 transition-all focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/10'>
+            <div className='flex flex-col items-center justify-center rounded-3xl border border-border/30 bg-muted/90 px-4 pt-4 pb-6 transition-all focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/10'>
               <span className='mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground'>Amount</span>
               <div className='flex items-center justify-center gap-2'>
                 <span className='text-3xl font-medium text-muted-foreground/50'>$</span>
@@ -220,245 +218,207 @@ export function CreateLinkDialog({ onCreated }: CreateLinkDialogProps) {
             </div>
 
             {/* Details section */}
-            <div className='overflow-hidden rounded-2xl border border-border/40 bg-background/30 transition-all hover:bg-background/40'>
-              <button
-                type='button'
-                onClick={() => setDetailsOpen((v) => !v)}
-                className='flex w-full items-center justify-between px-4 py-3.5 text-left outline-none focus-visible:bg-muted/50'
-              >
-                <div>
-                  <p className='text-sm font-medium text-foreground'>Details</p>
-                  <p className='mt-0.5 text-xs text-muted-foreground'>Add an optional title and note</p>
-                </div>
-                <motion.div
-                  animate={{ rotate: detailsOpen ? 180 : 0 }}
-                  transition={collapseTransition}
-                  className='flex h-8 w-8 items-center justify-center rounded-full bg-muted/50 text-muted-foreground'
-                >
-                  <ChevronDown className='h-4 w-4' />
-                </motion.div>
-              </button>
-              <AnimatePresence initial={false}>
-                {detailsOpen && (
-                  <motion.div
-                    key='details-body'
-                    variants={collapseVariants}
-                    initial='initial'
-                    animate='animate'
-                    exit='exit'
-                    transition={collapseTransition}
-                    className='overflow-hidden'
-                  >
-                    <div className='space-y-4 border-t border-border/40 px-4 pb-4 pt-3'>
-                      <div>
-                        <input
-                          type='text'
-                          maxLength={80}
-                          value={title}
-                          onChange={(e) => setTitle(e.target.value)}
-                          placeholder='Title (e.g. Design invoice #12)'
-                          className='w-full rounded-xl border-none bg-muted/90 px-3.5 py-3 pt-3 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30'
-                        />
-                      </div>
-                      <div>
-                        <textarea
-                          maxLength={300}
-                          rows={2}
-                          value={description}
-                          onChange={(e) => setDescription(e.target.value)}
-                          placeholder='What is this payment for?'
-                          className='w-full resize-none rounded-xl border-none bg-muted/90 px-3.5 py-3 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30'
-                        />
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+            <div className='space-y-3'>
+              <input
+                type='text'
+                maxLength={80}
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder='Link title (optional)'
+                className='w-full rounded-2xl border border-border/40 bg-background/30 px-4 py-3.5 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30 hover:bg-background/40'
+              />
+              <textarea
+                maxLength={300}
+                rows={2}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder='Add a description or note (optional)'
+                className='w-full resize-none rounded-2xl border border-border/40 bg-background/30 px-4 py-3.5 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30 hover:bg-background/40'
+              />
             </div>
 
-            {/* Limits section */}
-            <div className='overflow-hidden rounded-2xl border border-border/40 bg-background/30 transition-all hover:bg-background/40'>
-              <button
-                type='button'
-                onClick={() => setLimitsOpen((v) => !v)}
-                className='flex w-full items-center justify-between px-4 py-3.5 text-left outline-none focus-visible:bg-muted/50'
-              >
-                <div>
-                  <p className='text-sm font-medium text-foreground'>Limits</p>
-                  <p className='mt-0.5 text-xs text-muted-foreground'>
-                    {expiresAt || maxUses
-                      ? [expiresAt && 'Expires set', maxUses && `Max ${maxUses} uses`].filter(Boolean).join(' · ')
-                      : 'Set expiry or max uses'}
-                  </p>
-                </div>
-                <motion.div
-                  animate={{ rotate: limitsOpen ? 180 : 0 }}
-                  transition={collapseTransition}
-                  className='flex h-8 w-8 items-center justify-center rounded-full bg-muted/50 text-muted-foreground'
-                >
-                  <ChevronDown className='h-4 w-4' />
-                </motion.div>
-              </button>
-              <AnimatePresence initial={false}>
-                {limitsOpen && (
-                  <motion.div
-                    key='limits-body'
-                    variants={collapseVariants}
-                    initial='initial'
-                    animate='animate'
-                    exit='exit'
-                    transition={collapseTransition}
-                    className='overflow-hidden'
-                  >
-                    <div className='space-y-4 border-t border-border/40 px-4 pb-4 pt-3'>
-                      <DatePickerInput
-                        label='Expires at'
-                        type='datetime-local'
-                        value={expiresAt}
-                        min={new Date().toISOString().slice(0, 16)}
-                        onChange={setExpiresAt}
+            {/* Limits + Revenue Split */}
+            <div className='space-y-5'>
+                  {/* Limits section */}
+                  <div className='overflow-hidden rounded-2xl border border-border/40 bg-background/30 transition-all hover:bg-background/40'>
+                    <div className='flex items-center justify-between px-4 py-3.5'>
+                      <div>
+                        <p className='text-sm font-medium text-foreground'>Payment Limits</p>
+                        <p className='mt-0.5 text-xs text-muted-foreground'>
+                          {limitsEnabled
+                            ? [expiresAt && 'Expiry set', maxUses && `Max ${maxUses} uses`].filter(Boolean).join(' · ') || 'Set expiry or max uses'
+                            : 'Restrict link usage and expiry'}
+                        </p>
+                      </div>
+                      <Switch
+                        checked={limitsEnabled}
+                        onCheckedChange={(checked) => {
+                          setLimitsEnabled(checked)
+                          setError('')
+                        }}
+                        className='cursor-pointer [&>span]:w-4! data-[state=checked]:[&>span]:translate-x-6!'
                       />
-                      <div>
-                        <label className='mb-1.5 block text-xs font-medium text-muted-foreground'>Max uses</label>
-                        <input
-                          type='number'
-                          min='1'
-                          step='1'
-                          value={maxUses}
-                          onChange={(e) => setMaxUses(e.target.value)}
-                          placeholder='Unlimited'
-                          className='w-full rounded-xl border-none bg-muted/90 px-3.5 py-3 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30'
-                          style={{ WebkitAppearance: 'none', MozAppearance: 'textfield' }}
-                        />
-                      </div>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Revenue split section */}
-            <div className='overflow-hidden rounded-2xl border border-border/40 bg-background/30 transition-all hover:bg-background/40'>
-              <div className='flex items-center justify-between px-4 py-3.5'>
-                <div>
-                  <p className='text-sm font-medium text-foreground'>Revenue Split</p>
-                  <p className='mt-0.5 text-xs text-muted-foreground'>Route payments to partners</p>
-                </div>
-                <Switch
-                  id='split-toggle'
-                  checked={splitEnabled}
-                  onCheckedChange={(checked) => {
-                    setSplitEnabled(checked)
-                    setError('')
-                  }}
-                  className='cursor-pointer [&>span]:w-4! data-[state=checked]:[&>span]:translate-x-6!'
-                />
-              </div>
-
-              <AnimatePresence initial={false}>
-                {splitEnabled && (
-                  <motion.div
-                    key='split-body'
-                    variants={collapseVariants}
-                    initial='initial'
-                    animate='animate'
-                    exit='exit'
-                    transition={collapseTransition}
-                    className='overflow-hidden'
-                  >
-                    <div className='space-y-4 border-t border-border/40 px-4 pb-4 pt-4'>
-                      <div className='flex w-full items-center gap-3 rounded-xl border border-border/30 bg-muted/20 p-3'>
-                        <div className='flex flex-1 flex-col items-start gap-1'>
-                          <span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground'>
-                            Your share
-                          </span>
-                          <span
-                            className={`text-sm font-bold ${merchantBp < 0 ? 'text-destructive' : 'text-foreground'}`}
-                          >
-                            {merchantBp < 0 ? '—' : `${merchantPercent}%`}
-                          </span>
-                        </div>
-                        <div className='h-8 w-px shrink-0 bg-border/50' />
-                        <div className='flex flex-1 flex-col items-end gap-1'>
-                          <span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground'>
-                            Partners
-                          </span>
-                          <span
-                            className={`text-sm font-bold ${allocationOk ? 'text-green-500' : 'text-amber-500'}`}
-                          >
-                            {(partnerBpTotal / 100).toFixed(2)}%
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className='flex flex-col'>
-                        <AnimatePresence initial={false}>
-                          {partners.map((p, i) => (
-                            <motion.div
-                              key={p.id}
-                              layout
-                              initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                              animate={{ opacity: 1, height: 'auto', marginTop: 8 }}
-                              exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                              transition={{
-                                opacity: { duration: 0.2 },
-                                height: { duration: 0.3, ease: 'easeInOut' },
-                                marginTop: { duration: 0.3, ease: 'easeInOut' },
-                              }}
-                              className='group relative flex flex-col gap-2 overflow-hidden rounded-xl'
-                            >
-                              <div className='flex items-center gap-2'>
-                                <div className='relative flex-1'>
-                                  <input
-                                    type='text'
-                                    value={p.wallet}
-                                    onChange={(e) => updatePartner(i, 'wallet', e.target.value)}
-                                    placeholder='Wallet address'
-                                    className='w-full rounded-xl border border-border/30 bg-muted/90 px-3 py-2.5 font-mono text-xs text-foreground outline-none transition-all placeholder:text-muted-foreground/50 focus:border-border/60'
-                                  />
-                                </div>
-                                <div className='relative w-[80px] shrink-0'>
-                                  <input
-                                    type='number'
-                                    min='0.01'
-                                    max='99.99'
-                                    step='0.01'
-                                    value={p.percent}
-                                    onChange={(e) => updatePartner(i, 'percent', limitDecimals(e.target.value))}
-                                    placeholder='0.0'
-                                    className='w-full rounded-xl border border-border/30 bg-muted/90 py-2.5 pl-3 pr-6 text-xs font-semibold text-foreground outline-none transition-all placeholder:text-muted-foreground/50 focus:border-border/60'
-                                  />
-                                  <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground'>
-                                    %
-                                  </span>
-                                </div>
-                                <Button
-                                  type='button'
-                                  onClick={() => removePartner(i)}
-                                  className='flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-destructive/5 text-destructive/70 transition-all hover:bg-destructive/10 hover:text-destructive'
-                                >
-                                  <Trash2 className='h-4 w-4' />
-                                </Button>
-                              </div>
-                            </motion.div>
-                          ))}
-                        </AnimatePresence>
-                      </div>
-
-                      {partners.length < 9 && (
-                        <Button
-                          type='button'
-                          onClick={addPartner}
-                          className='flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border/60 bg-gray-300 py-3 text-xs font-medium text-foreground transition-all hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300'
+                    <AnimatePresence initial={false}>
+                      {limitsEnabled && (
+                        <motion.div
+                          key='limits-body'
+                          variants={collapseVariants}
+                          initial='initial'
+                          animate='animate'
+                          exit='exit'
+                          transition={collapseTransition}
+                          className='overflow-hidden'
                         >
-                          <Plus className='h-3.5 w-3.5' />
-                          Add Partner
-                        </Button>
+                          <div className='space-y-4 border-t border-border/40 px-4 pb-4 pt-4'>
+                            <DatePickerInput
+                              label='Expires at'
+                              value={expiresAt}
+                              min={new Date().toISOString().slice(0, 10)}
+                              onChange={setExpiresAt}
+                            />
+                            <div>
+                              <label className='mb-1.5 block text-xs font-medium text-muted-foreground'>Max uses</label>
+                              <input
+                                type='number'
+                                min='1'
+                                step='1'
+                                value={maxUses}
+                                onChange={(e) => setMaxUses(e.target.value)}
+                                placeholder='Unlimited'
+                                className='w-full rounded-xl border-none bg-muted/90 px-3.5 py-3 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30'
+                                style={{ WebkitAppearance: 'none', MozAppearance: 'textfield' }}
+                              />
+                            </div>
+                          </div>
+                        </motion.div>
                       )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Revenue split section */}
+                  <div className='overflow-hidden rounded-2xl border border-border/40 bg-background/30 transition-all hover:bg-background/40'>
+                    <div className='flex items-center justify-between px-4 py-3.5'>
+                      <div>
+                        <p className='text-sm font-medium text-foreground'>Revenue Split</p>
+                        <p className='mt-0.5 text-xs text-muted-foreground'>Route payments to partners</p>
+                      </div>
+                      <Switch
+                        id='split-toggle'
+                        checked={splitEnabled}
+                        onCheckedChange={(checked) => {
+                          setSplitEnabled(checked)
+                          setError('')
+                        }}
+                        className='cursor-pointer [&>span]:w-4! data-[state=checked]:[&>span]:translate-x-6!'
+                      />
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+
+                    <AnimatePresence initial={false}>
+                      {splitEnabled && (
+                        <motion.div
+                          key='split-body'
+                          variants={collapseVariants}
+                          initial='initial'
+                          animate='animate'
+                          exit='exit'
+                          transition={collapseTransition}
+                          className='overflow-hidden'
+                        >
+                          <div className='space-y-4 border-t border-border/40 px-4 pb-4 pt-4'>
+                            <div className='flex w-full items-center gap-3 rounded-xl border border-border/30 bg-muted/20 p-3'>
+                              <div className='flex flex-1 flex-col items-start gap-1'>
+                                <span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground'>
+                                  Your share
+                                </span>
+                                <span
+                                  className={`text-sm font-bold ${merchantBp < 0 ? 'text-destructive' : 'text-foreground'}`}
+                                >
+                                  {merchantBp < 0 ? '—' : `${merchantPercent}%`}
+                                </span>
+                              </div>
+                              <div className='h-8 w-px shrink-0 bg-border/50' />
+                              <div className='flex flex-1 flex-col items-end gap-1'>
+                                <span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground'>
+                                  Partners
+                                </span>
+                                <span
+                                  className={`text-sm font-bold ${allocationOk ? 'text-green-500' : 'text-amber-500'}`}
+                                >
+                                  {(partnerBpTotal / 100).toFixed(2)}%
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className='flex flex-col'>
+                              <AnimatePresence initial={false}>
+                                {partners.map((p, i) => (
+                                  <motion.div
+                                    key={p.id}
+                                    layout
+                                    initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                                    animate={{ opacity: 1, height: 'auto', marginTop: 8 }}
+                                    exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                                    transition={{
+                                      opacity: { duration: 0.2 },
+                                      height: { duration: 0.3, ease: 'easeInOut' },
+                                      marginTop: { duration: 0.3, ease: 'easeInOut' },
+                                    }}
+                                    className='group relative flex flex-col gap-2 overflow-hidden rounded-xl'
+                                  >
+                                    <div className='flex items-center gap-2'>
+                                      <div className='relative flex-1'>
+                                        <input
+                                          type='text'
+                                          value={p.wallet}
+                                          onChange={(e) => updatePartner(i, 'wallet', e.target.value)}
+                                          placeholder='Wallet address'
+                                          className='w-full rounded-xl border border-border/30 bg-muted/90 px-3 py-2.5 font-mono text-xs text-foreground outline-none transition-all placeholder:text-muted-foreground/50 focus:border-border/60'
+                                        />
+                                      </div>
+                                      <div className='relative w-[80px] shrink-0'>
+                                        <input
+                                          type='number'
+                                          min='0.01'
+                                          max='99.99'
+                                          step='0.01'
+                                          value={p.percent}
+                                          onChange={(e) => updatePartner(i, 'percent', limitDecimals(e.target.value))}
+                                          placeholder='0.0'
+                                          className='w-full rounded-xl border border-border/30 bg-muted/90 py-2.5 pl-3 pr-6 text-xs font-semibold text-foreground outline-none transition-all placeholder:text-muted-foreground/50 focus:border-border/60'
+                                        />
+                                        <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground'>
+                                          %
+                                        </span>
+                                      </div>
+                                      <Button
+                                        type='button'
+                                        onClick={() => removePartner(i)}
+                                        className='flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-destructive/5 text-destructive/70 transition-all hover:bg-destructive/10 hover:text-destructive'
+                                      >
+                                        <Trash2 className='h-4 w-4' />
+                                      </Button>
+                                    </div>
+                                  </motion.div>
+                                ))}
+                              </AnimatePresence>
+                            </div>
+
+                            {partners.length < 9 && (
+                              <Button
+                                type='button'
+                                onClick={addPartner}
+                                className='flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border/60 bg-gray-300 py-3 text-xs font-medium text-foreground transition-all hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300'
+                              >
+                                <Plus className='h-3.5 w-3.5' />
+                                Add Partner
+                              </Button>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
             </div>
 
             <FormErrorBanner error={error} />

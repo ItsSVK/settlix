@@ -38,6 +38,7 @@ export async function GET(_req: Request, { params }: Params) {
       token: link.token,
       amount: link.amount.toString(),
       type: link.type,
+      interval: link.interval ?? null,
       title: link.title ?? null,
       description: link.description ?? null,
       createdAt: link.createdAt.toISOString(),

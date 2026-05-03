@@ -34,9 +34,11 @@ model PaymentLink {
   maxUses        Int?
   createdAt      DateTime           @default(now())
   archivedAt      DateTime?
+  interval       String?
   executions     PaymentExecution[]
   recipients     SplitRecipient[]
   invoice        Invoice?
+  subscriptions  Subscription[]
 }
 
 model Invoice {
@@ -101,6 +103,51 @@ enum PaymentExecutionStatus {
   pending
   paid
   failed
+}
+
+enum SubscriptionStatus {
+  active
+  past_due
+  cancelled
+}
+
+enum RenewalStatus {
+  pending
+  succeeded
+  failed
+}
+
+model Subscription {
+  id               String             @id @default(cuid())
+  linkId           String
+  link             PaymentLink        @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  subscriberWallet String
+  status           SubscriptionStatus @default(active)
+  currentPeriodEnd DateTime
+  cancelledAt      DateTime?
+  createdAt        DateTime           @default(now())
+  renewals         SubscriptionRenewal[]
+
+  @@unique([linkId, subscriberWallet])
+  @@index([subscriberWallet])
+  @@index([linkId])
+  @@index([status, currentPeriodEnd])
+}
+
+model SubscriptionRenewal {
+  id             String       @id @default(cuid())
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  txSignature    String?      @unique
+  status         RenewalStatus
+  attemptCount   Int          @default(1)
+  dueAt          DateTime
+  executedAt     DateTime?
+  failureReason  String?
+  createdAt      DateTime     @default(now())
+
+  @@index([subscriptionId])
+  @@index([status, dueAt])
 }
 
 model ApiKey {
