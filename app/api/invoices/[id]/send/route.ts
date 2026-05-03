@@ -19,9 +19,9 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     const invoice = await getInvoiceById(id)
     if (!invoice) throw new ApiError(404, 'Invoice not found', NOT_FOUND)
-    if (invoice.merchantWallet !== wallet) throw new ApiError(403, 'Forbidden', 'FORBIDDEN')
+    if (invoice.merchant.wallet !== wallet) throw new ApiError(403, 'Forbidden', 'FORBIDDEN')
 
-    const isPaid = !!invoice.link.executions[0]
+    const isPaid = invoice.executions.length > 0
     if (isPaid) throw new ApiError(409, 'Invoice is already paid — receipt was sent automatically at payment time', INVOICE_ALREADY_PAID)
 
     if (!invoice.clientEmail) {
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       invoiceId: id,
       clientName: invoice.clientName,
       clientEmail: invoice.clientEmail,
-      amount: invoice.link.amount.toString(),
+      amount: invoice.amount.toString(),
       tokenSymbol,
       dueDate: invoice.dueDate?.toISOString() ?? null,
       memo: invoice.memo,

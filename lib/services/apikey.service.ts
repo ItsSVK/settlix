@@ -6,7 +6,7 @@ import { prisma } from '@/lib/db'
 export async function getApiKeysByWallet(wallet: string) {
   try {
     return await prisma.apiKey.findMany({
-      where: { merchantWallet: wallet },
+      where: { merchant: { wallet } },
       orderBy: { createdAt: 'desc' },
       select: { id: true, name: true, lastUsedAt: true, createdAt: true },
     })
@@ -18,11 +18,18 @@ export async function getApiKeysByWallet(wallet: string) {
 
 export async function createApiKey(data: { wallet: string; name: string; keyHash: string }) {
   try {
+    const merchant = await prisma.merchant.findUnique({
+      where: { wallet: data.wallet },
+      select: { id: true },
+    })
+    if (!merchant) throw new ApiError(404, 'Merchant not found', 'NOT_FOUND')
+
     return await prisma.apiKey.create({
-      data: { merchantWallet: data.wallet, keyHash: data.keyHash, name: data.name },
+      data: { merchantId: merchant.id, keyHash: data.keyHash, name: data.name },
       select: { id: true, name: true, createdAt: true },
     })
   } catch (e) {
+    if (e instanceof ApiError) throw e
     apiLogger.error('API key creation failed', e, { wallet: data.wallet })
     throw new ApiError(500, 'Database error', DB_CREATE_FAILED)
   }

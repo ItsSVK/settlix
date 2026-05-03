@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 
 import { handleApi } from '@/lib/api/errors'
 import { requireAuth } from '@/lib/auth/require-auth'
-import { cancelSubscription } from '@/lib/services/subscription.service'
+import { cancelSubscriber } from '@/lib/services/subscription.service'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     const { wallet } = await requireAuth(req)
     const { id } = await params
 
-    await cancelSubscription(id, wallet)
+    await cancelSubscriber(id, wallet)
 
     return new NextResponse(null, { status: 204 })
   })

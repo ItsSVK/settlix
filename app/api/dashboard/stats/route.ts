@@ -4,7 +4,6 @@ import { handleApi } from '@/lib/api/errors'
 import { requireSession } from '@/lib/auth/require-auth'
 import { prisma } from '@/lib/db'
 import { deriveInvoiceStatus } from '@/lib/services/invoice.service'
-import { PaymentExecutionStatus } from '@/lib/generated/prisma/client'
 
 const DAYS = 30
 
@@ -14,7 +13,7 @@ export async function GET(req: NextRequest) {
 
     const [paidExecutions, allExecutionStatuses, links, invoices] = await Promise.all([
       prisma.paymentExecution.findMany({
-        where: { status: PaymentExecutionStatus.paid, link: { merchantWallet: wallet } },
+        where: { status: 'paid', link: { merchant: { wallet } } },
         select: {
           id: true,
           outputAmount: true,
@@ -27,33 +26,29 @@ export async function GET(req: NextRequest) {
         orderBy: { createdAt: 'desc' },
       }),
       prisma.paymentExecution.findMany({
-        where: { link: { merchantWallet: wallet } },
+        where: { link: { merchant: { wallet } } },
         select: { status: true },
       }),
       prisma.paymentLink.findMany({
-        where: { merchantWallet: wallet, archivedAt: null, NOT: { type: 'invoice' } },
+        where: { merchant: { wallet }, archivedAt: null },
         select: {
           id: true,
           title: true,
           active: true,
           executions: {
-            where: { status: PaymentExecutionStatus.paid },
+            where: { status: 'paid' },
             select: { outputAmount: true },
           },
         },
       }),
       prisma.invoice.findMany({
-        where: { merchantWallet: wallet, archivedAt: null },
+        where: { merchant: { wallet }, archivedAt: null },
         select: {
           dueDate: true,
-          link: {
-            select: {
-              executions: {
-                where: { status: PaymentExecutionStatus.paid },
-                select: { createdAt: true },
-                take: 1,
-              },
-            },
+          executions: {
+            where: { status: 'paid' },
+            select: { createdAt: true },
+            take: 1,
           },
         },
       }),
@@ -64,13 +59,12 @@ export async function GET(req: NextRequest) {
     const overallSuccessRate =
       allExecutionStatuses.length > 0
         ? Math.round(
-            (allExecutionStatuses.filter((e) => e.status === PaymentExecutionStatus.paid).length /
+            (allExecutionStatuses.filter((e) => e.status === 'paid').length /
               allExecutionStatuses.length) *
               100,
           )
         : null
 
-    // Fill last DAYS days with zeros, then sum paid executions into each bucket
     const dayMap = new Map<string, number>()
     for (let i = DAYS - 1; i >= 0; i--) {
       const d = new Date()
@@ -100,14 +94,14 @@ export async function GET(req: NextRequest) {
       id: e.id,
       userWallet: e.userWallet,
       amount: Number(e.outputAmount) / 1_000_000,
-      linkTitle: e.link.title,
+      linkTitle: e.link?.title ?? null,
       txSignature: e.txSignature,
       createdAt: e.createdAt.toISOString(),
     }))
 
     const invoiceStats = { paid: 0, unpaid: 0, overdue: 0 }
     for (const inv of invoices) {
-      const paidAt = inv.link.executions[0]?.createdAt ?? null
+      const paidAt = inv.executions[0]?.createdAt ?? null
       const status = deriveInvoiceStatus(inv.dueDate, paidAt)
       invoiceStats[status]++
     }

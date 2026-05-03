@@ -1,13 +1,15 @@
 import { ApiError, UpstreamError } from '@/lib/api/errors'
 import { apiLogger } from '@/lib/api/logger'
-import { getPaymentLinkByDetails } from '@/lib/solana/database-lookup'
+import { getPaymentLinkByDetails, getInvoicePayDetails } from '@/lib/solana/database-lookup'
 import { getExactOutQuote } from '@/lib/solana/jupiter'
 import type { JupiterQuoteBody } from '@/lib/validation'
 import { decimalToBigIntUSDC } from '@/lib/solana/amount'
 
 export async function executeJupiterQuoteRequest(body: JupiterQuoteBody) {
   try {
-    const pay = await getPaymentLinkByDetails(body.payId)
+    const pay = body.invoiceId
+      ? await getInvoicePayDetails(body.invoiceId)
+      : await getPaymentLinkByDetails(body.payId!)
     const rawOut = decimalToBigIntUSDC(pay.amount)
 
     // Same-mint shortcut — buyer is paying with the exact settlement token.

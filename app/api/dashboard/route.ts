@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 
       return {
         id: link.id,
-        merchantWallet: link.merchantWallet,
+        merchantWallet: link.merchant.wallet,
         token: link.token,
         amount: link.amount.toString(),
         title: link.title ?? undefined,

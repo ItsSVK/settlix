@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { BackgroundBeams } from '@/components/ui/background-beams'
-import { PayCardBase } from '@/components/pay/pay-card-base'
+import { InvoicePayForm } from './invoice-pay-form'
 import { JupiterCallout } from '@/components/pay/jupiter-callout'
 import { useRouter } from 'next/navigation'
 import { InvoiceReceipt } from './invoice-receipt'
@@ -17,7 +17,6 @@ export interface InvoiceData {
   memo: string | null
   token: string
   amount: string
-  linkId: string
   status: 'paid' | 'overdue' | 'unpaid'
   paidAt: string | null
   txSignature: string | null
@@ -86,7 +85,7 @@ export function InvoicePayCard({ invoice }: { invoice: InvoiceData }) {
 
         <div className='flex flex-col items-center gap-4 w-full max-w-sm'>
           <JupiterCallout />
-          <PayCardBase linkId={invoice.linkId} allowInvoice onPaid={handlePaid} />
+          <InvoicePayForm invoiceId={invoice.id} amount={invoice.amount} token={invoice.token} onPaid={handlePaid} />
         </div>
       </div>
     </div>

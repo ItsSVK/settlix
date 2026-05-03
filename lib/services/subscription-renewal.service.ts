@@ -1,6 +1,14 @@
+import { randomUUID } from 'node:crypto'
 import { PublicKey } from '@solana/web3.js'
 import { getMint } from '@solana/spl-token'
-import { RenewalStatus, SubscriptionStatus } from '@/lib/generated/prisma/client'
+import {
+  RenewalStatus,
+  SubscriptionStatus,
+  PaymentExecutionStatus,
+  PaymentExecutionSource,
+  SubscriptionInterval,
+} from '@/lib/generated/prisma/client'
+import { Decimal } from '@/lib/generated/prisma/internal/prismaNamespace'
 import { apiLogger } from '@/lib/api/logger'
 import { prisma } from '@/lib/db'
 import { getSubscriptionRelayerKeypair } from '@/lib/env/server'
@@ -12,11 +20,11 @@ import { buildRenewalTx } from '@/lib/solana/subscriptionTxBuilder'
 const MAX_RETRY_ATTEMPTS = 7
 const PAST_DUE_GRACE_DAYS = 14
 
-function nextPeriodEnd(from: Date, interval: string): Date {
+function nextPeriodEnd(from: Date, interval: SubscriptionInterval): Date {
   const date = new Date(from)
-  if (interval === 'weekly') date.setDate(date.getDate() + 7)
-  else if (interval === 'monthly') date.setMonth(date.getMonth() + 1)
-  else if (interval === 'yearly') date.setFullYear(date.getFullYear() + 1)
+  if (interval === SubscriptionInterval.weekly) date.setDate(date.getDate() + 7)
+  else if (interval === SubscriptionInterval.monthly) date.setMonth(date.getMonth() + 1)
+  else if (interval === SubscriptionInterval.yearly) date.setFullYear(date.getFullYear() + 1)
   return date
 }
 
@@ -33,8 +41,8 @@ export async function processDueRenewals(): Promise<RenewalSummary> {
   const now = new Date()
   const pastDueCutoff = new Date(now.getTime() - PAST_DUE_GRACE_DAYS * 24 * 60 * 60 * 1000)
 
-  // Auto-cancel subscriptions that have been past_due beyond the grace period
-  const autoCancelled = await prisma.subscription.updateMany({
+  // Auto-cancel subscribers that have been past_due beyond the grace period
+  const autoCancelled = await prisma.subscriber.updateMany({
     where: {
       status: SubscriptionStatus.past_due,
       currentPeriodEnd: { lt: pastDueCutoff },
@@ -43,14 +51,16 @@ export async function processDueRenewals(): Promise<RenewalSummary> {
   })
   summary.cancelled = autoCancelled.count
 
-  // Find all active subscriptions whose billing period has ended
-  const due = await prisma.subscription.findMany({
+  // Find all active subscribers whose billing period has ended
+  const due = await prisma.subscriber.findMany({
     where: {
       status: SubscriptionStatus.active,
       currentPeriodEnd: { lte: now },
     },
     include: {
-      link: { select: { token: true, amount: true, interval: true, merchantWallet: true } },
+      plan: {
+        select: { token: true, amount: true, interval: true, merchant: { select: { wallet: true } } },
+      },
     },
   })
 
@@ -58,11 +68,14 @@ export async function processDueRenewals(): Promise<RenewalSummary> {
     summary.processed++
     const result = await executeRenewal(sub.id, {
       subscriberWallet: sub.subscriberWallet,
-      merchantWallet: sub.link.merchantWallet,
-      token: sub.link.token,
-      amount: sub.link.amount.toString(),
-      interval: sub.link.interval ?? 'monthly',
+      merchantWallet: sub.plan.merchant.wallet,
+      token: sub.plan.token,
+      amount: sub.plan.amount.toString(),
+      interval: sub.plan.interval,
       currentPeriodEnd: sub.currentPeriodEnd,
+      // Snapshot values captured at billing time
+      amountSnapshot: sub.plan.amount,
+      tokenSnapshot: sub.plan.token,
     })
     if (result.ok) summary.succeeded++
     else summary.failed++
@@ -72,26 +85,28 @@ export async function processDueRenewals(): Promise<RenewalSummary> {
 }
 
 async function executeRenewal(
-  subscriptionId: string,
+  subscriberId: string,
   data: {
     subscriberWallet: string
     merchantWallet: string
     token: string
     amount: string
-    interval: string
+    interval: SubscriptionInterval
     currentPeriodEnd: Date
+    amountSnapshot: Decimal
+    tokenSnapshot: string
   },
 ): Promise<{ ok: boolean; reason?: string }> {
   const connection = createServerConnection()
 
-  // Count prior failures for this period to enforce retry cap
+  // Count prior failed renewals for this subscriber to enforce retry cap
   const failureCount = await prisma.subscriptionRenewal.count({
-    where: { subscriptionId, status: RenewalStatus.failed },
+    where: { subscriberId, status: RenewalStatus.failed },
   })
 
   if (failureCount >= MAX_RETRY_ATTEMPTS) {
-    await prisma.subscription.update({
-      where: { id: subscriptionId },
+    await prisma.subscriber.update({
+      where: { id: subscriberId },
       data: { status: SubscriptionStatus.past_due },
     })
     return { ok: false, reason: 'Max retry attempts reached — marked past_due' }
@@ -104,7 +119,6 @@ async function executeRenewal(
     const relayerKeypair = getSubscriptionRelayerKeypair()
     const mintPk = new PublicKey(data.token)
     const mintInfo = await getMint(connection, mintPk, RPC_COMMITMENT)
-    const { Decimal } = await import('@/lib/generated/prisma/internal/prismaNamespace')
     const transferAmountRaw = humanToRawAmount(new Decimal(data.amount), mintInfo.decimals)
 
     const tx = await buildRenewalTx({
@@ -115,7 +129,7 @@ async function executeRenewal(
       settlementMint: mintPk,
       transferAmountRaw,
       mintDecimals: mintInfo.decimals,
-      subscriptionId,
+      subscriptionId: subscriberId,
     })
 
     txSignature = await connection.sendRawTransaction(tx.serialize(), {
@@ -134,40 +148,80 @@ async function executeRenewal(
     }
   } catch (e) {
     failureReason = failureReason ?? (e instanceof Error ? e.message : 'Unknown error')
-    apiLogger.warn('Subscription renewal failed', { subscriptionId, reason: failureReason })
+    apiLogger.warn('Subscription renewal failed', { subscriberId, reason: failureReason })
 
-    await prisma.subscriptionRenewal.create({
-      data: {
-        subscriptionId,
-        status: RenewalStatus.failed,
-        txSignature: txSignature ?? null,
-        dueAt: data.currentPeriodEnd,
-        failureReason,
-        attemptCount: failureCount + 1,
-      },
+    // Create the renewal record first, then link a failed PaymentExecution if a tx was submitted
+    await prisma.$transaction(async (tx) => {
+      const renewal = await tx.subscriptionRenewal.create({
+        data: {
+          subscriberId,
+          amountSnapshot: data.amountSnapshot,
+          tokenSnapshot: data.tokenSnapshot,
+          periodStart: data.currentPeriodEnd,
+          dueAt: data.currentPeriodEnd,
+          status: RenewalStatus.failed,
+          failureReason,
+          attemptCount: failureCount + 1,
+        },
+      })
+
+      // Only record an execution if a tx was actually submitted on-chain
+      if (txSignature) {
+        await tx.paymentExecution.create({
+          data: {
+            clientExecutionId: randomUUID(),
+            source: PaymentExecutionSource.subscription,
+            renewalId: renewal.id,
+            userWallet: data.subscriberWallet,
+            inputToken: data.token,
+            inputAmount: BigInt(0),
+            outputAmount: BigInt(0),
+            txSignature,
+            status: PaymentExecutionStatus.failed,
+          },
+        })
+      }
     })
+
     return { ok: false, reason: failureReason }
   }
 
-  // Success — advance the period
+  // Success — advance the billing period
   const nextEnd = nextPeriodEnd(data.currentPeriodEnd, data.interval)
-  await prisma.$transaction([
-    prisma.subscriptionRenewal.create({
+  await prisma.$transaction(async (tx) => {
+    const renewal = await tx.subscriptionRenewal.create({
       data: {
-        subscriptionId,
-        status: RenewalStatus.succeeded,
-        txSignature,
+        subscriberId,
+        amountSnapshot: data.amountSnapshot,
+        tokenSnapshot: data.tokenSnapshot,
+        periodStart: data.currentPeriodEnd,
         dueAt: data.currentPeriodEnd,
-        executedAt: new Date(),
+        status: RenewalStatus.succeeded,
         attemptCount: failureCount + 1,
+        executedAt: new Date(),
       },
-    }),
-    prisma.subscription.update({
-      where: { id: subscriptionId },
-      data: { currentPeriodEnd: nextEnd, status: SubscriptionStatus.active },
-    }),
-  ])
+    })
 
-  apiLogger.info('Subscription renewal succeeded', { subscriptionId, txSignature })
+    await tx.paymentExecution.create({
+      data: {
+        clientExecutionId: randomUUID(),
+        source: PaymentExecutionSource.subscription,
+        renewalId: renewal.id,
+        userWallet: data.subscriberWallet,
+        inputToken: data.token,
+        inputAmount: humanToRawAmount(data.amountSnapshot, 6),
+        outputAmount: humanToRawAmount(data.amountSnapshot, 6),
+        txSignature: txSignature!,
+        status: PaymentExecutionStatus.paid,
+      },
+    })
+
+    await tx.subscriber.update({
+      where: { id: subscriberId },
+      data: { currentPeriodEnd: nextEnd, status: SubscriptionStatus.active },
+    })
+  })
+
+  apiLogger.info('Subscription renewal succeeded', { subscriberId, txSignature })
   return { ok: true }
 }

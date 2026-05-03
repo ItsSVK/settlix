@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       invoices: invoices.map((inv) => {
-        const paidExecution = inv.link.executions[0] ?? null
+        const paidExecution = inv.executions[0] ?? null
         const status = deriveInvoiceStatus(inv.dueDate, paidExecution?.createdAt ?? null)
         return {
           id: inv.id,
@@ -25,8 +25,7 @@ export async function GET(req: NextRequest) {
           dueDate: inv.dueDate?.toISOString() ?? null,
           memo: inv.memo,
           token: inv.token,
-          amount: inv.link.amount.toString(),
-          linkId: inv.link.id,
+          amount: inv.amount.toString(),
           status,
           paidAt: paidExecution?.createdAt.toISOString() ?? null,
           txSignature: paidExecution?.txSignature ?? null,
@@ -75,7 +74,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         id: invoice.id,
-        linkId: invoice.linkId,
         invoicePath: `/invoice/${invoice.id}`,
       },
       { status: 201 },

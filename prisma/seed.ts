@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import { PrismaPg } from '@prisma/adapter-pg'
-import { PrismaClient } from '../lib/generated/prisma/client'
+import { PrismaClient, PaymentLinkType } from '../lib/generated/prisma/client'
 import cuid from 'cuid'
 
 // ─── Config ──────────────────────────────────────────────────────────────────
@@ -29,10 +29,10 @@ function randDate(year: number, month: number, maxDay = 27): Date {
 
 // Approximate USDC/token rates (Jan–Apr 2026 estimates)
 const INPUT_TOKENS = [
-  { mint: SOL_MINT, rate: 138, decimals: 9 }, // SOL — 40% of txs
+  { mint: SOL_MINT, rate: 138, decimals: 9 },       // SOL — 40% of txs
   { mint: BONK_MINT, rate: 0.0000275, decimals: 5 }, // BONK — 20%
-  { mint: PONKE_MINT, rate: 0.0000001, decimals: 9 }, // PONKE — 20%
-  { mint: USDC_MINT, rate: 1, decimals: 6 }, // USDC — 20%
+  { mint: PONKE_MINT, rate: 0.0000001, decimals: 9 },// PONKE — 20%
+  { mint: USDC_MINT, rate: 1, decimals: 6 },         // USDC — 20%
 ]
 
 function pickToken() {
@@ -44,31 +44,26 @@ function pickToken() {
 }
 
 // Simulate tiny slippage (±0.4%), returns raw USDC units (6 decimals)
-// e.g. 400 USDC → 400_000_000n micro-USDC
 function usdcUnits(humanAmount: number): bigint {
   const slipped = humanAmount * (1 + (Math.random() - 0.5) * 0.008)
   return BigInt(Math.round(slipped * 1_000_000))
 }
 
-// Convert human USDC amount → raw input token units using BigInt arithmetic
-// to avoid Number overflow for very small-rate tokens (e.g. PONKE at 1e-7 USDC/token)
+// Convert human USDC amount → raw input token units
 function toInputUnits(usdcHuman: number, rate: number, decimals: number): bigint {
-  // Scale both values to 10^12 precision so fractional rates survive integer division
-  const SCALE = 1_000_000_000_000n // 10^12
+  const SCALE = BigInt(1_000_000_000_000)
   const usdcScaled = BigInt(Math.round(usdcHuman * 1_000_000_000_000))
   const rateScaled = BigInt(Math.round(rate * 1_000_000_000_000))
-  if (rateScaled === 0n) return 0n
-  // (usdcScaled / rateScaled) = token human amount (scaled); multiply by 10^decimals
-  return (usdcScaled * 10n ** BigInt(decimals)) / rateScaled
+  if (rateScaled === BigInt(0)) return BigInt(0)
+  return (usdcScaled * BigInt(10) ** BigInt(decimals)) / rateScaled
 }
 
-// ─── Static buyer wallets (reused across txs to look realistic) ───────────────
+// ─── Static buyer wallets ─────────────────────────────────────────────────────
 
 const BUYERS = Array.from({ length: 14 }, fakePubkey)
 const pickBuyer = () => BUYERS[~~(Math.random() * BUYERS.length)]
 
 // ─── Payment Links ────────────────────────────────────────────────────────────
-// target: ~$13,550 total over Jan–Apr 2026
 
 const ID1 = cuid()
 const ID2 = cuid()
@@ -143,8 +138,6 @@ const LINKS = [
 ]
 
 // ─── Execution plan ───────────────────────────────────────────────────────────
-// Jan: $4,700 (10 txs) | Feb: $3,050 (9 txs) | Mar: $4,300 (11 txs) | Apr: $1,500 (5 txs)
-// Total: ~$13,550 across 35 paid executions + 1 failed
 
 type Batch = { linkId: string; amount: number; month: number; count: number }
 
@@ -182,7 +175,7 @@ async function main() {
   console.log('🌱  Seeding demo data...\n')
 
   // Merchant
-  await prisma.merchant.create({
+  const merchant = await prisma.merchant.create({
     data: {
       wallet: MERCHANT_WALLET,
       webhookUrl: 'https://hooks.example.com/settlix',
@@ -195,7 +188,7 @@ async function main() {
 
   // Payment links
   for (const link of LINKS) {
-    await prisma.paymentLink.create({ data: { ...link, merchantWallet: MERCHANT_WALLET } })
+    await prisma.paymentLink.create({ data: { ...link, type: link.type as PaymentLinkType, merchantId: merchant.id } })
   }
   console.log('✓  Payment links created (6)')
 
@@ -209,11 +202,10 @@ async function main() {
   })
   console.log('✓  Split recipients created (API Access link — 80/20)')
 
-  // Invoices
+  // Invoices (standalone, no linkId)
   const INVOICES = [
     {
       id: 'inv_001',
-      linkId: ID1,
       clientName: 'Alex Chen',
       clientEmail: 'alex@techstart.io',
       dueDate: new Date('2026-02-15'),
@@ -223,7 +215,6 @@ async function main() {
     },
     {
       id: 'inv_002',
-      linkId: ID2,
       clientName: 'Sarah Johnson',
       clientEmail: 'sarah@acmecreative.co',
       dueDate: new Date('2026-02-28'),
@@ -236,7 +227,6 @@ async function main() {
     },
     {
       id: 'inv_003',
-      linkId: ID5,
       clientName: 'Marcus Rivera',
       clientEmail: 'marcus@novalabs.xyz',
       dueDate: new Date('2026-03-15'),
@@ -250,11 +240,13 @@ async function main() {
   ]
 
   for (const { lineItems, ...inv } of INVOICES) {
+    const amount = lineItems.reduce((sum, item) => sum + parseFloat(item.unitPrice) * parseFloat(item.quantity), 0)
     await prisma.invoice.create({
       data: {
         ...inv,
-        merchantWallet: MERCHANT_WALLET,
+        merchantId: merchant.id,
         token: USDC_MINT,
+        amount: amount.toFixed(6),
         lineItems: { create: lineItems },
       },
     })
@@ -265,14 +257,14 @@ async function main() {
   await prisma.apiKey.createMany({
     data: [
       {
-        merchantWallet: MERCHANT_WALLET,
+        merchantId: merchant.id,
         keyHash: fakeKeyHash(),
         name: 'Production',
         createdAt: new Date('2026-01-15T10:00:00Z'),
         lastUsedAt: new Date('2026-04-29T15:32:00Z'),
       },
       {
-        merchantWallet: MERCHANT_WALLET,
+        merchantId: merchant.id,
         keyHash: fakeKeyHash(),
         name: 'Staging',
         createdAt: new Date('2026-01-20T14:00:00Z'),
@@ -285,12 +277,12 @@ async function main() {
   // Payment executions
   let totalExecs = 0
   let totalUsdc = 0
-  let failedIdx = 7 // make the 8th execution (0-indexed) a failed one for realism
+  const failedIdx = 7 // make the 8th execution (0-indexed) a failed one for realism
 
   for (const batch of BATCHES) {
     for (let i = 0; i < batch.count; i++) {
       const token = pickToken()
-      const outUnits = usdcUnits(batch.amount) // raw micro-USDC (6 decimals)
+      const outUnits = usdcUnits(batch.amount)
       const inUnits = toInputUnits(batch.amount, token.rate, token.decimals)
       const createdAt = randDate(2026, batch.month)
       const isFailed = totalExecs === failedIdx
@@ -298,11 +290,12 @@ async function main() {
       await prisma.paymentExecution.create({
         data: {
           clientExecutionId: crypto.randomUUID(),
+          source: 'payment_link',
           linkId: batch.linkId,
           userWallet: pickBuyer(),
           inputToken: token.mint,
           inputAmount: inUnits,
-          outputAmount: isFailed ? 0n : outUnits,
+          outputAmount: isFailed ? BigInt(0) : outUnits,
           txSignature: fakeSig(),
           status: isFailed ? 'failed' : 'paid',
           distributedAt: isFailed ? null : new Date(createdAt.getTime() + 2800 + ~~(Math.random() * 1200)),
@@ -315,7 +308,6 @@ async function main() {
         },
       })
 
-      // track human-readable total for the summary log
       if (!isFailed) totalUsdc += Number(outUnits) / 1_000_000
       totalExecs++
     }

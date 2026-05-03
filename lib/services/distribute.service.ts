@@ -28,8 +28,7 @@ export async function getPendingDistributions(merchantWallet: string): Promise<P
         status: 'paid',
         distributedAt: null,
         link: {
-          merchantWallet,
-          // Only links that have at least one non-merchant recipient
+          merchant: { wallet: merchantWallet },
           recipients: {
             some: { wallet: { not: merchantWallet } },
           },
@@ -51,7 +50,7 @@ export async function getPendingDistributions(merchantWallet: string): Promise<P
 
     for (const exec of executions) {
       const outputRaw = exec.outputAmount
-      for (const recipient of exec.link.recipients) {
+      for (const recipient of exec.link!.recipients) {
         const owed = (outputRaw * BigInt(recipient.basisPoints)) / BigInt(10000)
         partnerTotals.set(recipient.wallet, (partnerTotals.get(recipient.wallet) ?? BigInt(0)) + owed)
       }
@@ -91,7 +90,7 @@ export async function markAsDistributed(executionIds: string[], merchantWallet: 
         id: { in: executionIds },
         status: 'paid',
         distributedAt: null,
-        link: { merchantWallet },
+        link: { merchant: { wallet: merchantWallet } },
       },
       data: { distributedAt: new Date() },
     })

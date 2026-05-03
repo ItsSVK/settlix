@@ -3,20 +3,20 @@
 import { useCallback } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { AlertCircle, Loader2, Zap } from 'lucide-react'
-import type { TokenInfo } from './token-selector'
+import type { TokenInfo } from '@/components/pay/token-selector'
 import { cn } from '@/lib/utils'
 import { usePaymentFlow, PAY_STEP_LABELS } from '@/lib/hooks/use-payment-flow'
 import type { SwapReceipt } from '@/lib/hooks/use-payment-flow'
 
-interface PayButtonProps {
-  linkId: string
+interface InvoicePayButtonProps {
+  invoiceId: string
   selectedToken: TokenInfo | null
   quoteReady: boolean
   onSuccess: (txSignature: string, swap: SwapReceipt) => void
   className?: string
 }
 
-export function PayButton({ linkId, selectedToken, quoteReady, onSuccess, className }: PayButtonProps) {
+export function InvoicePayButton({ invoiceId, selectedToken, quoteReady, onSuccess, className }: InvoicePayButtonProps) {
   const { step, setStep, errorMsg, isLoading, connected, publicKey, requestWalletConnection, signAndExecute, handleError } =
     usePaymentFlow({ onSuccess })
 
@@ -28,21 +28,26 @@ export function PayButton({ linkId, selectedToken, quoteReady, onSuccess, classN
     if (!selectedToken || !quoteReady) return
 
     try {
-      // 1. Build order
       setStep('building')
       const orderRes = await fetch('/api/checkout/pay/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inputMint: selectedToken.mint, taker: publicKey.toBase58(), payId: linkId }),
+        body: JSON.stringify({ inputMint: selectedToken.mint, taker: publicKey.toBase58(), invoiceId }),
       })
       const orderData = await orderRes.json()
       if (!orderRes.ok) throw new Error(orderData.error || 'Failed to build transaction')
 
       const { transaction: txBase64, requestId, isDirect, inAmount, outAmount } = orderData
       const executionId = crypto.randomUUID()
-      const paymentContext = { executionId, source: 'payment_link', linkId, userWallet: publicKey.toBase58(), inputToken: selectedToken.mint, inAmount }
+      const paymentContext = {
+        executionId,
+        source: 'invoice',
+        invoiceId,
+        userWallet: publicKey.toBase58(),
+        inputToken: selectedToken.mint,
+        inAmount,
+      }
 
-      // 2 + 3. Sign and execute
       await signAndExecute(
         txBase64,
         async (signedBase64) => {
@@ -70,7 +75,7 @@ export function PayButton({ linkId, selectedToken, quoteReady, onSuccess, classN
     } catch (e) {
       handleError(e)
     }
-  }, [connected, publicKey, selectedToken, quoteReady, linkId, requestWalletConnection, signAndExecute, handleError, setStep])
+  }, [connected, publicKey, selectedToken, quoteReady, invoiceId, requestWalletConnection, signAndExecute, handleError, setStep])
 
   const isDisabled = isLoading || step === 'done' || !selectedToken || !quoteReady
 

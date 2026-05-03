@@ -3,14 +3,16 @@ import { ApiError, UpstreamError } from '@/lib/api/errors'
 import { apiLogger } from '@/lib/api/logger'
 import { decimalToBigIntUSDC } from '@/lib/solana/amount'
 import { createServerConnection } from '@/lib/solana/connection'
-import { getPaymentLinkByDetails } from '@/lib/solana/database-lookup'
+import { getPaymentLinkByDetails, getInvoicePayDetails } from '@/lib/solana/database-lookup'
 import { getExactOutOrder } from '@/lib/solana/jupiter'
 import { buildDirectSettlementPaymentTx } from '@/lib/solana/txBuilder'
 import type { JupiterOrderBody } from '@/lib/validation'
 
 export async function executeJupiterOrderRequest(body: JupiterOrderBody) {
   try {
-    const pay = await getPaymentLinkByDetails(body.payId)
+    const pay = body.invoiceId
+      ? await getInvoicePayDetails(body.invoiceId)
+      : await getPaymentLinkByDetails(body.payId!)
     const rawOut = decimalToBigIntUSDC(pay.amount)
 
     // ── Same-mint shortcut ────────────────────────────────────────────────────
@@ -29,11 +31,11 @@ export async function executeJupiterOrderRequest(body: JupiterOrderBody) {
       const tx = await buildDirectSettlementPaymentTx({
         connection,
         payer: new PublicKey(body.taker),
-        merchant: new PublicKey(pay.merchantWallet),
+        merchant: new PublicKey(pay.merchant.wallet),
         settlementMint: mint,
         transferAmountRaw: rawOut,
         mintDecimals,
-        linkId: body.payId,
+        linkId: body.payId ?? body.invoiceId,
       })
 
       return {
@@ -48,7 +50,7 @@ export async function executeJupiterOrderRequest(body: JupiterOrderBody) {
     }
 
     // ── Normal Jupiter swap ────────────────────────────────────────────────────
-    const order = await getExactOutOrder(body.inputMint, pay.token, rawOut, body.taker, pay.merchantWallet)
+    const order = await getExactOutOrder(body.inputMint, pay.token, rawOut, body.taker, pay.merchant.wallet)
     return {
       transaction: order.transaction,
       inAmount: order.inAmount,

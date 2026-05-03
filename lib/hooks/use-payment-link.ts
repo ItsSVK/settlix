@@ -8,7 +8,6 @@ export interface PaymentLinkData {
   token: string
   amount: string
   type: string
-  interval: string | null
   title: string | null
   description: string | null
   createdAt: string

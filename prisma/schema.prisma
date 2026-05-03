@@ -7,102 +7,25 @@ datasource db {
   provider = "postgresql"
 }
 
-model Merchant {
-  id             String        @id @default(cuid())
-  wallet         String        @unique
-  webhookUrl     String?
-  webhookSecret  String?
-  createdAt      DateTime      @default(now())
-  lastSeenAt     DateTime      @default(now())
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
 
-  paymentLinks   PaymentLink[]
-  invoices       Invoice[]
-  apiKeys        ApiKey[]
-}
-
-model PaymentLink {
-  id             String             @id @default(cuid())
-  merchantWallet String
-  merchant       Merchant           @relation(fields: [merchantWallet], references: [wallet])
-  token          String
-  amount         Decimal            @db.Decimal(20, 6)
-  type           String             @default("fixed")
-  active         Boolean            @default(true)
-  title          String?
-  description    String?
-  expiresAt      DateTime?
-  maxUses        Int?
-  createdAt      DateTime           @default(now())
-  archivedAt      DateTime?
-  interval       String?
-  executions     PaymentExecution[]
-  recipients     SplitRecipient[]
-  invoice        Invoice?
-  subscriptions  Subscription[]
-}
-
-model Invoice {
-  id             String        @id @default(cuid())
-  merchantWallet String
-  merchant       Merchant      @relation(fields: [merchantWallet], references: [wallet])
-  clientName     String?
-  clientEmail    String?
-  dueDate        DateTime?
-  memo           String?       @db.Text
-  token          String
-  lineItems      InvoiceItem[]
-  linkId         String        @unique
-  link           PaymentLink   @relation(fields: [linkId], references: [id], onDelete: Cascade)
-  createdAt      DateTime      @default(now())
-  archivedAt      DateTime?
-
-  @@index([merchantWallet])
-}
-
-model InvoiceItem {
-  id          String  @id @default(cuid())
-  invoiceId   String
-  description String
-  quantity    Decimal @db.Decimal(10, 4)
-  unitPrice   Decimal @db.Decimal(20, 6)
-  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-
-  @@index([invoiceId])
-}
-
-model SplitRecipient {
-  id           String      @id @default(cuid())
-  linkId       String
-  wallet       String
-  basisPoints  Int
-  displayOrder Int         @default(0)
-  link         PaymentLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
-
-  @@index([linkId])
-}
-
-model PaymentExecution {
-  id                String                 @id @default(cuid())
-  clientExecutionId String                 @unique
-  linkId            String
-  userWallet        String
-  inputToken        String
-  inputAmount       BigInt
-  outputAmount      BigInt
-  txSignature       String                 @unique
-  status            PaymentExecutionStatus
-  metadata          Json?
-  distributedAt     DateTime?
-  createdAt         DateTime               @default(now())
-  link              PaymentLink            @relation(fields: [linkId], references: [id], onDelete: Cascade)
-
-  @@index([linkId])
+enum PaymentLinkType {
+  fixed
+  open
 }
 
 enum PaymentExecutionStatus {
   pending
   paid
   failed
+}
+
+enum SubscriptionInterval {
+  weekly
+  monthly
+  yearly
 }
 
 enum SubscriptionStatus {
@@ -117,47 +40,225 @@ enum RenewalStatus {
   failed
 }
 
-model Subscription {
-  id               String             @id @default(cuid())
-  linkId           String
-  link             PaymentLink        @relation(fields: [linkId], references: [id], onDelete: Cascade)
+enum PaymentExecutionSource {
+  payment_link
+  invoice
+  subscription
+}
+
+// ---------------------------------------------------------------------------
+// Merchant
+// ---------------------------------------------------------------------------
+
+model Merchant {
+  id                String             @id @default(cuid())
+  wallet            String             @unique
+  webhookUrl        String?
+  webhookSecret     String?
+  createdAt         DateTime           @default(now())
+  lastSeenAt        DateTime           @default(now())
+
+  paymentLinks      PaymentLink[]
+  invoices          Invoice[]
+  subscriptionPlans SubscriptionPlan[]
+  apiKeys           ApiKey[]
+}
+
+// ---------------------------------------------------------------------------
+// Payment Links  (one-time payments, fixed or open amount)
+// ---------------------------------------------------------------------------
+
+model PaymentLink {
+  id          String           @id @default(cuid())
+  merchantId  String
+  merchant    Merchant         @relation(fields: [merchantId], references: [id])
+  token       String           @unique
+  amount      Decimal          @db.Decimal(20, 6)
+  type        PaymentLinkType  @default(fixed)
+  active      Boolean          @default(true)
+  title       String?
+  description String?
+  expiresAt   DateTime?
+  maxUses     Int?
+  createdAt   DateTime         @default(now())
+  archivedAt  DateTime?
+
+  recipients  SplitRecipient[]
+  executions  PaymentExecution[]
+
+  @@index([merchantId])
+}
+
+model SplitRecipient {
+  id           String      @id @default(cuid())
+  linkId       String
+  wallet       String
+  basisPoints  Int
+  displayOrder Int         @default(0)
+  link         PaymentLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+
+  @@unique([linkId, wallet])
+  @@index([linkId])
+}
+
+// ---------------------------------------------------------------------------
+// Invoices  (standalone — not backed by a PaymentLink)
+// ---------------------------------------------------------------------------
+
+model Invoice {
+  id          String        @id @default(cuid())
+  merchantId  String
+  merchant    Merchant      @relation(fields: [merchantId], references: [id])
+  clientName  String?
+  clientEmail String?
+  dueDate     DateTime?
+  memo        String?       @db.Text
+  token       String
+  // Stored total (sum of lineItems qty * unitPrice). Computed at creation and
+  // kept here so queries never need to re-aggregate line items for display.
+  amount      Decimal       @db.Decimal(20, 6)
+  lineItems   InvoiceItem[]
+  createdAt   DateTime      @default(now())
+  archivedAt  DateTime?
+
+  // Multiple attempts allowed; at most one will have status=paid.
+  executions  PaymentExecution[]
+
+  @@index([merchantId])
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  description String
+  quantity    Decimal @db.Decimal(10, 4)
+  unitPrice   Decimal @db.Decimal(20, 6)
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+}
+
+// ---------------------------------------------------------------------------
+// Subscriptions  (plan definition + subscriber relationships)
+// ---------------------------------------------------------------------------
+
+model SubscriptionPlan {
+  id          String               @id @default(cuid())
+  merchantId  String
+  merchant    Merchant             @relation(fields: [merchantId], references: [id])
+  token       String
+  amount      Decimal              @db.Decimal(20, 6)
+  interval    SubscriptionInterval
+  active      Boolean              @default(true)
+  title       String?
+  description String?
+  createdAt   DateTime             @default(now())
+  archivedAt  DateTime?
+
+  subscribers Subscriber[]
+
+  @@index([merchantId])
+}
+
+model Subscriber {
+  id               String               @id @default(cuid())
+  planId           String
+  plan             SubscriptionPlan     @relation(fields: [planId], references: [id], onDelete: Cascade)
   subscriberWallet String
-  status           SubscriptionStatus @default(active)
+  status           SubscriptionStatus   @default(active)
   currentPeriodEnd DateTime
   cancelledAt      DateTime?
-  createdAt        DateTime           @default(now())
+  createdAt        DateTime             @default(now())
+
   renewals         SubscriptionRenewal[]
 
-  @@unique([linkId, subscriberWallet])
+  @@unique([planId, subscriberWallet])
   @@index([subscriberWallet])
-  @@index([linkId])
+  @@index([planId])
   @@index([status, currentPeriodEnd])
 }
 
+// One record per billing attempt. txSignature lives on PaymentExecution — if
+// execution is null the renewal attempt did not produce an on-chain tx.
 model SubscriptionRenewal {
-  id             String       @id @default(cuid())
-  subscriptionId String
-  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  txSignature    String?      @unique
-  status         RenewalStatus
-  attemptCount   Int          @default(1)
+  id             String        @id @default(cuid())
+  subscriberId   String
+  subscriber     Subscriber    @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  // Snapshot of amount/token at billing time in case plan details ever change.
+  amountSnapshot Decimal       @db.Decimal(20, 6)
+  tokenSnapshot  String
+  periodStart    DateTime
   dueAt          DateTime
+  status         RenewalStatus
+  attemptCount   Int           @default(1)
   executedAt     DateTime?
   failureReason  String?
-  createdAt      DateTime     @default(now())
+  createdAt      DateTime      @default(now())
 
-  @@index([subscriptionId])
+  // Populated when a tx was submitted (succeeded or on-chain-failed).
+  // @unique because one renewal attempt produces at most one execution record.
+  execution      PaymentExecution?
+
+  @@index([subscriberId])
   @@index([status, dueAt])
 }
 
-model ApiKey {
-  id             String    @id @default(cuid())
-  merchantWallet String
-  merchant       Merchant  @relation(fields: [merchantWallet], references: [wallet])
-  keyHash        String    @unique
-  name           String
-  lastUsedAt     DateTime?
-  createdAt      DateTime  @default(now())
+// ---------------------------------------------------------------------------
+// Payment Executions  (on-chain tx record — polymorphic source)
+//
+// Exactly one of linkId / invoiceId / renewalId will be non-null, matching
+// the source field. Enforced at the service layer.
+// onDelete: Restrict on all three — execution records are payment proof and
+// must never be silently removed. All parents use soft-delete (archivedAt /
+// cancelledAt) so hard-deletes should never occur in normal operation.
+// ---------------------------------------------------------------------------
 
-  @@index([merchantWallet])
+model PaymentExecution {
+  id                String                 @id @default(cuid())
+  // Client-generated UUID used as idempotency key — prevents duplicate records
+  // if the submit endpoint is retried after a network failure.
+  clientExecutionId String                 @unique
+
+  source            PaymentExecutionSource
+
+  linkId            String?
+  link              PaymentLink?           @relation(fields: [linkId], references: [id], onDelete: Restrict)
+
+  invoiceId         String?
+  invoice           Invoice?               @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+
+  // @unique: one renewal attempt → at most one PaymentExecution.
+  renewalId         String?                @unique
+  renewal           SubscriptionRenewal?   @relation(fields: [renewalId], references: [id], onDelete: Restrict)
+
+  userWallet        String
+  inputToken        String
+  inputAmount       BigInt
+  outputAmount      BigInt
+  txSignature       String                 @unique
+  status            PaymentExecutionStatus
+  metadata          Json?
+  distributedAt     DateTime?
+  createdAt         DateTime               @default(now())
+
+  @@index([linkId])
+  @@index([invoiceId])
+  @@index([userWallet])
+  @@index([source])
+}
+
+// ---------------------------------------------------------------------------
+// API Keys
+// ---------------------------------------------------------------------------
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  merchantId String
+  merchant   Merchant  @relation(fields: [merchantId], references: [id])
+  keyHash    String    @unique
+  name       String
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([merchantId])
 }

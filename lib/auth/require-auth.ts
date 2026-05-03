@@ -17,7 +17,10 @@ export async function requireAuth(req: NextRequest): Promise<{ wallet: string }>
     if (!rawKey) throw new ApiError(401, 'Unauthorized', UNAUTHORIZED)
 
     const keyHash = createHash('sha256').update(rawKey).digest('hex')
-    const apiKey = await prisma.apiKey.findUnique({ where: { keyHash } })
+    const apiKey = await prisma.apiKey.findUnique({
+      where: { keyHash },
+      include: { merchant: { select: { wallet: true } } },
+    })
 
     if (!apiKey) throw new ApiError(401, 'Invalid API key', UNAUTHORIZED)
 
@@ -27,7 +30,7 @@ export async function requireAuth(req: NextRequest): Promise<{ wallet: string }>
       data: { lastUsedAt: new Date() },
     })
 
-    return { wallet: apiKey.merchantWallet }
+    return { wallet: apiKey.merchant.wallet }
   }
 
   const session = await getSessionFromRequest(req)

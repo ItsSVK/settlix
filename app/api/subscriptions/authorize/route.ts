@@ -3,13 +3,13 @@ import { PublicKey } from '@solana/web3.js'
 import { getMint } from '@solana/spl-token'
 
 import { ApiError, handleApi, readJsonBody } from '@/lib/api/errors'
-import { NOT_A_SUBSCRIPTION, RELAYER_NOT_CONFIGURED, VALIDATION } from '@/lib/api/constants'
+import { RELAYER_NOT_CONFIGURED, VALIDATION } from '@/lib/api/constants'
 import { getSubscriptionRelayerKeypair } from '@/lib/env/server'
 import { humanToRawAmount } from '@/lib/solana/amount'
 import { createServerConnection } from '@/lib/solana/connection'
 import { RPC_COMMITMENT } from '@/lib/solana/constants'
 import { buildSubscriptionAuthorizationTx } from '@/lib/solana/subscriptionTxBuilder'
-import { getPaymentLinkById } from '@/lib/services/payment-link.service'
+import { getSubscriptionPlanById } from '@/lib/services/subscription.service'
 import { authorizeSubscriptionBody } from '@/lib/validation'
 import { Decimal } from '@/lib/generated/prisma/internal/prismaNamespace'
 
@@ -31,13 +31,10 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { linkId, subscriberWallet } = parsed.data
+    const { planId, subscriberWallet } = parsed.data
 
-    const link = await getPaymentLinkById(linkId)
-    if (!link || !link.active) throw new ApiError(404, 'Payment link not found', 'LINK_NOT_FOUND')
-    if (link.type !== 'subscription' || !link.interval) {
-      throw new ApiError(400, 'This link is not a subscription', NOT_A_SUBSCRIPTION)
-    }
+    const plan = await getSubscriptionPlanById(planId)
+    if (!plan || !plan.active) throw new ApiError(404, 'Subscription plan not found', 'PLAN_NOT_FOUND')
 
     let relayerKeypair
     try {
@@ -48,9 +45,9 @@ export async function POST(req: NextRequest) {
     }
 
     const connection = createServerConnection()
-    const mintPk = new PublicKey(link.token)
+    const mintPk = new PublicKey(plan.token)
     const mintInfo = await getMint(connection, mintPk, RPC_COMMITMENT)
-    const transferAmountRaw = humanToRawAmount(new Decimal(link.amount.toString()), mintInfo.decimals)
+    const transferAmountRaw = humanToRawAmount(new Decimal(plan.amount.toString()), mintInfo.decimals)
 
     const tx = await buildSubscriptionAuthorizationTx({
       connection,
@@ -59,13 +56,13 @@ export async function POST(req: NextRequest) {
       settlementMint: mintPk,
       transferAmountRaw,
       mintDecimals: mintInfo.decimals,
-      linkId,
+      planId,
     })
 
     return NextResponse.json({
       transaction: Buffer.from(tx.serialize()).toString('base64'),
-      amount: link.amount.toString(),
-      interval: link.interval,
+      amount: plan.amount.toString(),
+      interval: plan.interval,
       delegationMonths: 12,
     })
   })

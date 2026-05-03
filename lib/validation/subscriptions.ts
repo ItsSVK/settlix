@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { paymentLinkId } from './links'
 
 export const createSubscriptionPlanBody = z.object({
   token: z.string().min(32).max(64),
@@ -10,12 +9,12 @@ export const createSubscriptionPlanBody = z.object({
 })
 
 export const authorizeSubscriptionBody = z.object({
-  linkId: paymentLinkId,
+  planId: z.string().uuid(),
   subscriberWallet: z.string().min(32).max(64),
 })
 
 export const createSubscriptionBody = z.object({
-  linkId: paymentLinkId,
+  planId: z.string().uuid(),
   subscriberWallet: z.string().min(32).max(64),
   signedTransaction: z.string().min(1),
   executionId: z.uuid(),

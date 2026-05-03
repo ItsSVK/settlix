@@ -1,7 +1,9 @@
 export interface DashboardPaymentPaidEvent {
   type: 'payment_paid'
   merchantWallet: string
-  linkId: string
+  // Exactly one of linkId / invoiceId will be present depending on payment source.
+  linkId?: string
+  invoiceId?: string
   executionId: string
   txSignature: string
   outputAmount: string

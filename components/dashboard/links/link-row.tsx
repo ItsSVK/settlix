@@ -5,7 +5,7 @@ const SOLSCAN_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK === 'devnet' ? '?
 import { useState } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'motion/react'
-import { Copy, Check, ExternalLink, ToggleLeft, ToggleRight, QrCode, GitFork, RefreshCw } from 'lucide-react'
+import { Copy, Check, ExternalLink, ToggleLeft, ToggleRight, QrCode, GitFork } from 'lucide-react'
 import type { Link } from '@/lib/hooks/use-links'
 import { Button } from '@/components/ui/button'
 import { copyText } from '@/lib/utils'
@@ -105,12 +105,6 @@ export function LinkRow({ link, onToggle, onRefresh, onArchive }: LinkRowProps) 
               />
               {Number(link.amount).toFixed(2)}
             </span>
-            {link.type === 'subscription' && link.interval && (
-              <span className='flex items-center gap-1 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2 py-0.5 text-[10px] font-semibold text-indigo-500'>
-                <RefreshCw className='h-2.5 w-2.5' />
-                {link.interval}
-              </span>
-            )}
             {link.description && (
               <span className='truncate text-[11px] text-muted-foreground max-w-[200px]'>• {link.description}</span>
             )}

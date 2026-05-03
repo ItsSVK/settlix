@@ -54,8 +54,10 @@ export async function POST(req: Request) {
     // Direct transfers use inAmount for both input and output (same-mint).
     const recordResult = await processSubmitTx({
       executionId: parsed.data.executionId,
+      source: parsed.data.source,
       txSignature: signature,
       linkId: parsed.data.linkId,
+      invoiceId: parsed.data.invoiceId,
       userWallet: parsed.data.userWallet,
       inputToken: parsed.data.inputToken,
       inputAmount: parsed.data.inAmount,

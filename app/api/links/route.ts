@@ -28,13 +28,12 @@ export async function GET(req: NextRequest) {
 
       return {
         id: link.id,
-        merchantWallet: link.merchantWallet,
+        merchantWallet: link.merchant.wallet,
         token: link.token,
         amount: link.amount.toString(),
         title: link.title ?? undefined,
         description: link.description ?? undefined,
         type: link.type,
-        interval: link.interval ?? null,
         active: link.active,
         expiresAt: link.expiresAt?.toISOString() ?? null,
         maxUses: link.maxUses ?? null,

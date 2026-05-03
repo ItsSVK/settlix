@@ -3,7 +3,9 @@ import { createHmac } from 'node:crypto'
 import { apiLogger } from '@/lib/api/logger'
 
 export interface PaymentWebhookPayload {
-  linkId: string
+  // Exactly one of linkId / invoiceId will be present depending on payment source.
+  linkId?: string
+  invoiceId?: string
   txSignature: string
   inputToken: string
   inputAmount: string

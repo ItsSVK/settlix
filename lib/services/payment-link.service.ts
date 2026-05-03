@@ -10,32 +10,33 @@ import {
 import { apiLogger } from '@/lib/api/logger'
 import { prisma } from '@/lib/db'
 import { Decimal } from '@/lib/generated/prisma/internal/prismaNamespace'
-import { Prisma, PaymentExecutionStatus } from '@/lib/generated/prisma/client'
+import { PaymentExecutionStatus, PaymentLinkType } from '@/lib/generated/prisma/client'
 import type { SplitRecipientInput } from '@/lib/validation'
-
-type PaymentLinkWithRelations = Prisma.PaymentLinkGetPayload<{
-  include: { executions: true; recipients: true }
-}>
 
 export async function createPaymentLink(data: {
   merchantWallet: string
   token: string
   amount: Decimal
+  type?: PaymentLinkType
   title?: string
   description?: string
   recipients?: SplitRecipientInput[]
   expiresAt?: Date | null
   maxUses?: number | null
-  interval?: string | null
 }) {
+  const merchant = await prisma.merchant.findUnique({
+    where: { wallet: data.merchantWallet },
+    select: { id: true },
+  })
+  if (!merchant) throw new ApiError(404, 'Merchant not found', NOT_FOUND)
+
   try {
     return await prisma.paymentLink.create({
       data: {
-        merchantWallet: data.merchantWallet,
+        merchantId: merchant.id,
         token: data.token,
         amount: data.amount,
-        type: data.interval ? 'subscription' : 'fixed',
-        interval: data.interval ?? null,
+        type: data.type ?? PaymentLinkType.fixed,
         active: true,
         title: data.title ?? null,
         description: data.description ?? null,
@@ -70,7 +71,7 @@ export async function getPaymentLinkById(id: string) {
       include: {
         recipients: { orderBy: { displayOrder: 'asc' } },
         _count: { select: { executions: { where: { status: PaymentExecutionStatus.paid } } } },
-        merchant: { select: { webhookUrl: true, webhookSecret: true } },
+        merchant: { select: { wallet: true, webhookUrl: true, webhookSecret: true } },
       },
     })
   } catch (e) {
@@ -82,12 +83,13 @@ export async function getPaymentLinkById(id: string) {
   }
 }
 
-export async function getPaymentLinksByWallet(merchantWallet: string): Promise<PaymentLinkWithRelations[]> {
+export async function getPaymentLinksByWallet(merchantWallet: string) {
   try {
     return await prisma.paymentLink.findMany({
-      where: { merchantWallet, archivedAt: null, NOT: { type: { in: ['invoice', 'subscription'] } } },
+      where: { merchant: { wallet: merchantWallet }, archivedAt: null },
       orderBy: { createdAt: 'desc' },
       include: {
+        merchant: { select: { wallet: true } },
         executions: {
           orderBy: { createdAt: 'desc' },
           take: 50,
@@ -106,26 +108,29 @@ export async function getPaymentLinksByWallet(merchantWallet: string): Promise<P
 
 export async function archivePaymentLink(id: string, merchantWallet: string) {
   try {
-    const link = await prisma.paymentLink.findFirst({ where: { id, archivedAt: null } })
+    const link = await prisma.paymentLink.findFirst({
+      where: { id, archivedAt: null },
+      include: { merchant: { select: { wallet: true } } },
+    })
     if (!link) throw new ApiError(404, 'Payment link not found', NOT_FOUND)
-    if (link.merchantWallet !== merchantWallet) throw new ApiError(403, 'Not authorized', FORBIDDEN)
+    if (link.merchant.wallet !== merchantWallet) throw new ApiError(403, 'Not authorized', FORBIDDEN)
     await prisma.paymentLink.update({ where: { id }, data: { archivedAt: new Date() } })
   } catch (e) {
     if (e instanceof ApiError) throw e
-    apiLogger.error('PaymentLink delete failed', e, { id })
-    throw new ApiError(500, 'Could not delete payment link', DB_UNEXPECTED, { error: e })
+    apiLogger.error('PaymentLink archive failed', e, { id })
+    throw new ApiError(500, 'Could not archive payment link', DB_UNEXPECTED, { error: e })
   }
 }
 
 export async function updatePaymentLinkActive(id: string, merchantWallet: string, active: boolean) {
   try {
-    const link = await prisma.paymentLink.findUnique({ where: { id } })
-    if (!link) {
-      throw new ApiError(404, 'Payment link not found', NOT_FOUND)
-    }
-    if (link.merchantWallet !== merchantWallet) {
-      throw new ApiError(403, 'Not authorized to update this link', FORBIDDEN)
-    }
+    const link = await prisma.paymentLink.findFirst({
+      where: { id },
+      include: { merchant: { select: { wallet: true } } },
+    })
+    if (!link) throw new ApiError(404, 'Payment link not found', NOT_FOUND)
+    if (link.merchant.wallet !== merchantWallet) throw new ApiError(403, 'Not authorized to update this link', FORBIDDEN)
+
     return await prisma.paymentLink.update({
       where: { id },
       data: { active },

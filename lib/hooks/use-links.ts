@@ -19,7 +19,6 @@ interface Link {
   title?: string
   description?: string
   type: string
-  interval?: string | null
   active: boolean
   expiresAt?: string | null
   maxUses?: number | null

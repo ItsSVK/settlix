@@ -1,4 +1,5 @@
 import { PaymentExecutionStatus, Prisma } from '@/lib/generated/prisma/client'
+import type { PaymentExecutionSource } from '@/lib/generated/prisma/enums'
 import { getMint } from '@solana/spl-token'
 import { PublicKey } from '@solana/web3.js'
 
@@ -20,16 +21,47 @@ import { humanToRawAmount } from '@/lib/solana/amount'
 import { createServerConnection } from '@/lib/solana/connection'
 import { RPC_COMMITMENT } from '@/lib/solana/constants'
 import { verifyPaymentTransaction } from '@/lib/solana/verify'
-import type { SubmitTxBody } from '@/lib/validation'
 import { publishDashboardPaymentPaid } from '@/lib/realtime/dashboard-stream'
 
 import { getPaymentLinkById } from './payment-link.service'
+import { getInvoiceById } from './invoice.service'
 import { deliverPaymentWebhook } from './payment-webhook.service'
 import { sendInvoiceReceiptIfApplicable } from './invoice-email.service'
 
 export type SubmitTxOutcome = { ok: true } | { ok: false; reason: string; httpStatus: number; code: string }
 
-export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutcome> {
+// Callers must supply source + the matching id field.
+// Using a flat optional shape and asserting inside avoids discriminated-union
+// narrowing issues that arise with isolatedModules + Prisma enum namespacing.
+export type ProcessTxInput = {
+  source: PaymentExecutionSource
+  executionId: string
+  txSignature: string
+  linkId?: string
+  invoiceId?: string
+  userWallet?: string
+  inputToken?: string
+  inputAmount?: string
+  outputAmount?: string
+  metadata?: Record<string, unknown>
+}
+
+export async function processSubmitTx(input: ProcessTxInput): Promise<SubmitTxOutcome> {
+  if (input.source === 'invoice') {
+    if (!input.invoiceId) throw new ApiError(400, 'invoiceId required', 'VALIDATION')
+    return processInvoiceTx({ ...input, invoiceId: input.invoiceId })
+  }
+  if (!input.linkId) throw new ApiError(400, 'linkId required', 'VALIDATION')
+  return processPaymentLinkTx({ ...input, linkId: input.linkId })
+}
+
+// ---------------------------------------------------------------------------
+// Payment link path
+// ---------------------------------------------------------------------------
+
+async function processPaymentLinkTx(
+  body: Omit<ProcessTxInput, 'linkId'> & { linkId: string },
+): Promise<SubmitTxOutcome> {
   const link = await getPaymentLinkById(body.linkId)
   if (!link || !link.active) {
     return { ok: false, reason: 'Link not found', httpStatus: 404, code: LINK_NOT_FOUND }
@@ -39,13 +71,12 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
     return { ok: false, reason: 'Payment limit reached', httpStatus: 409, code: LINK_SOLD_OUT }
   }
 
+  const merchantWallet = link.merchant.wallet
   const connection = createServerConnection()
   const mintPk = new PublicKey(link.token)
   const mintInfo = await getMint(connection, mintPk, RPC_COMMITMENT)
   const expectedRaw = humanToRawAmount(link.amount, mintInfo.decimals)
 
-  // Single RPC fetch — passed directly into verifyPaymentTransaction so there
-  // is no second round-trip for the same signature.
   const tx = await connection.getTransaction(body.txSignature, {
     commitment: RPC_COMMITMENT,
     maxSupportedTransactionVersion: 0,
@@ -53,9 +84,10 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
 
   if (!tx) {
     await upsertPaymentExecution({
+      source: 'payment_link',
       executionId: body.executionId,
       linkId: body.linkId,
-      merchantWallet: link.merchantWallet,
+      merchantWallet,
       txSignature: body.txSignature,
       userWallet: body.userWallet ?? UNKNOWN_PAYER_WALLET,
       inputToken: body.inputToken ?? link.token,
@@ -64,15 +96,10 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
       status: PaymentExecutionStatus.failed,
       settlementToken: link.token,
       metadata: body.metadata ?? null,
-      webhookUrl: link.merchant?.webhookUrl ?? null,
-      webhookSecret: link.merchant?.webhookSecret ?? null,
+      webhookUrl: link.merchant.webhookUrl ?? null,
+      webhookSecret: link.merchant.webhookSecret ?? null,
     })
-    return {
-      ok: false,
-      reason: 'Transaction not found on RPC',
-      httpStatus: 400,
-      code: TX_NOT_FOUND,
-    }
+    return { ok: false, reason: 'Transaction not found on RPC', httpStatus: 400, code: TX_NOT_FOUND }
   }
 
   const decompiled = await decompileVersionedTransactionMessage(connection, tx.transaction.message)
@@ -80,16 +107,14 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
 
   const verify = await verifyPaymentTransaction({
     connection,
-    tx, // pre-fetched — no second getTransaction call inside verify
-    merchantWallet: link.merchantWallet,
+    tx,
+    merchantWallet,
     settlementMint: link.token,
     expectedRaw,
   })
 
   const inputToken = body.inputToken ?? link.token
   const inputAmountBig = BigInt(body.inputAmount ?? '0')
-  // Fall back to the link's expected amount (converted to raw units) when the
-  // client didn't report outputAmount — avoids a zero recorded for paid txs.
   const outputAmountBig =
     body.outputAmount !== undefined && body.outputAmount !== ''
       ? BigInt(body.outputAmount)
@@ -98,9 +123,10 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
   const status = verify.ok ? PaymentExecutionStatus.paid : PaymentExecutionStatus.failed
 
   const upsertResult = await upsertPaymentExecution({
+    source: 'payment_link',
     executionId: body.executionId,
     linkId: body.linkId,
-    merchantWallet: link.merchantWallet,
+    merchantWallet,
     txSignature: body.txSignature,
     userWallet,
     inputToken,
@@ -109,28 +135,115 @@ export async function processSubmitTx(body: SubmitTxBody): Promise<SubmitTxOutco
     status,
     settlementToken: link.token,
     metadata: body.metadata ?? null,
-    webhookUrl: link.merchant?.webhookUrl ?? null,
-    webhookSecret: link.merchant?.webhookSecret ?? null,
+    webhookUrl: link.merchant.webhookUrl ?? null,
+    webhookSecret: link.merchant.webhookSecret ?? null,
   })
 
-  // txSignature was already recorded (different executionId, same on-chain tx).
-  // This is idempotent — treat as success so the UI can proceed normally.
-  if (upsertResult === 'already_recorded') {
-    return { ok: true }
-  }
-
-  if (!verify.ok) {
-    return { ok: false, reason: verify.reason, httpStatus: 400, code: VERIFY_FAILED }
-  }
+  if (upsertResult === 'already_recorded') return { ok: true }
+  if (!verify.ok) return { ok: false, reason: verify.reason, httpStatus: 400, code: VERIFY_FAILED }
 
   return { ok: true }
 }
 
+// ---------------------------------------------------------------------------
+// Invoice path
+// ---------------------------------------------------------------------------
+
+async function processInvoiceTx(
+  body: Omit<ProcessTxInput, 'invoiceId'> & { invoiceId: string },
+): Promise<SubmitTxOutcome> {
+  const invoice = await getInvoiceById(body.invoiceId)
+  if (!invoice) {
+    return { ok: false, reason: 'Invoice not found', httpStatus: 404, code: LINK_NOT_FOUND }
+  }
+
+  // Invoice is single-use — reject if already paid
+  if (invoice.executions.length > 0) {
+    return { ok: false, reason: 'Invoice already paid', httpStatus: 409, code: LINK_SOLD_OUT }
+  }
+
+  const merchantWallet = invoice.merchant.wallet
+  const connection = createServerConnection()
+  const mintPk = new PublicKey(invoice.token)
+  const mintInfo = await getMint(connection, mintPk, RPC_COMMITMENT)
+  const expectedRaw = humanToRawAmount(invoice.amount, mintInfo.decimals)
+
+  const tx = await connection.getTransaction(body.txSignature, {
+    commitment: RPC_COMMITMENT,
+    maxSupportedTransactionVersion: 0,
+  })
+
+  if (!tx) {
+    await upsertPaymentExecution({
+      source: 'invoice',
+      executionId: body.executionId,
+      invoiceId: body.invoiceId,
+      merchantWallet,
+      txSignature: body.txSignature,
+      userWallet: body.userWallet ?? UNKNOWN_PAYER_WALLET,
+      inputToken: body.inputToken ?? invoice.token,
+      inputAmount: BigInt(body.inputAmount ?? '0'),
+      outputAmount: BigInt(body.outputAmount ?? '0'),
+      status: PaymentExecutionStatus.failed,
+      settlementToken: invoice.token,
+      metadata: body.metadata ?? null,
+      webhookUrl: invoice.merchant.webhookUrl ?? null,
+      webhookSecret: invoice.merchant.webhookSecret ?? null,
+    })
+    return { ok: false, reason: 'Transaction not found on RPC', httpStatus: 400, code: TX_NOT_FOUND }
+  }
+
+  const decompiled = await decompileVersionedTransactionMessage(connection, tx.transaction.message)
+  const userWallet = body.userWallet ?? decompiled.payerKey.toBase58()
+
+  const verify = await verifyPaymentTransaction({
+    connection,
+    tx,
+    merchantWallet,
+    settlementMint: invoice.token,
+    expectedRaw,
+  })
+
+  const inputToken = body.inputToken ?? invoice.token
+  const inputAmountBig = BigInt(body.inputAmount ?? '0')
+  const outputAmountBig =
+    body.outputAmount !== undefined && body.outputAmount !== ''
+      ? BigInt(body.outputAmount)
+      : humanToRawAmount(invoice.amount, mintInfo.decimals)
+
+  const status = verify.ok ? PaymentExecutionStatus.paid : PaymentExecutionStatus.failed
+
+  const upsertResult = await upsertPaymentExecution({
+    source: 'invoice',
+    executionId: body.executionId,
+    invoiceId: body.invoiceId,
+    merchantWallet,
+    txSignature: body.txSignature,
+    userWallet,
+    inputToken,
+    inputAmount: inputAmountBig,
+    outputAmount: outputAmountBig,
+    status,
+    settlementToken: invoice.token,
+    metadata: body.metadata ?? null,
+    webhookUrl: invoice.merchant.webhookUrl ?? null,
+    webhookSecret: invoice.merchant.webhookSecret ?? null,
+  })
+
+  if (upsertResult === 'already_recorded') return { ok: true }
+  if (!verify.ok) return { ok: false, reason: verify.reason, httpStatus: 400, code: VERIFY_FAILED }
+
+  return { ok: true }
+}
+
+// ---------------------------------------------------------------------------
+// Shared upsert
+// ---------------------------------------------------------------------------
+
 type UpsertResult = 'ok' | 'already_recorded'
 
-async function upsertPaymentExecution(data: {
+type UpsertPaymentExecutionData = {
   executionId: string
-  linkId: string
   merchantWallet: string
   txSignature: string
   userWallet: string
@@ -142,7 +255,12 @@ async function upsertPaymentExecution(data: {
   metadata?: Record<string, unknown> | null
   webhookUrl?: string | null
   webhookSecret?: string | null
-}): Promise<UpsertResult> {
+} & (
+  | { source: 'payment_link'; linkId: string; invoiceId?: never }
+  | { source: 'invoice'; invoiceId: string; linkId?: never }
+)
+
+async function upsertPaymentExecution(data: UpsertPaymentExecutionData): Promise<UpsertResult> {
   try {
     const existing = await prisma.paymentExecution.findUnique({
       where: { clientExecutionId: data.executionId },
@@ -153,7 +271,8 @@ async function upsertPaymentExecution(data: {
       where: { clientExecutionId: data.executionId },
       create: {
         clientExecutionId: data.executionId,
-        linkId: data.linkId,
+        source: data.source,
+        ...(data.source === 'payment_link' ? { linkId: data.linkId } : { invoiceId: data.invoiceId }),
         userWallet: data.userWallet,
         inputToken: data.inputToken,
         inputAmount: data.inputAmount,
@@ -177,7 +296,7 @@ async function upsertPaymentExecution(data: {
       publishDashboardPaymentPaid({
         type: 'payment_paid',
         merchantWallet: data.merchantWallet,
-        linkId: data.linkId,
+        ...(data.source === 'payment_link' ? { linkId: data.linkId } : { invoiceId: data.invoiceId }),
         executionId: saved.id,
         txSignature: data.txSignature,
         outputAmount: data.outputAmount.toString(),
@@ -190,7 +309,7 @@ async function upsertPaymentExecution(data: {
           webhookUrl: data.webhookUrl,
           webhookSecret: data.webhookSecret,
           payload: {
-            linkId: data.linkId,
+            ...(data.source === 'payment_link' ? { linkId: data.linkId } : { invoiceId: data.invoiceId }),
             txSignature: data.txSignature,
             inputToken: data.inputToken,
             inputAmount: data.inputAmount.toString(),
@@ -202,14 +321,13 @@ async function upsertPaymentExecution(data: {
         })
       }
 
-      void sendInvoiceReceiptIfApplicable(data.linkId, data.txSignature, data.inputToken, data.inputAmount)
+      if (data.source === 'invoice') {
+        void sendInvoiceReceiptIfApplicable(data.invoiceId, data.txSignature, data.inputToken, data.inputAmount)
+      }
     }
 
     return 'ok'
   } catch (e) {
-    // P2002 = unique constraint violation. If it's on txSignature, another
-    // execution record already exists for this on-chain tx (different clientExecutionId).
-    // Treat as idempotent — the payment was recorded, no double-counting.
     if (
       e instanceof Error &&
       'code' in e &&

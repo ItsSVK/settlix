@@ -81,7 +81,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     const session: SolanaPaySession = {
       sessionId,
       linkId: id,
-      merchantWallet: link.merchantWallet,
+      merchantWallet: link.merchant.wallet,
       buyerWallet,
       inputMint,
       outputMint: order.outputMint,
@@ -137,6 +137,7 @@ async function watchAndRecord(session: SolanaPaySession) {
 
         const result = await processSubmitTx({
           executionId: crypto.randomUUID(),
+          source: 'payment_link',
           txSignature: sigInfo.signature,
           linkId: session.linkId,
           userWallet: session.buyerWallet,

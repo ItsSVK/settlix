@@ -5,10 +5,32 @@ import { ApiError, handleApi, readJsonBody } from '@/lib/api/errors'
 import { getSolanaCluster } from '@/lib/env/server'
 import { decimalFromCreateLinkAmount } from '@/lib/money'
 import { isAllowedSettlementMint } from '@/lib/solana/constants'
-import { createPaymentLink } from '@/lib/services/payment-link.service'
+import { createSubscriptionPlan, getSubscriptionPlansByWallet } from '@/lib/services/subscription.service'
 import { createSubscriptionPlanBody } from '@/lib/validation'
 import { INVALID_AMOUNT, UNSUPPORTED_SETTLEMENT_TOKEN, VALIDATION } from '@/lib/api/constants'
 import { requireAuth } from '@/lib/auth/require-auth'
+import { SubscriptionInterval } from '@/lib/generated/prisma/client'
+
+export async function GET(req: NextRequest) {
+  return handleApi(async () => {
+    const { wallet } = await requireAuth(req)
+    const plans = await getSubscriptionPlansByWallet(wallet)
+
+    return NextResponse.json({
+      plans: plans.map((plan) => ({
+        id: plan.id,
+        token: plan.token,
+        amount: plan.amount.toString(),
+        interval: plan.interval,
+        title: plan.title ?? null,
+        description: plan.description ?? null,
+        active: plan.active,
+        createdAt: plan.createdAt.toISOString(),
+        activeSubscribers: plan._count.subscribers,
+      })),
+    })
+  })
+}
 
 export async function POST(req: NextRequest) {
   return handleApi(async () => {
@@ -40,17 +62,17 @@ export async function POST(req: NextRequest) {
       throw new ApiError(400, 'Amount must be positive', INVALID_AMOUNT)
     }
 
-    const link = await createPaymentLink({
+    const plan = await createSubscriptionPlan({
       merchantWallet,
       token: parsed.data.token,
       amount,
+      interval: parsed.data.interval as SubscriptionInterval,
       title: parsed.data.title,
       description: parsed.data.description,
-      interval: parsed.data.interval,
     })
 
     return NextResponse.json(
-      { id: link.id, payPath: `/pay/${link.id}` },
+      { id: plan.id },
       { status: 201 },
     )
   })

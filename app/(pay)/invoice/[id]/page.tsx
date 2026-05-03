@@ -14,7 +14,7 @@ export default async function InvoicePage({ params }: Props) {
 
   if (!invoice) notFound()
 
-  const paidExecution = invoice.link.executions[0] ?? null
+  const paidExecution = invoice.executions[0] ?? null
   const status = deriveInvoiceStatus(invoice.dueDate, paidExecution?.createdAt ?? null)
 
   const inputTokenEntry = paidExecution ? getTokenByMint(paidExecution.inputToken) : null
@@ -22,15 +22,14 @@ export default async function InvoicePage({ params }: Props) {
 
   const data: InvoiceData = {
     id: invoice.id,
-    merchantWallet: invoice.merchantWallet,
+    merchantWallet: invoice.merchant.wallet,
     clientName: invoice.clientName,
     clientEmail: invoice.clientEmail,
     dueDate: invoice.dueDate?.toISOString() ?? null,
     memo: invoice.memo,
     token: invoice.token,
     tokenSymbol: settlementTokenEntry?.symbol ?? invoice.token,
-    amount: invoice.link.amount.toString(),
-    linkId: invoice.linkId,
+    amount: invoice.amount.toString(),
     status,
     paidAt: paidExecution?.createdAt.toISOString() ?? null,
     txSignature: paidExecution?.txSignature ?? null,

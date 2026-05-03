@@ -34,11 +34,10 @@ export async function GET(_req: Request, { params }: Params) {
 
     return NextResponse.json({
       id: link.id,
-      merchantWallet: link.merchantWallet,
+      merchantWallet: link.merchant.wallet,
       token: link.token,
       amount: link.amount.toString(),
       type: link.type,
-      interval: link.interval ?? null,
       title: link.title ?? null,
       description: link.description ?? null,
       createdAt: link.createdAt.toISOString(),
@@ -90,7 +89,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (!link) {
       return NextResponse.json({ error: 'Not found', code: NOT_FOUND }, { status: 404 })
     }
-    if (link.merchantWallet !== wallet) {
+    if (link.merchant.wallet !== wallet) {
       throw new ApiError(403, 'You do not own this payment link', FORBIDDEN)
     }
 

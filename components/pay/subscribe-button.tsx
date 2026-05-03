@@ -6,12 +6,12 @@ import { cn } from '@/lib/utils'
 import { useSubscriptionFlow, SUBSCRIBE_STEP_LABELS, type SubscribeResult } from '@/lib/hooks/use-subscription-flow'
 
 interface SubscribeButtonProps {
-  linkId: string
+  planId: string
   onSuccess: (result: SubscribeResult) => void
   className?: string
 }
 
-export function SubscribeButton({ linkId, onSuccess, className }: SubscribeButtonProps) {
+export function SubscribeButton({ planId, onSuccess, className }: SubscribeButtonProps) {
   const { step, errorMsg, isLoading, connected, requestWalletConnection, subscribe } = useSubscriptionFlow({
     onSuccess,
   })
@@ -33,7 +33,7 @@ export function SubscribeButton({ linkId, onSuccess, className }: SubscribeButto
   return (
     <div className='space-y-2'>
       <button
-        onClick={() => subscribe(linkId)}
+        onClick={() => subscribe(planId)}
         disabled={isLoading || step === 'done'}
         className={cn(
           'flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-semibold text-primary-foreground',

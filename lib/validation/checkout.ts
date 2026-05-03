@@ -4,7 +4,9 @@ import { paymentLinkId } from './links'
 export const submitTxBody = z.object({
   executionId: z.uuid(),
   txSignature: z.string().min(80).max(128),
-  linkId: paymentLinkId,
+  source: z.enum(['payment_link', 'invoice']),
+  linkId: paymentLinkId.optional(),
+  invoiceId: z.string().uuid().optional(),
   userWallet: z.string().min(32).max(64).optional(),
   inputToken: z.string().min(32).max(64).optional(),
   inputAmount: z.string().optional(),
@@ -15,7 +17,8 @@ export const submitTxBody = z.object({
 export const jupiterOrderBody = z.object({
   inputMint: z.string().min(32).max(64),
   taker: z.string().min(32).max(64),
-  payId: paymentLinkId,
+  payId: paymentLinkId.optional(),
+  invoiceId: z.string().uuid().optional(),
 })
 
 /** Quote-only: no wallet / taker. */
@@ -25,7 +28,9 @@ export const jupiterQuoteBody = jupiterOrderBody.omit({ taker: true })
 // processSubmitTx server-side, eliminating the separate /api/submit-tx round-trip.
 const paymentRecordContext = z.object({
   executionId: z.uuid(),
-  linkId: paymentLinkId,
+  source: z.enum(['payment_link', 'invoice']),
+  linkId: paymentLinkId.optional(),
+  invoiceId: z.string().uuid().optional(),
   userWallet: z.string().min(32).max(64),
   inputToken: z.string().min(32).max(64),
   inAmount: z.string(),

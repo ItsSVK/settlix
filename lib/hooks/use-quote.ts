@@ -12,19 +12,21 @@ interface QuoteResult {
 }
 
 /**
- * @param payId        - payment link ID
+ * @param payContext   - { payId } for a payment link, { invoiceId } for an invoice
  * @param inputMint    - mint the buyer wants to pay with (null = token not selected yet)
- * @param outputMint   - settlement mint of the payment link (used to detect same-mint case)
+ * @param outputMint   - settlement mint (used to detect same-mint case)
  *
  * When inputMint === outputMint the rate is permanently 1:1 — polling is skipped entirely.
  * One initial API call is still made to get the confirmed raw amount from the backend.
  */
 export function useQuote(
-  payId: string,
+  payContext: { payId: string } | { invoiceId: string },
   inputMint: string | null,
   outputMint: string | null,
   options: { disabled?: boolean } = {},
 ) {
+  const payId = 'payId' in payContext ? payContext.payId : undefined
+  const invoiceId = 'invoiceId' in payContext ? payContext.invoiceId : undefined
   /** True when inputMint and outputMint are the same (direct transfer, no swap). */
   const isDirect = !!inputMint && !!outputMint && inputMint === outputMint
 
@@ -53,7 +55,7 @@ export function useQuote(
 
   const fetch_ = useCallback(
     async (isBackground = false) => {
-      if (!inputMint || !payId) return
+      if (!inputMint || (!payId && !invoiceId)) return
       activeController.current?.abort()
 
       const currentRequest = ++requestSeq.current
@@ -72,7 +74,7 @@ export function useQuote(
         const res = await fetch('/api/checkout/pay/quote', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ inputMint, payId }),
+          body: JSON.stringify(payId ? { inputMint, payId } : { inputMint, invoiceId }),
           signal: controller.signal,
         })
         if (!res.ok) {
@@ -103,7 +105,7 @@ export function useQuote(
         }
       }
     },
-    [payId, inputMint],
+    [payId, invoiceId, inputMint],
   )
 
   // Initial fetch (debounced 400ms) whenever the selected token changes.

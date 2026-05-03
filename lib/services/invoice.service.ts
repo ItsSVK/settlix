@@ -29,41 +29,33 @@ export async function createInvoice(data: {
   token: string
   lineItems: { description: string; quantity: number; unitPrice: number }[]
 }) {
-  const total = computeTotal(data.lineItems)
+  const merchant = await prisma.merchant.findUnique({
+    where: { wallet: data.merchantWallet },
+    select: { id: true },
+  })
+  if (!merchant) throw new ApiError(404, 'Merchant not found', NOT_FOUND)
+
+  const amount = computeTotal(data.lineItems)
 
   try {
-    return await prisma.$transaction(async (tx) => {
-      const link = await tx.paymentLink.create({
-        data: {
-          merchantWallet: data.merchantWallet,
-          token: data.token,
-          amount: total,
-          type: 'invoice',
-          active: true,
-          maxUses: 1,
-          title: data.clientName ? `Invoice · ${data.clientName}` : 'Invoice',
+    return await prisma.invoice.create({
+      data: {
+        merchantId: merchant.id,
+        clientName: data.clientName ?? null,
+        clientEmail: data.clientEmail ?? null,
+        dueDate: data.dueDate ?? null,
+        memo: data.memo ?? null,
+        token: data.token,
+        amount,
+        lineItems: {
+          create: data.lineItems.map((item) => ({
+            description: item.description,
+            quantity: new Decimal(item.quantity.toString()),
+            unitPrice: new Decimal(item.unitPrice.toString()),
+          })),
         },
-      })
-
-      return await tx.invoice.create({
-        data: {
-          merchantWallet: data.merchantWallet,
-          clientName: data.clientName ?? null,
-          clientEmail: data.clientEmail ?? null,
-          dueDate: data.dueDate ?? null,
-          memo: data.memo ?? null,
-          token: data.token,
-          linkId: link.id,
-          lineItems: {
-            create: data.lineItems.map((item) => ({
-              description: item.description,
-              quantity: new Decimal(item.quantity.toString()),
-              unitPrice: new Decimal(item.unitPrice.toString()),
-            })),
-          },
-        },
-        include: { lineItems: true, link: true },
-      })
+      },
+      include: { lineItems: true },
     })
   } catch (e) {
     apiLogger.error('Invoice create failed', e, { merchantWallet: data.merchantWallet })
@@ -80,15 +72,11 @@ export async function getInvoiceById(id: string) {
       where: { id, archivedAt: null },
       include: {
         lineItems: { orderBy: { id: 'asc' } },
-        link: {
-          include: {
-            executions: {
-              where: { status: PaymentExecutionStatus.paid },
-              orderBy: { createdAt: 'asc' },
-              take: 1,
-            },
-            recipients: { orderBy: { displayOrder: 'asc' } },
-          },
+        merchant: { select: { wallet: true, webhookUrl: true, webhookSecret: true } },
+        executions: {
+          where: { status: PaymentExecutionStatus.paid },
+          orderBy: { createdAt: 'asc' },
+          take: 1,
         },
       },
     })
@@ -104,20 +92,14 @@ export async function getInvoiceById(id: string) {
 export async function getInvoicesByWallet(merchantWallet: string) {
   try {
     return await prisma.invoice.findMany({
-      where: { merchantWallet, archivedAt: null },
+      where: { merchant: { wallet: merchantWallet }, archivedAt: null },
       orderBy: { createdAt: 'desc' },
       include: {
         lineItems: true,
-        link: {
-          select: {
-            id: true,
-            amount: true,
-            executions: {
-              where: { status: PaymentExecutionStatus.paid },
-              select: { txSignature: true, createdAt: true },
-              take: 1,
-            },
-          },
+        executions: {
+          where: { status: PaymentExecutionStatus.paid },
+          select: { txSignature: true, createdAt: true },
+          take: 1,
         },
       },
     })
@@ -130,23 +112,24 @@ export async function getInvoicesByWallet(merchantWallet: string) {
   }
 }
 
-export async function getInvoiceByLinkId(linkId: string) {
+export async function getInvoiceForReceipt(invoiceId: string) {
   try {
     return await prisma.invoice.findFirst({
-      where: { linkId, archivedAt: null },
+      where: { id: invoiceId, archivedAt: null },
       select: {
         id: true,
         clientName: true,
         clientEmail: true,
-        merchantWallet: true,
+        merchantId: true,
+        merchant: { select: { wallet: true } },
         memo: true,
         token: true,
+        amount: true,
         lineItems: { select: { description: true, quantity: true, unitPrice: true }, orderBy: { id: 'asc' } },
-        link: { select: { amount: true } },
       },
     })
   } catch (e) {
-    apiLogger.warn('getInvoiceByLinkId failed', { linkId, error: String(e) })
+    apiLogger.warn('getInvoiceForReceipt failed', { invoiceId, error: String(e) })
     return null
   }
 }
@@ -155,17 +138,14 @@ export async function archiveInvoice(id: string, merchantWallet: string) {
   try {
     const invoice = await prisma.invoice.findFirst({
       where: { id, archivedAt: null },
-      select: { merchantWallet: true, linkId: true },
+      include: { merchant: { select: { wallet: true } } },
     })
     if (!invoice) throw new ApiError(404, 'Invoice not found', NOT_FOUND)
-    if (invoice.merchantWallet !== merchantWallet) throw new ApiError(403, 'Forbidden', FORBIDDEN)
-    await prisma.$transaction([
-      prisma.invoice.update({ where: { id }, data: { archivedAt: new Date() } }),
-      prisma.paymentLink.update({ where: { id: invoice.linkId }, data: { archivedAt: new Date() } }),
-    ])
+    if (invoice.merchant.wallet !== merchantWallet) throw new ApiError(403, 'Forbidden', FORBIDDEN)
+    await prisma.invoice.update({ where: { id }, data: { archivedAt: new Date() } })
   } catch (e) {
     if (e instanceof ApiError) throw e
-    apiLogger.error('Invoice delete failed', e, { id })
-    throw new ApiError(500, 'Could not delete invoice', DB_UNEXPECTED, { error: e })
+    apiLogger.error('Invoice archive failed', e, { id })
+    throw new ApiError(500, 'Could not archive invoice', DB_UNEXPECTED, { error: e })
   }
 }

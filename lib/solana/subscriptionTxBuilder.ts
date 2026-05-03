@@ -38,9 +38,9 @@ export async function buildSubscriptionAuthorizationTx(params: {
   settlementMint: PublicKey
   transferAmountRaw: bigint
   mintDecimals: number
-  linkId: string
+  planId: string
 }): Promise<VersionedTransaction> {
-  const { connection, subscriber, relayer, settlementMint, transferAmountRaw, mintDecimals, linkId } = params
+  const { connection, subscriber, relayer, settlementMint, transferAmountRaw, mintDecimals, planId } = params
 
   const tokenProgram = await resolveTokenProgram(connection, settlementMint)
   const subscriberAta = getAssociatedTokenAddressSync(settlementMint, subscriber, false, tokenProgram)
@@ -64,7 +64,7 @@ export async function buildSubscriptionAuthorizationTx(params: {
     new TransactionInstruction({
       programId: new PublicKey(MEMO_PROGRAM_ID),
       keys: [],
-      data: Buffer.from(`settlix:sub:${linkId}`, 'utf-8'),
+      data: Buffer.from(`settlix:sub:${planId}`, 'utf-8'),
     }),
   ]
 

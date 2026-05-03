@@ -13,10 +13,13 @@ export async function DELETE(req: NextRequest, { params }: Params) {
     const { wallet } = await requireAuth(req)
     const { id } = await params
 
-    const apiKey = await prisma.apiKey.findUnique({ where: { id }, select: { merchantWallet: true } })
+    const apiKey = await prisma.apiKey.findUnique({
+      where: { id },
+      select: { merchant: { select: { wallet: true } } },
+    })
 
     if (!apiKey) throw new ApiError(404, 'API key not found', NOT_FOUND)
-    if (apiKey.merchantWallet !== wallet) throw new ApiError(404, 'API key not found', NOT_FOUND)
+    if (apiKey.merchant.wallet !== wallet) throw new ApiError(404, 'API key not found', NOT_FOUND)
 
     await prisma.apiKey.delete({ where: { id } })
 

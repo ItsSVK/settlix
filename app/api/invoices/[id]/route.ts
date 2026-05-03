@@ -15,19 +15,18 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
     if (!invoice) throw new ApiError(404, 'Invoice not found', NOT_FOUND)
 
-    const paidExecution = invoice.link.executions[0] ?? null
+    const paidExecution = invoice.executions[0] ?? null
     const status = deriveInvoiceStatus(invoice.dueDate, paidExecution?.createdAt ?? null)
 
     return NextResponse.json({
       id: invoice.id,
-      merchantWallet: invoice.merchantWallet,
+      merchantWallet: invoice.merchant.wallet,
       clientName: invoice.clientName,
       clientEmail: invoice.clientEmail,
       dueDate: invoice.dueDate?.toISOString() ?? null,
       memo: invoice.memo,
       token: invoice.token,
-      amount: invoice.link.amount.toString(),
-      linkId: invoice.linkId,
+      amount: invoice.amount.toString(),
       status,
       paidAt: paidExecution?.createdAt.toISOString() ?? null,
       txSignature: paidExecution?.txSignature ?? null,

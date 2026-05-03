@@ -56,7 +56,7 @@ export function useSubscriptionFlow({ onSuccess }: UseSubscriptionFlowOptions) {
   }, [wallet, setVisible, connect, handleError])
 
   const subscribe = useCallback(
-    async (linkId: string) => {
+    async (planId: string) => {
       if (!connected || !publicKey || !signTransaction) {
         requestWalletConnection()
         return
@@ -68,7 +68,7 @@ export function useSubscriptionFlow({ onSuccess }: UseSubscriptionFlowOptions) {
         const authRes = await fetch('/api/subscriptions/authorize', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ linkId, subscriberWallet: publicKey.toBase58() }),
+          body: JSON.stringify({ planId, subscriberWallet: publicKey.toBase58() }),
         })
         const authData = await authRes.json()
         if (!authRes.ok) throw new Error(authData.error ?? 'Failed to build authorization')
@@ -87,7 +87,7 @@ export function useSubscriptionFlow({ onSuccess }: UseSubscriptionFlowOptions) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            linkId,
+            planId,
             subscriberWallet: publicKey.toBase58(),
             signedTransaction: signedBase64,
             executionId,
