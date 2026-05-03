@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch'
 import { useLinks } from '@/lib/hooks/use-links'
 
 export default function LinksPage() {
-  const { links, isLoading, refresh, toggleLinkActive, archiveLink } = useLinks()
+  const { links, isLoading } = useLinks()
   const [activeOnly, setActiveOnly] = useState(false)
 
   const filteredLinks = activeOnly ? links.filter((link) => link.active) : links
@@ -37,7 +37,7 @@ export default function LinksPage() {
           className='mb-8 flex items-center justify-between'
         >
           <h1 className='text-2xl font-bold text-foreground'>Payment Links</h1>
-          <CreateLinkDialog onCreated={refresh} />
+          <CreateLinkDialog />
         </motion.div>
 
         {/* Stats */}
@@ -69,13 +69,7 @@ export default function LinksPage() {
               </div>
             )}
           </div>
-          <LinksTable
-            links={filteredLinks}
-            isLoading={isLoading}
-            onRefresh={refresh}
-            onToggle={toggleLinkActive}
-            onArchive={archiveLink}
-          />
+          <LinksTable links={filteredLinks} isLoading={isLoading} />
         </motion.div>
       </div>
     </div>

@@ -5,11 +5,10 @@ const SOLSCAN_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK === 'devnet' ? '?
 import { useState } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'motion/react'
-import { Copy, Check, ExternalLink, ToggleLeft, ToggleRight, QrCode, GitFork } from 'lucide-react'
-import type { Link } from '@/lib/hooks/use-links'
+import { Copy, Check, ExternalLink, ToggleLeft, ToggleRight, QrCode, GitFork, Loader2 } from 'lucide-react'
+import { useLinks, type Link } from '@/lib/hooks/use-links'
 import { Button } from '@/components/ui/button'
 import { copyText } from '@/lib/utils'
-import { toast } from 'sonner'
 import { QRModal } from './qr-modal'
 import { SplitModal } from './split-modal'
 import { getDecimalsByMint, getLogoByMint, getNameByMint, TOKENS } from '@/lib/tokens/tokens'
@@ -21,47 +20,19 @@ function shorten(s: string, start = 6, end = 4) {
 
 interface LinkRowProps {
   link: Link
-  onToggle: (id: string, active: boolean) => Promise<void>
-  onRefresh: () => void
-  onArchive: (id: string) => Promise<void>
 }
 
-export function LinkRow({ link, onToggle, onRefresh, onArchive }: LinkRowProps) {
+export function LinkRow({ link }: LinkRowProps) {
   const [expanded, setExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [toggling, setToggling] = useState(false)
   const [qrOpen, setQROpen] = useState(false)
   const [splitOpen, setSplitOpen] = useState(false)
-  const [archiving, setArchiving] = useState<string | null>(null)
-  const [confirmArchive, setConfirmArchive] = useState<string | null>(null)
+  const { toggleLinkActive, toggleLinkActivePending, archiveLink, archiveLinkPending } = useLinks()
 
   const payUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/pay/${link.id}`
 
   const isExpired = link.expiresAt && new Date(link.expiresAt) < new Date()
   const isSoldOut = link.maxUses && link.stats.paidCount >= link.maxUses
-
-  const handleArchive = async (id: string) => {
-    setArchiving(id)
-    try {
-      await onArchive(id)
-      toast.success('Link archived successfully')
-      onRefresh()
-    } catch {
-      toast.error('Failed to archive link')
-    } finally {
-      setArchiving(null)
-      setConfirmArchive(null)
-    }
-  }
-
-  const handleToggle = async () => {
-    setToggling(true)
-    try {
-      await onToggle(link.id, !link.active)
-    } finally {
-      setToggling(false)
-    }
-  }
 
   return (
     <div className='group rounded-2xl border border-border/40 bg-card/40 backdrop-blur-sm shadow-sm transition-all hover:bg-card/60 hover:border-border/60 hover:shadow-md'>
@@ -182,35 +153,33 @@ export function LinkRow({ link, onToggle, onRefresh, onArchive }: LinkRowProps) 
           <div className='w-px h-4 bg-border/50 mx-1' />
 
           {/* Toggle */}
-          <Button
-            onClick={handleToggle}
-            disabled={toggling}
-            title={link.active ? 'Deactivate' : 'Activate'}
-            variant='ghost'
-            size='sm'
-            className='h-6 w-6 rounded-lg p-0 text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors'
-          >
-            {link.active ? <ToggleRight className='h-5 w-5 text-green-500' /> : <ToggleLeft className='h-5 w-5' />}
-          </Button>
+          {toggleLinkActivePending ? (
+            <div className='flex items-center justify-center h-6 w-6'>
+              <Loader2
+                className={`h-3.5 w-3.5 animate-spin ${link.active ? 'text-green-500' : 'text-muted-foreground'}`}
+              />
+            </div>
+          ) : (
+            <Button
+              onClick={() => toggleLinkActive({ id: link.id, active: !link.active })}
+              disabled={toggleLinkActivePending}
+              title={link.active ? 'Deactivate' : 'Activate'}
+              variant='ghost'
+              size='sm'
+              className='h-6 w-6 rounded-lg p-0 text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors'
+            >
+              {link.active ? <ToggleRight className='h-5 w-5 text-green-500' /> : <ToggleLeft className='h-5 w-5' />}
+            </Button>
+          )}
 
           <ConfirmationModal
             className='text-red-500 h-6 w-6 rounded-lg p-0 hover:bg-background/80 hover:text-foreground transition-colors'
-            handleArchive={handleArchive}
-            archiving={archiving}
-            confirmArchive={confirmArchive}
-            setConfirmArchive={setConfirmArchive}
-            item={{ id: link.id }}
+            onConfirm={archiveLink}
+            isPending={archiveLinkPending}
+            id={link.id}
             type='Archive'
           />
         </div>
-
-        {/* <div className='hidden md:flex h-6 w-6 items-center justify-center rounded-full bg-muted/40 transition-colors group-hover:bg-muted/80 ml-2'>
-          <ChevronDown
-            className={`h-3 w-3 text-muted-foreground transition-transform duration-300 ${
-              expanded ? 'rotate-180' : ''
-            }`}
-          />
-        </div> */}
       </div>
 
       {/* Expanded view */}

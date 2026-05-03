@@ -42,7 +42,7 @@ export function useInvoices() {
     },
   })
 
-  const sendMutation = useMutation({
+  const { mutateAsync: sendInvoice, isPending: sendInvoicePending } = useMutation({
     mutationFn: (id: string) => apiClient.post(`/api/invoices/${id}/send`, {}),
     onSuccess: () => {
       toast.success('Invoice sent to client')
@@ -52,7 +52,7 @@ export function useInvoices() {
     },
   })
 
-  const archiveMutation = useMutation({
+  const { mutateAsync: archiveInvoice, isPending: archiveInvoicePending } = useMutation({
     mutationFn: (id: string) => apiClient.delete(`/api/invoices/${id}`),
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['invoices'] })
@@ -70,6 +70,7 @@ export function useInvoices() {
       }
     },
     onSuccess: () => {
+      toast.success('Invoice has been archived.')
       queryClient.invalidateQueries({ queryKey: ['invoices'] })
     },
   })
@@ -78,8 +79,9 @@ export function useInvoices() {
     invoices,
     isLoading,
     refresh: refetch,
-    archiveInvoice: async (id: string) => { await archiveMutation.mutateAsync(id) },
-    sendInvoice: async (id: string) => { await sendMutation.mutateAsync(id) },
-    isSending: sendMutation.isPending,
+    sendInvoice,
+    sendInvoicePending,
+    archiveInvoice,
+    archiveInvoicePending,
   }
 }

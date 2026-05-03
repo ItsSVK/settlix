@@ -72,7 +72,7 @@ model PaymentLink {
   id          String           @id @default(cuid())
   merchantId  String
   merchant    Merchant         @relation(fields: [merchantId], references: [id])
-  token       String           @unique
+  token       String
   amount      Decimal          @db.Decimal(20, 6)
   type        PaymentLinkType  @default(fixed)
   active      Boolean          @default(true)

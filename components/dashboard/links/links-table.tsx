@@ -13,12 +13,9 @@ import { EmptyState } from '@/components/shared/empty-state'
 interface LinksTableProps {
   links: Link[]
   isLoading: boolean
-  onRefresh: () => void
-  onToggle: (id: string, active: boolean) => Promise<void>
-  onArchive: (id: string) => Promise<void>
 }
 
-export function LinksTable({ links, isLoading, onRefresh, onToggle, onArchive }: LinksTableProps) {
+export function LinksTable({ links, isLoading }: LinksTableProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
@@ -45,7 +42,7 @@ export function LinksTable({ links, isLoading, onRefresh, onToggle, onArchive }:
       <EmptyState
         title='No payment links yet'
         description='Create your first link and start accepting payments.'
-        action={<CreateLinkDialog onCreated={onRefresh} />}
+        action={<CreateLinkDialog />}
       />
     )
   }
@@ -59,7 +56,7 @@ export function LinksTable({ links, isLoading, onRefresh, onToggle, onArchive }:
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: i * 0.05 }}
         >
-          <LinkRow link={link} onToggle={onToggle} onRefresh={onRefresh} onArchive={onArchive} />
+          <LinkRow link={link} />
         </motion.div>
       ))}
 

@@ -10,6 +10,7 @@ import { DialogSuccess } from '@/components/shared/dialog-success'
 import { getDefaultUsdcMint } from '@/lib/solana/constants'
 import { DatePickerInput } from '@/components/ui/date-picker-input'
 import { apiClient } from '@/lib/api/client'
+import { useInvoices } from '@/lib/hooks/use-invoices'
 
 interface LineItem {
   id: string
@@ -40,7 +41,7 @@ function fmt(n: number) {
   return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-export function CreateInvoiceDialog({ onCreated }: CreateInvoiceDialogProps) {
+export function CreateInvoiceDialog() {
   const [open, setOpen] = useState(false)
 
   const [clientName, setClientName] = useState('')
@@ -53,7 +54,10 @@ export function CreateInvoiceDialog({ onCreated }: CreateInvoiceDialogProps) {
   const [error, setError] = useState('')
   const [result, setResult] = useState<{ id: string; invoicePath: string } | null>(null)
 
+  const { refresh } = useInvoices()
+
   const reset = () => {
+    const wasCreated = !!result
     setClientName('')
     setClientEmail('')
     setDueDate('')
@@ -62,6 +66,12 @@ export function CreateInvoiceDialog({ onCreated }: CreateInvoiceDialogProps) {
     setError('')
     setResult(null)
     setOpen(false)
+
+    if (wasCreated) {
+      setTimeout(() => {
+        refresh()
+      }, 300)
+    }
   }
 
   const updateItem = (id: string, field: keyof Omit<LineItem, 'id'>, value: string) => {
@@ -119,7 +129,6 @@ export function CreateInvoiceDialog({ onCreated }: CreateInvoiceDialogProps) {
         })),
       })
       setResult(data)
-      onCreated()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unknown error')
     } finally {
@@ -127,9 +136,7 @@ export function CreateInvoiceDialog({ onCreated }: CreateInvoiceDialogProps) {
     }
   }
 
-  const invoiceUrl = result
-    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/invoice/${result.id}`
-    : ''
+  const invoiceUrl = result ? `${typeof window !== 'undefined' ? window.location.origin : ''}/invoice/${result.id}` : ''
 
   return (
     <>
@@ -162,7 +169,10 @@ export function CreateInvoiceDialog({ onCreated }: CreateInvoiceDialogProps) {
                   <input
                     type='text'
                     value={clientName}
-                    onChange={(e) => { setClientName(e.target.value); setError('') }}
+                    onChange={(e) => {
+                      setClientName(e.target.value)
+                      setError('')
+                    }}
                     placeholder='Client name'
                     maxLength={100}
                     className='w-full rounded-xl border-none bg-muted/90 px-3.5 py-3 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30'
@@ -172,7 +182,10 @@ export function CreateInvoiceDialog({ onCreated }: CreateInvoiceDialogProps) {
                   <input
                     type='email'
                     value={clientEmail}
-                    onChange={(e) => { setClientEmail(e.target.value); setError('') }}
+                    onChange={(e) => {
+                      setClientEmail(e.target.value)
+                      setError('')
+                    }}
                     placeholder='Email address'
                     className='w-full rounded-xl border-none bg-muted/90 px-3.5 py-3 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30'
                   />
@@ -182,7 +195,10 @@ export function CreateInvoiceDialog({ onCreated }: CreateInvoiceDialogProps) {
                   type='date'
                   value={dueDate}
                   min={new Date().toISOString().slice(0, 10)}
-                  onChange={(v) => { setDueDate(v); setError('') }}
+                  onChange={(v) => {
+                    setDueDate(v)
+                    setError('')
+                  }}
                 />
               </div>
             </div>

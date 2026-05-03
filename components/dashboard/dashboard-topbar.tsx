@@ -16,6 +16,7 @@ const routeLabels: Record<string, string> = {
   '/dashboard': 'Dashboard',
   '/dashboard/links': 'Payment Links',
   '/dashboard/invoices': 'Invoices',
+  '/dashboard/subscriptions': 'Subscriptions',
   '/dashboard/keys': 'API Keys',
   '/dashboard/webhook': 'Webhook',
 }

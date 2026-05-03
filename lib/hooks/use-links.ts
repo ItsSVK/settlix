@@ -59,9 +59,8 @@ export function useLinks() {
     },
   })
 
-  const toggleMutation = useMutation({
-    mutationFn: ({ id, active }: { id: string; active: boolean }) =>
-      apiClient.patch(`/api/links/${id}`, { active }),
+  const { mutateAsync: toggleLinkActive, isPending: toggleLinkActivePending } = useMutation({
+    mutationFn: ({ id, active }: { id: string; active: boolean }) => apiClient.patch(`/api/links/${id}`, { active }),
     onMutate: async ({ id, active }) => {
       await queryClient.cancelQueries({ queryKey: ['links'] })
       const previousLinks = queryClient.getQueryData<Link[]>(['links'])
@@ -86,12 +85,24 @@ export function useLinks() {
     },
   })
 
-  const archiveMutation = useMutation({
+  const { mutateAsync: archiveLink, isPending: archiveLinkPending } = useMutation({
     mutationFn: (id: string) => apiClient.delete(`/api/links/${id}`),
-    onError: (err) => {
-      toast.error(err instanceof Error ? err.message : 'Failed to delete link')
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['links'] })
+      const previousLinks = queryClient.getQueryData<Link[]>(['links'])
+      if (previousLinks) {
+        queryClient.setQueryData<Link[]>(['links'], (old) => old?.filter((link) => link.id !== id))
+      }
+      return { previousLinks }
+    },
+    onError: (err, _id, context) => {
+      toast.error(err instanceof Error ? err.message : 'Failed to archive link')
+      if (context?.previousLinks) {
+        queryClient.setQueryData(['links'], context.previousLinks)
+      }
     },
     onSuccess: () => {
+      toast.success('Link has been archived.')
       queryClient.invalidateQueries({ queryKey: ['links'] })
     },
   })
@@ -100,8 +111,10 @@ export function useLinks() {
     links,
     isLoading,
     refresh: refetch,
-    toggleLinkActive: async (id: string, active: boolean) => { await toggleMutation.mutateAsync({ id, active }) },
-    archiveLink: async (id: string) => { await archiveMutation.mutateAsync(id) },
+    toggleLinkActive,
+    toggleLinkActivePending,
+    archiveLink,
+    archiveLinkPending,
   }
 }
 

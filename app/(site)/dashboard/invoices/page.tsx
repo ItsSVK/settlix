@@ -8,7 +8,7 @@ import { SkeletonGrid } from '@/components/shared/skeletons'
 import { StatsBar } from '@/components/dashboard/stats-bar'
 
 export default function InvoicesPage() {
-  const { invoices, isLoading, refresh, archiveInvoice, sendInvoice } = useInvoices()
+  const { invoices, isLoading } = useInvoices()
 
   const invoiceStats = [
     { label: 'Total invoices', value: invoices.length },
@@ -32,7 +32,7 @@ export default function InvoicesPage() {
           className='mb-8 flex items-center justify-between'
         >
           <h1 className='text-2xl font-bold text-foreground'>Invoices</h1>
-          <CreateInvoiceDialog onCreated={refresh} />
+          <CreateInvoiceDialog />
         </motion.div>
 
         {/* Stats */}
@@ -58,13 +58,7 @@ export default function InvoicesPage() {
               Invoices {!isLoading && `(${invoices.length})`}
             </h2>
           </div>
-          <InvoicesTable
-            invoices={invoices}
-            isLoading={isLoading}
-            onRefresh={refresh}
-            archiveInvoice={archiveInvoice}
-            sendInvoice={sendInvoice}
-          />
+          <InvoicesTable invoices={invoices} isLoading={isLoading} />
         </motion.div>
       </div>
     </div>
