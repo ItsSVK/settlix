@@ -1,25 +1,32 @@
 'use client'
 
 import { motion } from 'motion/react'
-import { useSubscriptions } from '@/lib/hooks/use-subscriptions'
-import { SubscriptionsTable } from '@/components/dashboard/subscriptions/subscriptions-table'
+import { useSubscriptionPlans, useSubscriptions } from '@/lib/hooks/use-subscriptions'
+import { SubscriptionPlansList } from '@/components/dashboard/subscriptions/subscription-plans-list'
 import { CreateSubscriptionDialog } from '@/components/dashboard/subscriptions/create-subscription-dialog'
 import { SkeletonGrid } from '@/components/shared/skeletons'
 import { StatsBar } from '@/components/dashboard/stats-bar'
 
 export default function SubscriptionsPage() {
-  const { subscriptions, isLoading, refresh, cancelSubscription } = useSubscriptions()
+  const { subscriptions, isLoading, error: subscriptionsError, refresh, cancelSubscription } = useSubscriptions()
+  const { plans, isLoading: plansLoading, error: plansError, refresh: refreshPlans } = useSubscriptionPlans()
+  const isPageLoading = isLoading || plansLoading
+  const hasError = Boolean(subscriptionsError || plansError)
+
+  const refreshAll = () => {
+    void refresh()
+    void refreshPlans()
+  }
 
   const active = subscriptions.filter((s) => s.status === 'active').length
   const pastDue = subscriptions.filter((s) => s.status === 'past_due').length
-  const cancelled = subscriptions.filter((s) => s.status === 'cancelled').length
   const mrr = subscriptions
     .filter((s) => s.status === 'active')
     .reduce((sum, s) => sum + parseFloat(s.plan.amount), 0)
 
   const stats = [
-    { label: 'Total subscribers', value: subscriptions.length },
-    { label: 'Active', value: active },
+    { label: 'Plans', value: plans.length },
+    { label: 'Active subscribers', value: active },
     { label: 'Past due', value: pastDue },
     { label: 'Active value (USDC)', value: mrr, format: 'usdc' as const },
   ]
@@ -32,17 +39,22 @@ export default function SubscriptionsPage() {
           initial={false}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className='mb-8 flex items-center justify-between'
+          className='mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'
         >
-          <h1 className='text-2xl font-bold text-foreground'>Subscriptions</h1>
-          <CreateSubscriptionDialog onCreated={refresh} />
+          <div>
+            <h1 className='text-2xl font-bold text-foreground'>Subscriptions</h1>
+            <p className='mt-1 text-sm text-muted-foreground'>
+              Manage recurring plans, subscriber status, and renewal history from one place.
+            </p>
+          </div>
+          <CreateSubscriptionDialog onCreated={refreshAll} />
         </motion.div>
 
         {/* Stats */}
-        {isLoading ? (
+        {isPageLoading ? (
           <SkeletonGrid />
         ) : (
-          subscriptions.length > 0 && (
+          plans.length > 0 && (
             <motion.div
               initial={false}
               animate={{ opacity: 1, y: 0 }}
@@ -58,13 +70,15 @@ export default function SubscriptionsPage() {
         <motion.div initial={false} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 0.1 }}>
           <div className='mb-4 flex items-center justify-between'>
             <h2 className='text-sm font-semibold text-muted-foreground uppercase tracking-wider'>
-              Subscribers {!isLoading && `(${subscriptions.length})`}
+              Plans {!isPageLoading && `(${plans.length})`}
             </h2>
           </div>
-          <SubscriptionsTable
+          <SubscriptionPlansList
+            plans={plans}
             subscriptions={subscriptions}
-            isLoading={isLoading}
-            onRefresh={refresh}
+            isLoading={isPageLoading}
+            hasError={hasError}
+            onRefresh={refreshAll}
             cancelSubscription={cancelSubscription}
           />
         </motion.div>

@@ -156,6 +156,17 @@ export async function GET(req: NextRequest) {
               executedAt: s.renewals[0].executedAt?.toISOString() ?? null,
             }
           : null,
+        renewals: s.renewals.map((renewal) => ({
+          id: renewal.id,
+          status: renewal.status,
+          dueAt: renewal.dueAt.toISOString(),
+          executedAt: renewal.executedAt?.toISOString() ?? null,
+          amount: renewal.amountSnapshot.toString(),
+          token: renewal.tokenSnapshot,
+          txSignature: renewal.execution?.txSignature ?? null,
+          outputAmount: renewal.execution?.outputAmount?.toString() ?? null,
+          executionStatus: renewal.execution?.status ?? null,
+        })),
       })),
     })
   })

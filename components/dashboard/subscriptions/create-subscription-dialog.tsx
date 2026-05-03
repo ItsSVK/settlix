@@ -103,7 +103,10 @@ export function CreateSubscriptionDialog({ onCreated }: CreateSubscriptionDialog
                   min='0.01'
                   required
                   value={amount}
-                  onChange={(e) => { setAmount(limitDecimals(e.target.value)); setError('') }}
+                  onChange={(e) => {
+                    setAmount(limitDecimals(e.target.value))
+                    setError('')
+                  }}
                   placeholder='0.00'
                   className='w-[140px] shrink-0 bg-transparent text-center text-5xl font-semibold tracking-tighter text-foreground outline-none placeholder:text-muted-foreground/30'
                   style={{ WebkitAppearance: 'none', margin: 0, MozAppearance: 'textfield' }}
@@ -170,7 +173,7 @@ export function CreateSubscriptionDialog({ onCreated }: CreateSubscriptionDialog
             <Button
               type='submit'
               disabled={isLoading || !amount || parseFloat(amount) <= 0}
-              className='relative mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-sm font-semibold text-background transition-all hover:opacity-90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 dark:text-foreground'
+              className='relative mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-sm font-semibold text-background transition-all hover:opacity-90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 dark:text-primary-foreground'
             >
               {isLoading ? (
                 <>

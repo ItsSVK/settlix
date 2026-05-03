@@ -23,6 +23,29 @@ export interface MerchantSubscription {
     txSignature: string | null
     executedAt: string | null
   } | null
+  renewals: {
+    id: string
+    status: string
+    dueAt: string
+    executedAt: string | null
+    amount: string
+    token: string
+    txSignature: string | null
+    outputAmount: string | null
+    executionStatus: string | null
+  }[]
+}
+
+export interface SubscriptionPlan {
+  id: string
+  token: string
+  amount: string
+  interval: string
+  title: string | null
+  description: string | null
+  active: boolean
+  createdAt: string
+  activeSubscribers: number
 }
 
 export function useSubscriptions() {
@@ -31,6 +54,7 @@ export function useSubscriptions() {
   const {
     data: subscriptions = [],
     isLoading,
+    error,
     refetch,
   } = useQuery({
     queryKey: ['subscriptions'],
@@ -45,6 +69,7 @@ export function useSubscriptions() {
     onSuccess: () => {
       toast.success('Subscription cancelled')
       queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
+      queryClient.invalidateQueries({ queryKey: ['subscription-plans'] })
     },
     onError: (err) => {
       toast.error(err instanceof Error ? err.message : 'Failed to cancel subscription')
@@ -54,8 +79,31 @@ export function useSubscriptions() {
   return {
     subscriptions,
     isLoading,
+    error,
     refresh: refetch,
     cancelSubscription: async (id: string) => { await cancelMutation.mutateAsync(id) },
+  }
+}
+
+export function useSubscriptionPlans() {
+  const {
+    data: plans = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['subscription-plans'],
+    queryFn: async () => {
+      const data = await apiClient.get<{ plans: SubscriptionPlan[] }>('/api/subscription-plans')
+      return data.plans
+    },
+  })
+
+  return {
+    plans,
+    isLoading,
+    error,
+    refresh: refetch,
   }
 }
 

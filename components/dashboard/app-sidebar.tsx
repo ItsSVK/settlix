@@ -24,12 +24,12 @@ import {
 import { DollarSign } from 'lucide-react'
 
 const navItems = [
-  { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { title: 'Payment Links', href: '/dashboard/links', icon: DollarSign },
-  { title: 'Invoices', href: '/dashboard/invoices', icon: FileText },
-  { title: 'Subscriptions', href: '/dashboard/subscriptions', icon: RefreshCw },
-  { title: 'API Keys', href: '/dashboard/keys', icon: KeyRound },
-  { title: 'Webhook', href: '/dashboard/webhook', icon: Webhook },
+  { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, hoverAnim: 'group-hover/nav-item:scale-110 group-hover/nav-item:-rotate-6' },
+  { title: 'Payment Links', href: '/dashboard/links', icon: DollarSign, hoverAnim: 'group-hover/nav-item:-translate-y-1 group-hover/nav-item:rotate-6 group-hover/nav-item:scale-110' },
+  { title: 'Invoices', href: '/dashboard/invoices', icon: FileText, hoverAnim: 'group-hover/nav-item:scale-110 group-hover/nav-item:rotate-[10deg]' },
+  { title: 'Subscriptions', href: '/dashboard/subscriptions', icon: RefreshCw, hoverAnim: 'group-hover/nav-item:rotate-180 group-hover/nav-item:scale-110' },
+  { title: 'API Keys', href: '/dashboard/keys', icon: KeyRound, hoverAnim: 'group-hover/nav-item:-rotate-[35deg] group-hover/nav-item:scale-110' },
+  { title: 'Webhook', href: '/dashboard/webhook', icon: Webhook, hoverAnim: 'group-hover/nav-item:scale-125 group-hover/nav-item:rotate-[15deg]' },
 ]
 
 function shorten(addr: string) {
@@ -98,8 +98,8 @@ export function AppSidebar() {
                         className='flex items-center gap-3 w-full group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:justify-center'
                       >
                         <item.icon
-                          className={`h-5 w-5 shrink-0 transition-transform duration-300 ${
-                            isActive ? 'scale-110' : 'group-hover/nav-item:scale-110 group-hover/nav-item:text-primary'
+                          className={`h-5 w-5 shrink-0 transition-all duration-300 ease-out ${
+                            isActive ? 'scale-110' : `group-hover/nav-item:text-primary ${item.hoverAnim}`
                           }`}
                         />
                         <span className='text-sm tracking-wide group-data-[collapsible=icon]:hidden'>{item.title}</span>

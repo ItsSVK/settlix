@@ -258,8 +258,8 @@ export async function getSubscribersByMerchant(merchantWallet: string) {
         plan: { select: { id: true, title: true, amount: true, token: true, interval: true } },
         renewals: {
           orderBy: { createdAt: 'desc' },
-          take: 1,
-          include: { execution: { select: { txSignature: true, status: true } } },
+          take: 5,
+          include: { execution: { select: { txSignature: true, outputAmount: true, status: true } } },
         },
       },
     })

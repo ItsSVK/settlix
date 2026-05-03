@@ -16,7 +16,7 @@ export default function InvoicesPage() {
     { label: 'Total overdue invoices', value: invoices.reduce((s, i) => s + (i.status === 'overdue' ? 1 : 0), 0) },
     {
       label: 'Revenue (USDC)',
-      value: invoices.reduce((s, i) => s + parseFloat(i.amount), 0),
+      value: invoices.reduce((s, i) => s + (i.status === 'paid' ? parseFloat(i.amount) : 0), 0),
       format: 'usdc' as const,
     },
   ]
