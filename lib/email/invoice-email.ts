@@ -12,16 +12,7 @@ export interface InvoiceEmailData {
 }
 
 export function buildInvoiceEmailHtml(data: InvoiceEmailData): string {
-  const {
-    clientName,
-    amount,
-    tokenSymbol,
-    dueDate,
-    memo,
-    lineItems,
-    invoiceUrl,
-    merchantWallet,
-  } = data
+  const { clientName, amount, tokenSymbol, dueDate, memo, lineItems, invoiceUrl, merchantWallet } = data
 
   const greeting = clientName ? `Hi ${clientName},` : 'Hi,'
 
@@ -156,9 +147,20 @@ export interface ReceiptEmailData {
 
 export function buildReceiptEmailHtml(data: ReceiptEmailData): string {
   const {
-    clientName, amount, tokenSymbol, memo, lineItems, invoiceUrl, txSignature, merchantWallet,
-    inputTokenSymbol, inputAmount, inputTokenLogo,
-    outputAmount, outputTokenSymbol, outputTokenLogo,
+    clientName,
+    amount,
+    tokenSymbol,
+    memo,
+    lineItems,
+    invoiceUrl,
+    txSignature,
+    merchantWallet,
+    inputTokenSymbol,
+    inputAmount,
+    inputTokenLogo,
+    outputAmount,
+    outputTokenSymbol,
+    outputTokenLogo,
   } = data
 
   const greeting = clientName ? `Hi ${clientName},` : 'Hi,'
@@ -239,7 +241,9 @@ export function buildReceiptEmailHtml(data: ReceiptEmailData): string {
               ${memo ? `<p style="margin:0 0 32px;font-size:14px;color:#6b7280;font-style:italic;background:#f9fafb;padding:16px;border-radius:10px;border-left:3px solid #e5e7eb;">${memo}</p>` : ''}
 
               <!-- Swap summary -->
-              ${inputAmount && inputTokenSymbol ? `
+              ${
+                inputAmount && inputTokenSymbol
+                  ? `
               <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;margin-bottom:32px;">
                 <tr style="background-color:#f9fafb;">
                   <td style="padding:10px 16px;text-align:center;width:44%;">
@@ -254,7 +258,9 @@ export function buildReceiptEmailHtml(data: ReceiptEmailData): string {
                     <span style="font-size:12px;color:#6b7280;vertical-align:middle;margin-left:3px;">${outputTokenSymbol ?? tokenSymbol}</span>
                   </td>
                 </tr>
-              </table>` : ''}
+              </table>`
+                  : ''
+              }
 
               <!-- Tx signature -->
               <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:24px;">

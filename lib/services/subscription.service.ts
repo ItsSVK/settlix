@@ -264,7 +264,17 @@ export async function getSubscriberById(id: string) {
     return await prisma.subscriber.findUnique({
       where: { id },
       include: {
-        plan: { select: { id: true, merchantId: true, merchant: { select: { wallet: true } }, token: true, amount: true, interval: true, title: true } },
+        plan: {
+          select: {
+            id: true,
+            merchantId: true,
+            merchant: { select: { wallet: true } },
+            token: true,
+            amount: true,
+            interval: true,
+            title: true,
+          },
+        },
         renewals: {
           orderBy: { createdAt: 'desc' },
           take: 5,
@@ -348,7 +358,16 @@ export async function getSubscribersByWallet(subscriberWallet: string) {
       where: { subscriberWallet },
       orderBy: { createdAt: 'desc' },
       include: {
-        plan: { select: { id: true, merchant: { select: { wallet: true } }, title: true, amount: true, token: true, interval: true } },
+        plan: {
+          select: {
+            id: true,
+            merchant: { select: { wallet: true } },
+            title: true,
+            amount: true,
+            token: true,
+            interval: true,
+          },
+        },
         renewals: {
           orderBy: { createdAt: 'desc' },
           take: 1,

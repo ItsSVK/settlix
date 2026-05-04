@@ -5,7 +5,11 @@ import { getMint } from '@solana/spl-token'
 import { ApiError, handleApi, readJsonBody } from '@/lib/api/errors'
 import { RELAYER_NOT_CONFIGURED, VALIDATION } from '@/lib/api/constants'
 import { apiLogger } from '@/lib/api/logger'
-import { createSubscriber, getSubscribersByMerchant, getSubscriptionPlanById } from '@/lib/services/subscription.service'
+import {
+  createSubscriber,
+  getSubscribersByMerchant,
+  getSubscriptionPlanById,
+} from '@/lib/services/subscription.service'
 import { sendSubscriptionConfirmationEmail } from '@/lib/services/subscription-renewal.service'
 import { createServerConnection } from '@/lib/solana/connection'
 import { RPC_COMMITMENT } from '@/lib/solana/constants'
@@ -55,10 +59,7 @@ export async function POST(req: NextRequest) {
     )
 
     if (value?.err) {
-      return NextResponse.json(
-        { status: 'Failed', signature, error: JSON.stringify(value.err) },
-        { status: 200 },
-      )
+      return NextResponse.json({ status: 'Failed', signature, error: JSON.stringify(value.err) }, { status: 200 })
     }
 
     let relayerKeypair

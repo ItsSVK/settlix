@@ -19,10 +19,6 @@ interface LineItem {
   unitPrice: string
 }
 
-interface CreateInvoiceDialogProps {
-  onCreated: () => void
-}
-
 function newItem(): LineItem {
   return { id: Math.random().toString(36).slice(2), description: '', quantity: '1', unitPrice: '' }
 }

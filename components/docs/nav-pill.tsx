@@ -21,8 +21,8 @@ export function NavPill({ href, label, isActive }: NavPillProps) {
     >
       {isActive && (
         <motion.div
-          layoutId="activeDocsPill"
-          className="absolute inset-0 rounded-xl bg-primary shadow-md shadow-primary/20"
+          layoutId='activeDocsPill'
+          className='absolute inset-0 rounded-xl bg-primary shadow-md shadow-primary/20'
           initial={false}
           transition={{
             type: 'spring',
@@ -31,7 +31,7 @@ export function NavPill({ href, label, isActive }: NavPillProps) {
           }}
         />
       )}
-      <span className="relative z-10">{label}</span>
+      <span className='relative z-10'>{label}</span>
     </Link>
   )
 }

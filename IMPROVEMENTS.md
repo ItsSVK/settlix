@@ -56,7 +56,7 @@ model PaymentLink {
    ```ts
    // payload
    {
-     linkId, txSignature, inputToken, inputAmount, outputAmount, userWallet, timestamp
+     ;(linkId, txSignature, inputToken, inputAmount, outputAmount, userWallet, timestamp)
    }
    // header: X-Settlix-Signature: sha256=<HMAC-SHA256(secret, JSON.stringify(payload))>
    ```

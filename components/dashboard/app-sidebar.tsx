@@ -4,7 +4,19 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { LayoutDashboard, FileText, KeyRound, Webhook, LogOut, Sun, Moon, Copy, Check, BookOpen, RefreshCw } from 'lucide-react'
+import {
+  LayoutDashboard,
+  FileText,
+  KeyRound,
+  Webhook,
+  LogOut,
+  Sun,
+  Moon,
+  Copy,
+  Check,
+  BookOpen,
+  RefreshCw,
+} from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-context'
 import { useTheme } from 'next-themes'
 import { copyText } from '@/lib/utils'
@@ -24,12 +36,42 @@ import {
 import { DollarSign } from 'lucide-react'
 
 const navItems = [
-  { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, hoverAnim: 'group-hover/nav-item:scale-110 group-hover/nav-item:-rotate-6' },
-  { title: 'Payment Links', href: '/dashboard/links', icon: DollarSign, hoverAnim: 'group-hover/nav-item:-translate-y-1 group-hover/nav-item:rotate-6 group-hover/nav-item:scale-110' },
-  { title: 'Invoices', href: '/dashboard/invoices', icon: FileText, hoverAnim: 'group-hover/nav-item:scale-110 group-hover/nav-item:rotate-[10deg]' },
-  { title: 'Subscriptions', href: '/dashboard/subscriptions', icon: RefreshCw, hoverAnim: 'group-hover/nav-item:rotate-180 group-hover/nav-item:scale-110' },
-  { title: 'API Keys', href: '/dashboard/keys', icon: KeyRound, hoverAnim: 'group-hover/nav-item:-rotate-[35deg] group-hover/nav-item:scale-110' },
-  { title: 'Webhook', href: '/dashboard/webhook', icon: Webhook, hoverAnim: 'group-hover/nav-item:scale-125 group-hover/nav-item:rotate-[15deg]' },
+  {
+    title: 'Dashboard',
+    href: '/dashboard',
+    icon: LayoutDashboard,
+    hoverAnim: 'group-hover/nav-item:scale-110 group-hover/nav-item:-rotate-6',
+  },
+  {
+    title: 'Payment Links',
+    href: '/dashboard/links',
+    icon: DollarSign,
+    hoverAnim: 'group-hover/nav-item:-translate-y-1 group-hover/nav-item:rotate-6 group-hover/nav-item:scale-110',
+  },
+  {
+    title: 'Invoices',
+    href: '/dashboard/invoices',
+    icon: FileText,
+    hoverAnim: 'group-hover/nav-item:scale-110 group-hover/nav-item:rotate-[10deg]',
+  },
+  {
+    title: 'Subscriptions',
+    href: '/dashboard/subscriptions',
+    icon: RefreshCw,
+    hoverAnim: 'group-hover/nav-item:rotate-180 group-hover/nav-item:scale-110',
+  },
+  {
+    title: 'API Keys',
+    href: '/dashboard/keys',
+    icon: KeyRound,
+    hoverAnim: 'group-hover/nav-item:-rotate-[35deg] group-hover/nav-item:scale-110',
+  },
+  {
+    title: 'Webhook',
+    href: '/dashboard/webhook',
+    icon: Webhook,
+    hoverAnim: 'group-hover/nav-item:scale-125 group-hover/nav-item:rotate-[15deg]',
+  },
 ]
 
 function shorten(addr: string) {

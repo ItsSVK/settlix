@@ -60,7 +60,12 @@ export function EmbedHero() {
 export function EmbedSections({ snippets }: EmbedSectionsProps) {
   return (
     <>
-      <Section id='embed-quick-start' icon={Terminal} title='Quick Start' subtitle='Two steps to a working checkout button.'>
+      <Section
+        id='embed-quick-start'
+        icon={Terminal}
+        title='Quick Start'
+        subtitle='Two steps to a working checkout button.'
+      >
         <div className='mt-8'>
           <Step n={1} title='Load the checkout script once — anywhere in your HTML'>
             <CodeBlock code={snippets.loadScript} label='html' />
@@ -88,7 +93,10 @@ export function EmbedSections({ snippets }: EmbedSectionsProps) {
             <thead>
               <tr className='border-b border-border/40 bg-muted/40'>
                 {['Option', 'Type', 'Description'].map((h) => (
-                  <th key={h} className='px-5 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground'>
+                  <th
+                    key={h}
+                    className='px-5 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground'
+                  >
                     {h}
                   </th>
                 ))}
@@ -102,7 +110,9 @@ export function EmbedSections({ snippets }: EmbedSectionsProps) {
                 ['onClose', '(metadata) => void', 'Called on close, cancel, or failure.'],
               ].map(([opt, type, desc]) => (
                 <tr key={opt} className='transition-colors hover:bg-muted/20'>
-                  <td className='px-5 py-4 font-mono text-[13px] text-indigo-600 dark:text-indigo-400 font-medium'>{opt}</td>
+                  <td className='px-5 py-4 font-mono text-[13px] text-indigo-600 dark:text-indigo-400 font-medium'>
+                    {opt}
+                  </td>
                   <td className='px-5 py-4 font-mono text-[13px] text-muted-foreground'>{type}</td>
                   <td className='px-5 py-4 text-[13px] text-foreground/80 leading-relaxed'>{desc}</td>
                 </tr>
@@ -112,10 +122,15 @@ export function EmbedSections({ snippets }: EmbedSectionsProps) {
         </div>
       </Section>
 
-      <Section id='order-tracking' icon={FileCode} title='Order Tracking' subtitle='How to map a payment back to a specific order and user.'>
+      <Section
+        id='order-tracking'
+        icon={FileCode}
+        title='Order Tracking'
+        subtitle='How to map a payment back to a specific order and user.'
+      >
         <div className='mb-6 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-5 text-sm text-amber-600 dark:text-amber-200/80 leading-relaxed'>
-          <strong className='text-amber-700 dark:text-amber-300'>Without metadata</strong> — you know a payment was
-          made but not <em>which order</em> or <em>which user</em> triggered it. Two customers buying the same product
+          <strong className='text-amber-700 dark:text-amber-300'>Without metadata</strong> — you know a payment was made
+          but not <em>which order</em> or <em>which user</em> triggered it. Two customers buying the same product
           produce identical webhook payloads except for{' '}
           <code className='font-mono text-amber-700/80 dark:text-amber-200'>txSignature</code> and{' '}
           <code className='font-mono text-amber-700/80 dark:text-amber-200'>userWallet</code>.
@@ -130,7 +145,12 @@ export function EmbedSections({ snippets }: EmbedSectionsProps) {
         </p>
       </Section>
 
-      <Section id='embed-webhooks' icon={Webhook} title='Webhook Payload' subtitle='Settlix sends a signed POST to your endpoint on every confirmed payment.'>
+      <Section
+        id='embed-webhooks'
+        icon={Webhook}
+        title='Webhook Payload'
+        subtitle='Settlix sends a signed POST to your endpoint on every confirmed payment.'
+      >
         <CodeBlock code={snippets.webhookPayload} label='json' />
         <div className='mt-6 rounded-2xl border border-indigo-500/20 dark:border-indigo-400/20 bg-indigo-500/5 dark:bg-indigo-400/5 p-5 text-sm'>
           <p className='font-semibold text-indigo-600 dark:text-indigo-400 flex items-center gap-2'>
@@ -150,7 +170,12 @@ export function EmbedSections({ snippets }: EmbedSectionsProps) {
         </div>
       </Section>
 
-      <Section id='csp' icon={ShieldCheck} title='Content Security Policy' subtitle='Add these directives if your site sets a CSP header.'>
+      <Section
+        id='csp'
+        icon={ShieldCheck}
+        title='Content Security Policy'
+        subtitle='Add these directives if your site sets a CSP header.'
+      >
         <CodeBlock code={snippets.csp} label='http header' />
         <p className='mt-4 text-[13px] text-muted-foreground/80'>
           <code className='rounded-md bg-muted/60 px-1.5 py-0.5 font-mono text-foreground border border-border/40'>
@@ -164,11 +189,21 @@ export function EmbedSections({ snippets }: EmbedSectionsProps) {
         </p>
       </Section>
 
-      <Section id='typescript' icon={Code2} title='TypeScript' subtitle='Add types for window.Settlix — no npm package needed.'>
+      <Section
+        id='typescript'
+        icon={Code2}
+        title='TypeScript'
+        subtitle='Add types for window.Settlix — no npm package needed.'
+      >
         <CodeBlock code={snippets.typescript} label='typescript' />
       </Section>
 
-      <Section id='async' icon={Terminal} title='Async Script Loading' subtitle='Queue calls made before the script finishes loading.'>
+      <Section
+        id='async'
+        icon={Terminal}
+        title='Async Script Loading'
+        subtitle='Queue calls made before the script finishes loading.'
+      >
         <CodeBlock code={snippets.async} label='html' />
         <p className='mt-4 text-[13px] text-muted-foreground/80 leading-relaxed'>
           If you load the script with{' '}

@@ -129,7 +129,8 @@ export async function updatePaymentLinkActive(id: string, merchantWallet: string
       include: { merchant: { select: { wallet: true } } },
     })
     if (!link) throw new ApiError(404, 'Payment link not found', NOT_FOUND)
-    if (link.merchant.wallet !== merchantWallet) throw new ApiError(403, 'Not authorized to update this link', FORBIDDEN)
+    if (link.merchant.wallet !== merchantWallet)
+      throw new ApiError(403, 'Not authorized to update this link', FORBIDDEN)
 
     return await prisma.paymentLink.update({
       where: { id },

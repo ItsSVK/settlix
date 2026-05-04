@@ -76,15 +76,7 @@ export function SubscriptionRow({ subscription: sub, onCancel, onRefresh }: Subs
             </span>
             <span className='flex flex-wrap items-center gap-1.5'>
               <span className='flex items-center gap-1 text-xs font-bold text-foreground'>
-                {tokenLogo && (
-                  <Image
-                    src={tokenLogo}
-                    alt=''
-                    width={14}
-                    height={14}
-                    className='inline-block'
-                  />
-                )}
+                {tokenLogo && <Image src={tokenLogo} alt='' width={14} height={14} className='inline-block' />}
                 {Number(sub.plan.amount).toFixed(2)}
               </span>
               {sub.plan.interval && (
@@ -104,9 +96,15 @@ export function SubscriptionRow({ subscription: sub, onCancel, onRefresh }: Subs
             <span className='text-[9px] font-semibold text-muted-foreground uppercase tracking-wider'>
               {isCancelled ? 'Cancelled' : 'Next billing'}
             </span>
-            <span className={`text-[12px] font-semibold ${isOverdue && !isCancelled ? 'text-amber-500' : 'text-foreground'}`}>
+            <span
+              className={`text-[12px] font-semibold ${isOverdue && !isCancelled ? 'text-amber-500' : 'text-foreground'}`}
+            >
               {isCancelled && sub.cancelledAt
-                ? new Date(sub.cancelledAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                ? new Date(sub.cancelledAt).toLocaleDateString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })
                 : periodEnd.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
             </span>
           </span>
@@ -123,7 +121,9 @@ export function SubscriptionRow({ subscription: sub, onCancel, onRefresh }: Subs
         {/* Actions */}
         <div className='flex items-center gap-1 rounded-xl bg-muted/40 pl-2 border border-border/30'>
           <Button
-            onClick={() => window.open(`https://solscan.io/account/${sub.subscriberWallet}${SOLSCAN_CLUSTER}`, '_blank')}
+            onClick={() =>
+              window.open(`https://solscan.io/account/${sub.subscriberWallet}${SOLSCAN_CLUSTER}`, '_blank')
+            }
             title='View on Solscan'
             aria-label='View subscriber wallet on Solscan'
             variant='ghost'
@@ -183,10 +183,15 @@ export function SubscriptionRow({ subscription: sub, onCancel, onRefresh }: Subs
               {/* Renewals */}
               {sub.renewals.length > 0 ? (
                 <div className='space-y-1.5'>
-                  <p className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground'>Renewal history</p>
+                  <p className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground'>
+                    Renewal history
+                  </p>
                   <div className='space-y-2'>
                     {sub.renewals.map((renewal) => (
-                      <div key={renewal.id} className='flex items-center gap-2 rounded-xl bg-card border border-border/60 px-3 py-2.5'>
+                      <div
+                        key={renewal.id}
+                        className='flex items-center gap-2 rounded-xl bg-card border border-border/60 px-3 py-2.5'
+                      >
                         <span
                           className={`h-2 w-2 rounded-full shrink-0 ${RENEWAL_STATUS_DOT[renewal.status] ?? 'bg-muted-foreground'}`}
                         />

@@ -34,8 +34,17 @@ export function DirectPayButton({
   onSuccess,
   className,
 }: DirectPayButtonProps) {
-  const { step, setStep, errorMsg, isLoading, connected, publicKey, requestWalletConnection, signAndExecute, handleError } =
-    usePaymentFlow({ onSuccess })
+  const {
+    step,
+    setStep,
+    errorMsg,
+    isLoading,
+    connected,
+    publicKey,
+    requestWalletConnection,
+    signAndExecute,
+    handleError,
+  } = usePaymentFlow({ onSuccess })
 
   const send = useCallback(async () => {
     if (!connected || !publicKey) {
@@ -87,7 +96,18 @@ export function DirectPayButton({
     } catch (e) {
       handleError(e)
     }
-  }, [connected, publicKey, selectedToken, quoteReady, receiverWallet, amount, requestWalletConnection, signAndExecute, handleError, setStep])
+  }, [
+    connected,
+    publicKey,
+    selectedToken,
+    quoteReady,
+    receiverWallet,
+    amount,
+    requestWalletConnection,
+    signAndExecute,
+    handleError,
+    setStep,
+  ])
 
   const isDisabled = isLoading || step === 'done' || !selectedToken || !quoteReady
 

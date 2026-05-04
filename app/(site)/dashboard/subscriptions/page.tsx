@@ -29,9 +29,7 @@ export default function SubscriptionsPage() {
 
   const active = subscriptions.filter((s) => s.status === 'active').length
   const pastDue = subscriptions.filter((s) => s.status === 'past_due').length
-  const mrr = subscriptions
-    .filter((s) => s.status === 'active')
-    .reduce((sum, s) => sum + parseFloat(s.plan.amount), 0)
+  const mrr = subscriptions.filter((s) => s.status === 'active').reduce((sum, s) => sum + parseFloat(s.plan.amount), 0)
 
   const stats = [
     { label: 'Plans', value: plans.length },
@@ -48,7 +46,7 @@ export default function SubscriptionsPage() {
           initial={false}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className='mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'
+          className='mb-8 flex items-center justify-between flex-col gap-4 sm:flex-row'
         >
           <div>
             <h1 className='text-2xl font-bold text-foreground'>Subscriptions</h1>

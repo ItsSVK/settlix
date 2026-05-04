@@ -14,7 +14,11 @@ export interface PaymentLinkData {
 }
 
 export function usePaymentLink(id: string) {
-  const { data = null, isLoading, error } = useQuery({
+  const {
+    data = null,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['payment-link', id],
     queryFn: async () => {
       const res = await fetch(`/api/links/${id}`)

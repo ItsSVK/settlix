@@ -4,15 +4,11 @@ import Image from 'next/image'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Invoice, useInvoices } from '@/lib/hooks/use-invoices'
-import { Check, ChevronDown, Copy, ExternalLink, Loader2, Mail, QrCode } from 'lucide-react'
+import { Check, ChevronDown, Copy, ExternalLink, Loader2, Mail } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
-import { copyText } from '@/lib/utils'
+import { copyText, shorten } from '@/lib/utils'
 import { ConfirmationModal } from '@/components/shared/confirmation-modal'
 import { getLogoByMint, TOKENS } from '@/lib/tokens/tokens'
-
-function shorten(s: string, start = 6, end = 4) {
-  return `${s.slice(0, start)}…${s.slice(-end)}`
-}
 
 export function InvoiceRow({ invoice }: { invoice: Invoice }) {
   const [copied, setCopied] = useState(false)

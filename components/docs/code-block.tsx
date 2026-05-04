@@ -15,20 +15,66 @@ export function ColoredCode({ code }: { code: string }) {
       {tokens.map((part, i) => {
         if (!part) return null
         if (part.startsWith('//'))
-          return <span key={i} className='text-zinc-500'>{part}</span>
-        if (['function', 'const', 'let', 'var', 'return', 'if', 'else', 'interface', 'declare', 'global', 'type'].includes(part))
-          return <span key={i} className='text-pink-400'>{part}</span>
+          return (
+            <span key={i} className='text-zinc-500'>
+              {part}
+            </span>
+          )
+        if (
+          [
+            'function',
+            'const',
+            'let',
+            'var',
+            'return',
+            'if',
+            'else',
+            'interface',
+            'declare',
+            'global',
+            'type',
+          ].includes(part)
+        )
+          return (
+            <span key={i} className='text-pink-400'>
+              {part}
+            </span>
+          )
         if (['console', 'document', 'window'].includes(part))
-          return <span key={i} className='text-blue-400'>{part}</span>
+          return (
+            <span key={i} className='text-blue-400'>
+              {part}
+            </span>
+          )
         if (part.startsWith("'") || part.startsWith('"'))
-          return <span key={i} className='text-emerald-400'>{part}</span>
+          return (
+            <span key={i} className='text-emerald-400'>
+              {part}
+            </span>
+          )
         if (/^\d+$/.test(part))
-          return <span key={i} className='text-orange-400'>{part}</span>
+          return (
+            <span key={i} className='text-orange-400'>
+              {part}
+            </span>
+          )
         if (['true', 'false', 'null', 'undefined'].includes(part))
-          return <span key={i} className='text-orange-400'>{part}</span>
+          return (
+            <span key={i} className='text-orange-400'>
+              {part}
+            </span>
+          )
         if (['{', '}', '[', ']', '(', ')'].includes(part))
-          return <span key={i} className='text-zinc-400'>{part}</span>
-        return <span key={i} className='text-zinc-300'>{part}</span>
+          return (
+            <span key={i} className='text-zinc-400'>
+              {part}
+            </span>
+          )
+        return (
+          <span key={i} className='text-zinc-300'>
+            {part}
+          </span>
+        )
       })}
     </>
   )

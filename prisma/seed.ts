@@ -29,10 +29,10 @@ function randDate(year: number, month: number, maxDay = 27): Date {
 
 // Approximate USDC/token rates (Jan–Apr 2026 estimates)
 const INPUT_TOKENS = [
-  { mint: SOL_MINT, rate: 138, decimals: 9 },       // SOL — 40% of txs
+  { mint: SOL_MINT, rate: 138, decimals: 9 }, // SOL — 40% of txs
   { mint: BONK_MINT, rate: 0.0000275, decimals: 5 }, // BONK — 20%
-  { mint: PONKE_MINT, rate: 0.0000001, decimals: 9 },// PONKE — 20%
-  { mint: USDC_MINT, rate: 1, decimals: 6 },         // USDC — 20%
+  { mint: PONKE_MINT, rate: 0.0000001, decimals: 9 }, // PONKE — 20%
+  { mint: USDC_MINT, rate: 1, decimals: 6 }, // USDC — 20%
 ]
 
 function pickToken() {
@@ -51,7 +51,6 @@ function usdcUnits(humanAmount: number): bigint {
 
 // Convert human USDC amount → raw input token units
 function toInputUnits(usdcHuman: number, rate: number, decimals: number): bigint {
-  const SCALE = BigInt(1_000_000_000_000)
   const usdcScaled = BigInt(Math.round(usdcHuman * 1_000_000_000_000))
   const rateScaled = BigInt(Math.round(rate * 1_000_000_000_000))
   if (rateScaled === BigInt(0)) return BigInt(0)

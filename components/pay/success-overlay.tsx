@@ -3,8 +3,7 @@
 import { motion } from 'motion/react'
 import { CheckCircle, ExternalLink } from 'lucide-react'
 import { JupiterLogo } from '@/components/shared/jupiter-logo'
-
-const SOLSCAN_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK === 'devnet' ? '?cluster=devnet' : ''
+import { SOLSCAN_CLUSTER } from '@/lib/solana/constants'
 
 interface SwapDetails {
   /** Raw integer string from Jupiter, e.g. "2300000000" for 2.3 SOL */

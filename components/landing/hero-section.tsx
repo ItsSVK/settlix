@@ -1,8 +1,7 @@
 'use client'
 
 import { motion } from 'motion/react'
-import Link from 'next/link'
-import { ArrowRight, Blocks, LayoutDashboard } from 'lucide-react'
+import { ArrowRight, Blocks } from 'lucide-react'
 import { BackgroundBeams } from '@/components/ui/background-beams'
 import { TypewriterEffect } from '@/components/ui/typewriter-effect'
 import { Button } from '@/components/ui/button'

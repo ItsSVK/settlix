@@ -1,7 +1,19 @@
 'use client'
 
 import { motion } from 'motion/react'
-import { ArrowRight, Terminal, Webhook, ShieldCheck, Code2, Key, List, ToggleLeft, Zap, FileText, RefreshCw } from 'lucide-react'
+import {
+  ArrowRight,
+  Terminal,
+  Webhook,
+  ShieldCheck,
+  Code2,
+  Key,
+  List,
+  ToggleLeft,
+  Zap,
+  FileText,
+  RefreshCw,
+} from 'lucide-react'
 import { Section } from './doc-section'
 import { CodeBlock } from './code-block'
 import { MethodBadge } from './method-badge'
@@ -28,8 +40,8 @@ export function RestApiHero() {
         <span className='text-muted-foreground'>for your backend.</span>
       </h1>
       <p className='max-w-xl text-lg leading-relaxed text-muted-foreground/80'>
-        Create links, configure webhooks, and manage your account — all from your own server using a simple REST API
-        and a Bearer token.
+        Create links, configure webhooks, and manage your account — all from your own server using a simple REST API and
+        a Bearer token.
       </p>
 
       <div className='mt-10 flex flex-wrap gap-3'>
@@ -56,7 +68,12 @@ export function RestApiHero() {
 export function RestApiSections({ apiSnippets }: RestApiSectionsProps) {
   return (
     <>
-      <Section id='authentication' icon={ShieldCheck} title='Authentication' subtitle='All protected endpoints accept a Bearer token in the Authorization header.'>
+      <Section
+        id='authentication'
+        icon={ShieldCheck}
+        title='Authentication'
+        subtitle='All protected endpoints accept a Bearer token in the Authorization header.'
+      >
         <CodeBlock label='http header' code={`Authorization: Bearer sk_live_<your-key>`} />
         <div className='mt-4 space-y-3 text-sm text-muted-foreground'>
           <p>API keys are scoped to your merchant wallet — they can do everything your dashboard session can.</p>
@@ -67,11 +84,21 @@ export function RestApiSections({ apiSnippets }: RestApiSectionsProps) {
         </div>
       </Section>
 
-      <Section id='api-quick-start' icon={Zap} title='Quick Start' subtitle='Create a payment link and get a URL in one request.'>
+      <Section
+        id='api-quick-start'
+        icon={Zap}
+        title='Quick Start'
+        subtitle='Create a payment link and get a URL in one request.'
+      >
         <CodeBlock label='bash' code={apiSnippets.quickStart} />
       </Section>
 
-      <Section id='api-keys' icon={Key} title='API Keys' subtitle='Create and revoke API keys programmatically. Up to 10 keys per wallet.'>
+      <Section
+        id='api-keys'
+        icon={Key}
+        title='API Keys'
+        subtitle='Create and revoke API keys programmatically. Up to 10 keys per wallet.'
+      >
         <div className='space-y-4'>
           <MethodBadge method='GET' path='/api/keys' />
           <CodeBlock label='bash' code={apiSnippets.getKeys} />
@@ -81,7 +108,8 @@ export function RestApiSections({ apiSnippets }: RestApiSectionsProps) {
           <MethodBadge method='POST' path='/api/keys' />
           <CodeBlock label='bash' code={apiSnippets.createKey} />
           <p className='text-sm text-muted-foreground'>
-            The raw key is returned <strong className='text-foreground'>once</strong> and never stored. Save it immediately.
+            The raw key is returned <strong className='text-foreground'>once</strong> and never stored. Save it
+            immediately.
           </p>
 
           <div className='h-px bg-border/30' />
@@ -91,7 +119,12 @@ export function RestApiSections({ apiSnippets }: RestApiSectionsProps) {
         </div>
       </Section>
 
-      <Section id='create-link' icon={Terminal} title='Create a Payment Link' subtitle='Returns the link ID and its public pay URL.'>
+      <Section
+        id='create-link'
+        icon={Terminal}
+        title='Create a Payment Link'
+        subtitle='Returns the link ID and its public pay URL.'
+      >
         <MethodBadge method='POST' path='/api/links' />
         <CodeBlock label='bash' code={apiSnippets.createLink} />
 
@@ -100,7 +133,10 @@ export function RestApiSections({ apiSnippets }: RestApiSectionsProps) {
             <thead>
               <tr className='border-b border-border/40 bg-muted/40'>
                 {['Field', 'Type', 'Description'].map((h) => (
-                  <th key={h} className='px-5 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground'>
+                  <th
+                    key={h}
+                    className='px-5 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground'
+                  >
                     {h}
                   </th>
                 ))}
@@ -117,7 +153,9 @@ export function RestApiSections({ apiSnippets }: RestApiSectionsProps) {
                 ['recipients', 'array?', 'Optional. Revenue split — basis points must sum to 10000.'],
               ].map(([f, t, d]) => (
                 <tr key={f} className='transition-colors hover:bg-muted/20'>
-                  <td className='px-5 py-3.5 font-mono text-[13px] font-medium text-indigo-600 dark:text-indigo-400'>{f}</td>
+                  <td className='px-5 py-3.5 font-mono text-[13px] font-medium text-indigo-600 dark:text-indigo-400'>
+                    {f}
+                  </td>
                   <td className='px-5 py-3.5 font-mono text-[13px] text-muted-foreground'>{t}</td>
                   <td className='px-5 py-3.5 text-[13px] leading-relaxed text-foreground/80'>{d}</td>
                 </tr>
@@ -127,7 +165,12 @@ export function RestApiSections({ apiSnippets }: RestApiSectionsProps) {
         </div>
       </Section>
 
-      <Section id='list-links' icon={List} title='List Payment Links' subtitle='Returns all links with stats and recent executions.'>
+      <Section
+        id='list-links'
+        icon={List}
+        title='List Payment Links'
+        subtitle='Returns all links with stats and recent executions.'
+      >
         <MethodBadge method='GET' path='/api/links' />
         <CodeBlock label='bash' code={apiSnippets.listLinks} />
         <p className='mt-4 text-sm text-muted-foreground'>
@@ -138,11 +181,18 @@ export function RestApiSections({ apiSnippets }: RestApiSectionsProps) {
         </p>
       </Section>
 
-      <Section id='manage-link' icon={ToggleLeft} title='Manage a Link' subtitle='Get details or toggle a link active/inactive.'>
+      <Section
+        id='manage-link'
+        icon={ToggleLeft}
+        title='Manage a Link'
+        subtitle='Get details or toggle a link active/inactive.'
+      >
         <div className='space-y-4'>
           <MethodBadge method='GET' path='/api/links/:id' />
           <CodeBlock label='bash' code={apiSnippets.getLink} />
-          <p className='text-sm text-muted-foreground'>Public endpoint — no auth required. Used by buyers before paying.</p>
+          <p className='text-sm text-muted-foreground'>
+            Public endpoint — no auth required. Used by buyers before paying.
+          </p>
 
           <div className='h-px bg-border/30' />
 
@@ -151,7 +201,12 @@ export function RestApiSections({ apiSnippets }: RestApiSectionsProps) {
         </div>
       </Section>
 
-      <Section id='invoices' icon={FileText} title='Invoices' subtitle='Create and send invoices — clients pay via a dedicated invoice page.'>
+      <Section
+        id='invoices'
+        icon={FileText}
+        title='Invoices'
+        subtitle='Create and send invoices — clients pay via a dedicated invoice page.'
+      >
         <div className='space-y-4'>
           <CodeBlock label='bash' code={apiSnippets.invoices} />
 
@@ -160,7 +215,10 @@ export function RestApiSections({ apiSnippets }: RestApiSectionsProps) {
               <thead>
                 <tr className='border-b border-border/40 bg-muted/40'>
                   {['Field', 'Type', 'Description'].map((h) => (
-                    <th key={h} className='px-5 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground'>
+                    <th
+                      key={h}
+                      className='px-5 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground'
+                    >
                       {h}
                     </th>
                   ))}
@@ -169,14 +227,20 @@ export function RestApiSections({ apiSnippets }: RestApiSectionsProps) {
               <tbody className='divide-y divide-border/30'>
                 {[
                   ['clientName', 'string?', 'Optional. Shown in the invoice and email.'],
-                  ['clientEmail', 'string?', 'Optional. If set, invoice email is sent on creation and a receipt on payment.'],
+                  [
+                    'clientEmail',
+                    'string?',
+                    'Optional. If set, invoice email is sent on creation and a receipt on payment.',
+                  ],
                   ['token', 'string', 'Required. Settlement token mint address (USDC).'],
                   ['dueDate', 'ISO 8601?', 'Optional. After this date the invoice is marked overdue.'],
                   ['memo', 'string?', 'Optional. Internal note shown on the invoice.'],
                   ['lineItems', 'array', 'Required. At least one item with description, quantity, and unitPrice.'],
                 ].map(([f, t, d]) => (
                   <tr key={f} className='transition-colors hover:bg-muted/20'>
-                    <td className='px-5 py-3.5 font-mono text-[13px] font-medium text-indigo-600 dark:text-indigo-400'>{f}</td>
+                    <td className='px-5 py-3.5 font-mono text-[13px] font-medium text-indigo-600 dark:text-indigo-400'>
+                      {f}
+                    </td>
                     <td className='px-5 py-3.5 font-mono text-[13px] text-muted-foreground'>{t}</td>
                     <td className='px-5 py-3.5 text-[13px] leading-relaxed text-foreground/80'>{d}</td>
                   </tr>
@@ -189,7 +253,9 @@ export function RestApiSections({ apiSnippets }: RestApiSectionsProps) {
 
           <MethodBadge method='GET' path='/api/invoices/:id' />
           <CodeBlock label='bash' code={apiSnippets.getInvoice} />
-          <p className='text-sm text-muted-foreground'>Public endpoint — no auth required. Used by the client to view and pay the invoice.</p>
+          <p className='text-sm text-muted-foreground'>
+            Public endpoint — no auth required. Used by the client to view and pay the invoice.
+          </p>
 
           <div className='h-px bg-border/30' />
 
@@ -208,12 +274,17 @@ export function RestApiSections({ apiSnippets }: RestApiSectionsProps) {
         </div>
       </Section>
 
-      <Section id='subscriptions' icon={RefreshCw} title='Subscriptions' subtitle='Create recurring payment plans and manage subscribers.'>
+      <Section
+        id='subscriptions'
+        icon={RefreshCw}
+        title='Subscriptions'
+        subtitle='Create recurring payment plans and manage subscribers.'
+      >
         <div className='space-y-4'>
           <p className='text-sm text-muted-foreground leading-relaxed'>
             Subscribers authorize an SPL token delegation from the{' '}
-            <code className='rounded bg-muted/60 px-1.5 font-mono text-foreground'>/subscribe/:planId</code> page.
-            The relayer then charges them automatically at each renewal. Merchants get a webhook on every successful charge.
+            <code className='rounded bg-muted/60 px-1.5 font-mono text-foreground'>/subscribe/:planId</code> page. The
+            relayer then charges them automatically at each renewal. Merchants get a webhook on every successful charge.
           </p>
 
           <MethodBadge method='GET' path='/api/subscription-plans' />
@@ -229,7 +300,10 @@ export function RestApiSections({ apiSnippets }: RestApiSectionsProps) {
               <thead>
                 <tr className='border-b border-border/40 bg-muted/40'>
                   {['Field', 'Type', 'Description'].map((h) => (
-                    <th key={h} className='px-5 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground'>
+                    <th
+                      key={h}
+                      className='px-5 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground'
+                    >
                       {h}
                     </th>
                   ))}
@@ -244,7 +318,9 @@ export function RestApiSections({ apiSnippets }: RestApiSectionsProps) {
                   ['description', 'string?', 'Optional. Up to 300 characters.'],
                 ].map(([f, t, d]) => (
                   <tr key={f} className='transition-colors hover:bg-muted/20'>
-                    <td className='px-5 py-3.5 font-mono text-[13px] font-medium text-indigo-600 dark:text-indigo-400'>{f}</td>
+                    <td className='px-5 py-3.5 font-mono text-[13px] font-medium text-indigo-600 dark:text-indigo-400'>
+                      {f}
+                    </td>
                     <td className='px-5 py-3.5 font-mono text-[13px] text-muted-foreground'>{t}</td>
                     <td className='px-5 py-3.5 text-[13px] leading-relaxed text-foreground/80'>{d}</td>
                   </tr>
@@ -257,7 +333,9 @@ export function RestApiSections({ apiSnippets }: RestApiSectionsProps) {
 
           <MethodBadge method='PATCH' path='/api/subscription-plans/:id' />
           <CodeBlock label='bash' code={apiSnippets.togglePlan} />
-          <p className='text-sm text-muted-foreground'>Pausing a plan prevents new sign-ups but does not cancel existing subscribers.</p>
+          <p className='text-sm text-muted-foreground'>
+            Pausing a plan prevents new sign-ups but does not cancel existing subscribers.
+          </p>
 
           <div className='h-px bg-border/30' />
 
@@ -275,21 +353,26 @@ export function RestApiSections({ apiSnippets }: RestApiSectionsProps) {
           <CodeBlock label='bash' code={apiSnippets.cancelSubscriber} />
           <p className='text-sm text-muted-foreground'>
             Subscribers can also self-cancel from their{' '}
-            <code className='rounded bg-muted/60 px-1.5 font-mono text-foreground'>/manage/:subscriberId</code> page
-            by connecting the wallet they subscribed with.
+            <code className='rounded bg-muted/60 px-1.5 font-mono text-foreground'>/manage/:subscriberId</code> page by
+            connecting the wallet they subscribed with.
           </p>
 
           <div className='rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-4 text-sm dark:border-indigo-400/20 dark:bg-indigo-400/5'>
             <p className='font-semibold text-indigo-600 dark:text-indigo-400'>Renewal schedule</p>
             <p className='mt-1 leading-relaxed text-muted-foreground'>
-              Renewals run at midnight UTC. The relayer attempts each charge up to 3 times (10 PM, 11 PM, 12 AM).
-              If all attempts fail the subscriber is cancelled and notified by email.
+              Renewals run at midnight UTC. The relayer attempts each charge up to 3 times (10 PM, 11 PM, 12 AM). If all
+              attempts fail the subscriber is cancelled and notified by email.
             </p>
           </div>
         </div>
       </Section>
 
-      <Section id='api-webhooks' icon={Webhook} title='Webhooks' subtitle='Configure a webhook — Settlix POSTs to your URL on every confirmed payment.'>
+      <Section
+        id='api-webhooks'
+        icon={Webhook}
+        title='Webhooks'
+        subtitle='Configure a webhook — Settlix POSTs to your URL on every confirmed payment.'
+      >
         <div className='space-y-4'>
           <MethodBadge method='PATCH' path='/api/webhook' />
           <CodeBlock label='bash' code={apiSnippets.configWebhook} />
@@ -314,7 +397,12 @@ export function RestApiSections({ apiSnippets }: RestApiSectionsProps) {
         </div>
       </Section>
 
-      <Section id='errors' icon={Code2} title='Errors' subtitle='All errors follow a consistent JSON shape with a machine-readable code.'>
+      <Section
+        id='errors'
+        icon={Code2}
+        title='Errors'
+        subtitle='All errors follow a consistent JSON shape with a machine-readable code.'
+      >
         <CodeBlock label='json' code={apiSnippets.errorShape} />
       </Section>
     </>

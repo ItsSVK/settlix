@@ -7,12 +7,8 @@ import Image from 'next/image'
 import { getLogoByMint, getSymbolByMint } from '@/lib/tokens/tokens'
 import { JupiterLogo } from '@/components/shared/jupiter-logo'
 import type { InvoiceData } from './invoice-pay-card'
-
-const SOLSCAN_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK === 'devnet' ? '?cluster=devnet' : ''
-
-function shorten(addr: string, start = 6, end = 4) {
-  return `${addr.slice(0, start)}…${addr.slice(-end)}`
-}
+import { shorten } from '@/lib/utils'
+import { SOLSCAN_CLUSTER } from '@/lib/solana/constants'
 
 function fmt(n: string) {
   return Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -80,7 +76,9 @@ export function InvoiceReceipt({
           {/* Amount Banner */}
           <div className='bg-green-500/5 px-6 py-10 text-center border-b border-border/40 relative overflow-hidden'>
             <div className='absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-green-500/50 to-transparent opacity-50' />
-            <p className='text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-3'>Amount Paid</p>
+            <p className='text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-3'>
+              Amount Paid
+            </p>
             <div className='flex items-baseline justify-center gap-2'>
               <span className='text-6xl font-mono font-bold tracking-tight text-foreground'>{fmt(invoice.amount)}</span>
               <span className='text-2xl font-medium text-muted-foreground'>USDC</span>
@@ -91,13 +89,13 @@ export function InvoiceReceipt({
           <div className='px-6 py-8 space-y-8'>
             <div className='flex justify-between items-center'>
               <div>
-                <p className='text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1'>Billed To</p>
+                <p className='text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1'>
+                  Billed To
+                </p>
                 <p className='text-sm font-medium text-foreground'>
                   {invoice.clientName ?? shorten(invoice.merchantWallet)}
                 </p>
-                {invoice.clientEmail && (
-                  <p className='text-xs text-muted-foreground mt-0.5'>{invoice.clientEmail}</p>
-                )}
+                {invoice.clientEmail && <p className='text-xs text-muted-foreground mt-0.5'>{invoice.clientEmail}</p>}
               </div>
               <div className='text-right'>
                 <p className='text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1'>Date</p>
@@ -112,7 +110,9 @@ export function InvoiceReceipt({
             </div>
 
             <div>
-              <p className='text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-3'>Line Items</p>
+              <p className='text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-3'>
+                Line Items
+              </p>
               <div className='space-y-3 rounded-2xl bg-muted/30 p-4 border border-border/30'>
                 {invoice.lineItems.map((item) => (
                   <div key={item.id} className='flex justify-between items-center text-sm'>
@@ -145,8 +145,7 @@ export function InvoiceReceipt({
                     <div className='flex items-center justify-between px-4 py-3'>
                       <span className='text-xs text-muted-foreground'>Merchant received</span>
                       <span className='text-sm font-semibold text-foreground'>
-                        {fmt(invoice.amount)}{' '}
-                        <span className='text-green-500 font-normal'>{invoice.tokenSymbol}</span>
+                        {fmt(invoice.amount)} <span className='text-green-500 font-normal'>{invoice.tokenSymbol}</span>
                       </span>
                     </div>
                     {!isDirectPayment && finalInputToken !== invoice.token && Number(finalInputAmount) > 0 && (

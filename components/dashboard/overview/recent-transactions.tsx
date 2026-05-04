@@ -75,9 +75,7 @@ export function RecentTransactions({ data, loading = false }: RecentTransactions
                 {shortWallet(tx.userWallet).slice(0, 2)}
               </div>
               <div className='flex-1 min-w-0'>
-                <p className='text-sm font-medium text-foreground truncate'>
-                  {tx.linkTitle ?? 'Payment Link'}
-                </p>
+                <p className='text-sm font-medium text-foreground truncate'>{tx.linkTitle ?? 'Payment Link'}</p>
                 <p className='text-xs text-muted-foreground'>
                   {shortWallet(tx.userWallet)} · {timeAgo(tx.createdAt)}
                 </p>

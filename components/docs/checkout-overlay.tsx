@@ -18,7 +18,9 @@ export function CheckoutOverlay({ activeId, onClose, onPaid }: CheckoutOverlayPr
   useEffect(() => setMounted(true), [])
 
   const handleKey = useCallback(
-    (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() },
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    },
     [onClose],
   )
 

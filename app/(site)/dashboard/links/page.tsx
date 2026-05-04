@@ -34,9 +34,12 @@ export default function LinksPage() {
           initial={false}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className='mb-8 flex items-center justify-between'
+          className='mb-8 flex items-center justify-between flex-col gap-4 sm:flex-row'
         >
-          <h1 className='text-2xl font-bold text-foreground'>Payment Links</h1>
+          <div>
+            <h1 className='text-2xl font-bold text-foreground'>Payment Links</h1>
+            <p className='mt-1 text-sm text-muted-foreground'>Manage payments with links that settle in your wallet.</p>
+          </div>
           <CreateLinkDialog />
         </motion.div>
 

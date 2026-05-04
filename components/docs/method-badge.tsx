@@ -13,7 +13,9 @@ interface MethodBadgeProps {
 export function MethodBadge({ method, path }: MethodBadgeProps) {
   return (
     <div className='mb-4 flex items-center gap-3'>
-      <span className={`rounded-lg px-2.5 py-1 font-mono text-[11px] font-bold uppercase ring-1 ${METHOD_COLOR[method]}`}>
+      <span
+        className={`rounded-lg px-2.5 py-1 font-mono text-[11px] font-bold uppercase ring-1 ${METHOD_COLOR[method]}`}
+      >
         {method}
       </span>
       <code className='font-mono text-sm text-foreground/80'>{path}</code>

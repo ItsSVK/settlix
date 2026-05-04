@@ -129,9 +129,12 @@ export async function POST(req: NextRequest) {
       maxUses: parsed.data.maxUses,
     })
 
-    return NextResponse.json({
-      id: link.id,
-      payPath: `/pay/${link.id}`,
-    }, { status: 201 })
+    return NextResponse.json(
+      {
+        id: link.id,
+        payPath: `/pay/${link.id}`,
+      },
+      { status: 201 },
+    )
   })
 }

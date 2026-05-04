@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
-import { ApiError, handleApi, readJsonBody } from '@/lib/api/errors'
+import { handleApi, readJsonBody } from '@/lib/api/errors'
 import { NOT_FOUND, VALIDATION } from '@/lib/api/constants'
 import { updatePlanActiveBody } from '@/lib/validation'
 import { requireAuth } from '@/lib/auth/require-auth'

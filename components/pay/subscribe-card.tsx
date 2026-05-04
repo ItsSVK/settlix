@@ -6,8 +6,7 @@ import { CheckCircle, ExternalLink, Mail, RefreshCw, User } from 'lucide-react'
 import Image from 'next/image'
 import { SubscribeButton } from './subscribe-button'
 import type { SubscribeResult } from '@/lib/hooks/use-subscription-flow'
-
-const SOLSCAN_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK === 'devnet' ? '?cluster=devnet' : ''
+import { SOLSCAN_CLUSTER } from '@/lib/solana/constants'
 
 const INTERVAL_LABELS: Record<string, string> = {
   weekly: 'week',
@@ -32,7 +31,12 @@ function shorten(addr: string) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`
 }
 
-function SuccessState({ result, amount, tokenSymbol, interval }: {
+function SuccessState({
+  result,
+  amount,
+  tokenSymbol,
+  interval,
+}: {
   result: SubscribeResult
   amount: string
   tokenSymbol: string
@@ -71,7 +75,9 @@ function SuccessState({ result, amount, tokenSymbol, interval }: {
           <span className='text-xs text-muted-foreground'>Amount</span>
           <span className='text-sm font-semibold text-foreground'>
             {Number(amount).toFixed(2)}{' '}
-            <span className='font-normal text-muted-foreground'>{tokenSymbol} / {INTERVAL_LABELS[interval] ?? interval}</span>
+            <span className='font-normal text-muted-foreground'>
+              {tokenSymbol} / {INTERVAL_LABELS[interval] ?? interval}
+            </span>
           </span>
         </div>
         <div className='flex items-center justify-between px-4 py-2.5'>
@@ -116,12 +122,15 @@ export function SubscribeCard({ plan }: { plan: PlanData | null }) {
   const body = (() => {
     if (!plan) {
       return (
-        <motion.div key='not-found' initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='py-10 text-center space-y-2'>
+        <motion.div
+          key='not-found'
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className='py-10 text-center space-y-2'
+        >
           <p className='text-2xl'>🔍</p>
           <p className='text-sm font-medium text-foreground'>Subscription plan not found</p>
-          <p className='text-xs text-muted-foreground'>
-            This link may be invalid or the plan may have been removed.
-          </p>
+          <p className='text-xs text-muted-foreground'>This link may be invalid or the plan may have been removed.</p>
         </motion.div>
       )
     }
@@ -136,12 +145,15 @@ export function SubscribeCard({ plan }: { plan: PlanData | null }) {
 
     if (!plan.active) {
       return (
-        <motion.div key='inactive' initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='py-10 text-center space-y-2'>
+        <motion.div
+          key='inactive'
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className='py-10 text-center space-y-2'
+        >
           <p className='text-2xl'>⏸️</p>
           <p className='text-sm font-medium text-foreground'>This plan is currently paused</p>
-          <p className='text-xs text-muted-foreground'>
-            The merchant has temporarily disabled new subscriptions.
-          </p>
+          <p className='text-xs text-muted-foreground'>The merchant has temporarily disabled new subscriptions.</p>
         </motion.div>
       )
     }
@@ -149,18 +161,18 @@ export function SubscribeCard({ plan }: { plan: PlanData | null }) {
     return (
       <motion.div key='form' className='space-y-4'>
         <div className='rounded-xl border border-border/30 bg-muted/20 p-4 text-center'>
-          <p className='text-xs text-muted-foreground'>Billed every {INTERVAL_LABELS[plan.interval] ?? plan.interval}</p>
+          <p className='text-xs text-muted-foreground'>
+            Billed every {INTERVAL_LABELS[plan.interval] ?? plan.interval}
+          </p>
           <div className='mt-1 flex items-baseline justify-center gap-2'>
-            {plan.tokenLogo && (
-              <Image src={plan.tokenLogo} alt='' width={24} height={24} className='mb-1' />
-            )}
-            <p className='text-4xl font-bold tracking-tight text-foreground'>
-              {Number(plan.amount).toFixed(2)}
-            </p>
+            {plan.tokenLogo && <Image src={plan.tokenLogo} alt='' width={24} height={24} className='mb-1' />}
+            <p className='text-4xl font-bold tracking-tight text-foreground'>{Number(plan.amount).toFixed(2)}</p>
           </div>
           <div className='mt-1 flex items-center justify-center gap-1.5 text-sm text-muted-foreground'>
             <RefreshCw className='h-3.5 w-3.5' />
-            <span>{plan.tokenSymbol} / {INTERVAL_LABELS[plan.interval] ?? plan.interval}</span>
+            <span>
+              {plan.tokenSymbol} / {INTERVAL_LABELS[plan.interval] ?? plan.interval}
+            </span>
           </div>
         </div>
 
@@ -215,14 +227,10 @@ export function SubscribeCard({ plan }: { plan: PlanData | null }) {
               </p>
             </div>
 
-            {plan?.title && (
-              <h1 className='mt-2 text-2xl font-bold tracking-tight text-foreground'>{plan.title}</h1>
-            )}
+            {plan?.title && <h1 className='mt-2 text-2xl font-bold tracking-tight text-foreground'>{plan.title}</h1>}
 
             {plan?.description && (
-              <p className='mt-2 max-w-[280px] text-sm text-muted-foreground leading-relaxed'>
-                {plan.description}
-              </p>
+              <p className='mt-2 max-w-[280px] text-sm text-muted-foreground leading-relaxed'>{plan.description}</p>
             )}
 
             {plan && (

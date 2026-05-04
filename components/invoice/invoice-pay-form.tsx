@@ -62,9 +62,7 @@ export function InvoicePayForm({
             <motion.div key='form' className='space-y-4'>
               <div className='rounded-xl border border-border/30 bg-muted/20 p-4 text-center'>
                 <p className='text-xs text-muted-foreground'>Amount due</p>
-                <p className='mt-1 text-4xl font-bold tracking-tight text-foreground'>
-                  {Number(amount).toFixed(2)}
-                </p>
+                <p className='mt-1 text-4xl font-bold tracking-tight text-foreground'>{Number(amount).toFixed(2)}</p>
                 <p className='text-sm text-muted-foreground'>USDC</p>
               </div>
 

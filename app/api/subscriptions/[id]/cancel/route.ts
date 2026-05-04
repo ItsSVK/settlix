@@ -49,7 +49,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     }
 
     // Subscriber self-cancel: wallet address provided in body
-    const body = await readJsonBody(req).catch(() => null) as Record<string, unknown> | null
+    const body = (await readJsonBody(req).catch(() => null)) as Record<string, unknown> | null
     const walletAddress = typeof body?.walletAddress === 'string' ? body.walletAddress.trim() : null
     if (!walletAddress) {
       throw new ApiError(401, 'Provide a session or walletAddress in the request body', UNAUTHORIZED)

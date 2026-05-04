@@ -29,9 +29,14 @@ export default function InvoicesPage() {
           initial={false}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className='mb-8 flex items-center justify-between'
+          className='mb-8 flex items-center justify-between flex-col gap-4 sm:flex-row'
         >
-          <h1 className='text-2xl font-bold text-foreground'>Invoices</h1>
+          <div>
+            <h1 className='text-2xl font-bold text-foreground'>Invoices</h1>
+            <p className='mt-1 text-sm text-muted-foreground'>
+              Manage invoices, see payment status, and send reminders from one place.
+            </p>
+          </div>
           <CreateInvoiceDialog />
         </motion.div>
 

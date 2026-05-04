@@ -2,15 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'motion/react'
-import {
-  Area,
-  AreaChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-} from 'recharts'
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts'
 import type { RevenueDay } from '@/lib/hooks/use-dashboard-stats'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -59,9 +51,7 @@ export function RevenueChart({ data, loading = false }: RevenueChartProps) {
       <div className='mb-6 flex items-center justify-between'>
         <div>
           <h2 className='text-lg font-semibold text-foreground'>Revenue Overview</h2>
-          <p className='text-sm text-muted-foreground'>
-            Total USDC received across all payment links
-          </p>
+          <p className='text-sm text-muted-foreground'>Total USDC received across all payment links</p>
         </div>
         <div className='flex gap-1 rounded-lg border border-border/50 bg-muted/30 p-1'>
           {(['7d', '30d'] as Range[]).map((r) => (
@@ -69,9 +59,7 @@ export function RevenueChart({ data, loading = false }: RevenueChartProps) {
               key={r}
               onClick={() => setRange(r)}
               className={`rounded-md px-3 py-1 text-xs font-medium transition-all ${
-                range === r
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
+                range === r ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               {r}
@@ -94,12 +82,7 @@ export function RevenueChart({ data, loading = false }: RevenueChartProps) {
                   <stop offset='95%' stopColor='var(--color-primary)' stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid
-                strokeDasharray='3 3'
-                vertical={false}
-                stroke='var(--color-border)'
-                strokeOpacity={0.5}
-              />
+              <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='var(--color-border)' strokeOpacity={0.5} />
               <XAxis
                 dataKey='date'
                 tickFormatter={formatDate}
@@ -126,7 +109,11 @@ export function RevenueChart({ data, loading = false }: RevenueChartProps) {
                           {formatDate(label as string)}
                         </p>
                         <p className='text-lg font-bold text-foreground'>
-                          ${(payload[0].value as number).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          $
+                          {(payload[0].value as number).toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
                         </p>
                       </div>
                     )

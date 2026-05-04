@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { useWalletModal } from '@solana/wallet-adapter-react-ui'
+
 import { VersionedTransaction } from '@solana/web3.js'
 
 export type SubscribeStep = 'idle' | 'building' | 'signing' | 'submitting' | 'done' | 'error'
@@ -28,8 +28,8 @@ interface UseSubscriptionFlowOptions {
 }
 
 export function useSubscriptionFlow({ onSuccess }: UseSubscriptionFlowOptions) {
-  const { wallet, publicKey, signTransaction, connected, connecting, connect } = useWallet()
-  const { visible, setVisible } = useWalletModal()
+  const { wallet, publicKey, signTransaction, connected, connect } = useWallet()
+
   const [step, setStep] = useState<SubscribeStep>('idle')
   const [errorMsg, setErrorMsg] = useState('')
   const [connectRequested, setConnectRequested] = useState(false)
@@ -43,17 +43,14 @@ export function useSubscriptionFlow({ onSuccess }: UseSubscriptionFlowOptions) {
   const requestWalletConnection = useCallback(async () => {
     setErrorMsg('')
     setConnectRequested(true)
-    if (!wallet) {
-      setVisible(true)
-      return
-    }
+    if (!wallet) return
     try {
       await connect()
     } catch (e) {
       handleError(e)
       setConnectRequested(false)
     }
-  }, [wallet, setVisible, connect, handleError])
+  }, [wallet, connect, handleError])
 
   const subscribe = useCallback(
     async (planId: string, meta?: { subscriberName?: string; subscriberEmail?: string }) => {

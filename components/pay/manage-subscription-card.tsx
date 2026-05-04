@@ -59,7 +59,6 @@ export interface ManagedSubscription {
   }[]
 }
 
-
 function CancelButton({
   subscriptionId,
   subscriberWallet,

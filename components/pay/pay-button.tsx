@@ -17,8 +17,17 @@ interface PayButtonProps {
 }
 
 export function PayButton({ linkId, selectedToken, quoteReady, onSuccess, className }: PayButtonProps) {
-  const { step, setStep, errorMsg, isLoading, connected, publicKey, requestWalletConnection, signAndExecute, handleError } =
-    usePaymentFlow({ onSuccess })
+  const {
+    step,
+    setStep,
+    errorMsg,
+    isLoading,
+    connected,
+    publicKey,
+    requestWalletConnection,
+    signAndExecute,
+    handleError,
+  } = usePaymentFlow({ onSuccess })
 
   const pay = useCallback(async () => {
     if (!connected || !publicKey) {
@@ -40,7 +49,14 @@ export function PayButton({ linkId, selectedToken, quoteReady, onSuccess, classN
 
       const { transaction: txBase64, requestId, isDirect, inAmount, outAmount } = orderData
       const executionId = crypto.randomUUID()
-      const paymentContext = { executionId, source: 'payment_link', linkId, userWallet: publicKey.toBase58(), inputToken: selectedToken.mint, inAmount }
+      const paymentContext = {
+        executionId,
+        source: 'payment_link',
+        linkId,
+        userWallet: publicKey.toBase58(),
+        inputToken: selectedToken.mint,
+        inAmount,
+      }
 
       // 2 + 3. Sign and execute
       await signAndExecute(
@@ -54,7 +70,12 @@ export function PayButton({ linkId, selectedToken, quoteReady, onSuccess, classN
             })
             const body = await res.json()
             if (!res.ok || body.status !== 'Success') throw new Error(body.error || 'Direct transfer failed')
-            return { status: 'Success', signature: body.signature, inputAmountResult: inAmount, outputAmountResult: outAmount }
+            return {
+              status: 'Success',
+              signature: body.signature,
+              inputAmountResult: inAmount,
+              outputAmountResult: outAmount,
+            }
           } else {
             const res = await fetch('/api/checkout/pay/execute', {
               method: 'POST',
@@ -70,7 +91,17 @@ export function PayButton({ linkId, selectedToken, quoteReady, onSuccess, classN
     } catch (e) {
       handleError(e)
     }
-  }, [connected, publicKey, selectedToken, quoteReady, linkId, requestWalletConnection, signAndExecute, handleError, setStep])
+  }, [
+    connected,
+    publicKey,
+    selectedToken,
+    quoteReady,
+    linkId,
+    requestWalletConnection,
+    signAndExecute,
+    handleError,
+    setStep,
+  ])
 
   const isDisabled = isLoading || step === 'done' || !selectedToken || !quoteReady
 

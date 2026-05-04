@@ -8,7 +8,9 @@ import { RestApiHero, RestApiSections } from '@/components/docs/rest-api-section
 
 export default function DocsPage() {
   const [origin, setOrigin] = useState('https://settlix.xyz')
-  useEffect(() => { setOrigin(window.location.origin) }, [])
+  useEffect(() => {
+    setOrigin(window.location.origin)
+  }, [])
 
   const snippets = makeSnippets(origin)
   const apiSnippets = makeApiSnippets(origin)

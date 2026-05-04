@@ -18,8 +18,7 @@ export default function DashboardOverviewPage() {
     ? `$${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     : '$0.00'
 
-  const successRate =
-    stats?.overallSuccessRate != null ? `${stats.overallSuccessRate}%` : '—'
+  const successRate = stats?.overallSuccessRate != null ? `${stats.overallSuccessRate}%` : '—'
 
   return (
     <div className='flex-1 bg-muted/40 dark:bg-background/90 min-h-screen'>
@@ -32,8 +31,8 @@ export default function DashboardOverviewPage() {
         >
           <h1 className='text-3xl font-bold tracking-tight text-foreground'>Welcome back,</h1>
           <p className='text-muted-foreground mt-1'>
-            {wallet ? `${wallet.slice(0, 4)}...${wallet.slice(-4)}` : 'Merchant'} · Here&apos;s your
-            business at a glance.
+            {wallet ? `${wallet.slice(0, 4)}...${wallet.slice(-4)}` : 'Merchant'} · Here&apos;s your business at a
+            glance.
           </p>
         </motion.div>
 
@@ -84,10 +83,7 @@ export default function DashboardOverviewPage() {
             <TopLinksChart data={stats?.topLinks ?? []} loading={isLoading} />
           </div>
           <div className='lg:col-span-2'>
-            <InvoiceStatusChart
-              data={stats?.invoiceStats ?? { paid: 0, unpaid: 0, overdue: 0 }}
-              loading={isLoading}
-            />
+            <InvoiceStatusChart data={stats?.invoiceStats ?? { paid: 0, unpaid: 0, overdue: 0 }} loading={isLoading} />
           </div>
         </div>
 

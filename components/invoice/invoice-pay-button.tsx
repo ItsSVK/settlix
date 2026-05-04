@@ -16,9 +16,24 @@ interface InvoicePayButtonProps {
   className?: string
 }
 
-export function InvoicePayButton({ invoiceId, selectedToken, quoteReady, onSuccess, className }: InvoicePayButtonProps) {
-  const { step, setStep, errorMsg, isLoading, connected, publicKey, requestWalletConnection, signAndExecute, handleError } =
-    usePaymentFlow({ onSuccess })
+export function InvoicePayButton({
+  invoiceId,
+  selectedToken,
+  quoteReady,
+  onSuccess,
+  className,
+}: InvoicePayButtonProps) {
+  const {
+    step,
+    setStep,
+    errorMsg,
+    isLoading,
+    connected,
+    publicKey,
+    requestWalletConnection,
+    signAndExecute,
+    handleError,
+  } = usePaymentFlow({ onSuccess })
 
   const pay = useCallback(async () => {
     if (!connected || !publicKey) {
@@ -59,7 +74,12 @@ export function InvoicePayButton({ invoiceId, selectedToken, quoteReady, onSucce
             })
             const body = await res.json()
             if (!res.ok || body.status !== 'Success') throw new Error(body.error || 'Direct transfer failed')
-            return { status: 'Success', signature: body.signature, inputAmountResult: inAmount, outputAmountResult: outAmount }
+            return {
+              status: 'Success',
+              signature: body.signature,
+              inputAmountResult: inAmount,
+              outputAmountResult: outAmount,
+            }
           } else {
             const res = await fetch('/api/checkout/pay/execute', {
               method: 'POST',
@@ -75,7 +95,17 @@ export function InvoicePayButton({ invoiceId, selectedToken, quoteReady, onSucce
     } catch (e) {
       handleError(e)
     }
-  }, [connected, publicKey, selectedToken, quoteReady, invoiceId, requestWalletConnection, signAndExecute, handleError, setStep])
+  }, [
+    connected,
+    publicKey,
+    selectedToken,
+    quoteReady,
+    invoiceId,
+    requestWalletConnection,
+    signAndExecute,
+    handleError,
+    setStep,
+  ])
 
   const isDisabled = isLoading || step === 'done' || !selectedToken || !quoteReady
 

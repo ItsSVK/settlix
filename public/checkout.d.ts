@@ -3,7 +3,7 @@ interface SettlixCheckout {
     linkId: string
     metadata?: Record<string, unknown>
     onSuccess?: (txSignature: string, metadata: Record<string, unknown> | null) => void
-    onClose?:   (metadata: Record<string, unknown> | null) => void
+    onClose?: (metadata: Record<string, unknown> | null) => void
   }): void
   close(): void
 }

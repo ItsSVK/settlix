@@ -6,12 +6,8 @@ import { Button } from '@/components/ui/button'
 import type { Link } from '@/lib/hooks/use-links'
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-
-const SOLSCAN_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK === 'devnet' ? '?cluster=devnet' : ''
-
-function shorten(s: string, start = 6, end = 4) {
-  return `${s.slice(0, start)}…${s.slice(-end)}`
-}
+import { shorten } from '@/lib/utils'
+import { SOLSCAN_CLUSTER } from '@/lib/solana/constants'
 
 interface SplitModalProps {
   open: boolean

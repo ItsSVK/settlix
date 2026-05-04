@@ -71,9 +71,6 @@ export async function POST(req: NextRequest) {
       description: parsed.data.description,
     })
 
-    return NextResponse.json(
-      { id: plan.id },
-      { status: 201 },
-    )
+    return NextResponse.json({ id: plan.id }, { status: 201 })
   })
 }

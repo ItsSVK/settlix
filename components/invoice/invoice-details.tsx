@@ -2,10 +2,7 @@
 
 import { AlertTriangle, Clock } from 'lucide-react'
 import type { InvoiceData } from './invoice-pay-card'
-
-function shorten(addr: string, start = 6, end = 4) {
-  return `${addr.slice(0, start)}…${addr.slice(-end)}`
-}
+import { shorten } from '@/lib/utils'
 
 function fmt(n: string) {
   return Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })

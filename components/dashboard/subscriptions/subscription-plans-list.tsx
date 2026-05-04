@@ -148,7 +148,9 @@ function PlanRow({
             </span>
           </span>
           <span className='rounded-xl border border-border/50 bg-background/70 px-3 py-2'>
-            <span className='block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground'>Total</span>
+            <span className='block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground'>
+              Total
+            </span>
             <span className='mt-1 text-sm font-bold text-foreground'>{subscribers.length}</span>
           </span>
           <span className='rounded-xl border border-border/50 bg-background/70 px-3 py-2'>
@@ -189,11 +191,7 @@ function PlanRow({
               size='sm'
               className='h-8 w-8 rounded-lg p-0 text-muted-foreground transition-colors hover:bg-background/80 hover:text-foreground'
             >
-              {plan.active ? (
-                <ToggleRight className='h-5 w-5 text-green-500' />
-              ) : (
-                <ToggleLeft className='h-5 w-5' />
-              )}
+              {plan.active ? <ToggleRight className='h-5 w-5 text-green-500' /> : <ToggleLeft className='h-5 w-5' />}
             </Button>
           )}
 

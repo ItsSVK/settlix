@@ -59,9 +59,7 @@ export async function GET(req: NextRequest) {
     const overallSuccessRate =
       allExecutionStatuses.length > 0
         ? Math.round(
-            (allExecutionStatuses.filter((e) => e.status === 'paid').length /
-              allExecutionStatuses.length) *
-              100,
+            (allExecutionStatuses.filter((e) => e.status === 'paid').length / allExecutionStatuses.length) * 100,
           )
         : null
 

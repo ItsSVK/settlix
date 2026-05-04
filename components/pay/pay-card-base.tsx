@@ -10,17 +10,17 @@ import { PayButton } from './pay-button'
 import { SuccessOverlay } from './success-overlay'
 import { SolanaQRModal } from './solana-qr-modal'
 import { ScanLine } from 'lucide-react'
-
-function shorten(addr: string) {
-  return `${addr.slice(0, 6)}…${addr.slice(-4)}`
-}
+import { shorten } from '@/lib/utils'
 
 export function PayCardBase({
   linkId,
   onPaid,
 }: {
   linkId: string
-  onPaid?: (txSignature: string, details?: { swap?: { inputAmount: string; inputDecimals: number; inputSymbol: string }, tokenMint?: string }) => void
+  onPaid?: (
+    txSignature: string,
+    details?: { swap?: { inputAmount: string; inputDecimals: number; inputSymbol: string }; tokenMint?: string },
+  ) => void
 }) {
   const { data: link, isLoading: linkLoading, error: linkError } = usePaymentLink(linkId)
   const [selectedToken, setSelectedToken] = useState<TokenInfo | null>(null)

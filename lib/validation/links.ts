@@ -20,7 +20,10 @@ export const createLinkBody = z.object({
    */
   recipients: z.array(splitRecipientInput).min(1).max(10).optional(),
   /** YYYY-MM-DD date string — link stops accepting payments after end of this day (UTC). */
-  expiresAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expiresAt must be YYYY-MM-DD').optional(),
+  expiresAt: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'expiresAt must be YYYY-MM-DD')
+    .optional(),
   /** Maximum number of successful payments the link will accept. */
   maxUses: z.number().int().min(1).max(100_000).optional(),
 })

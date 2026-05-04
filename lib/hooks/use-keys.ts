@@ -52,6 +52,8 @@ export function useKeys() {
     keys,
     isLoading,
     refresh: refetch,
-    revokeKey: async (id: string) => { await revokeMutation.mutateAsync(id) },
+    revokeKey: async (id: string) => {
+      await revokeMutation.mutateAsync(id)
+    },
   }
 }

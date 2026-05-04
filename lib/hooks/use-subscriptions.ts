@@ -81,7 +81,9 @@ export function useSubscriptions() {
     isLoading,
     error,
     refresh: refetch,
-    cancelSubscription: async (id: string) => { await cancelMutation.mutateAsync(id) },
+    cancelSubscription: async (id: string) => {
+      await cancelMutation.mutateAsync(id)
+    },
   }
 }
 
@@ -129,9 +131,13 @@ export function useSubscriptionPlans() {
     isLoading,
     error,
     refresh: refetch,
-    togglePlanActive: async (id: string, active: boolean) => { await toggleActiveMutation.mutateAsync({ id, active }) },
+    togglePlanActive: async (id: string, active: boolean) => {
+      await toggleActiveMutation.mutateAsync({ id, active })
+    },
     togglePlanActivePending: toggleActiveMutation.isPending,
-    archivePlan: async (id: string) => { await archiveMutation.mutateAsync(id) },
+    archivePlan: async (id: string) => {
+      await archiveMutation.mutateAsync(id)
+    },
     archivePlanPending: archiveMutation.isPending,
   }
 }

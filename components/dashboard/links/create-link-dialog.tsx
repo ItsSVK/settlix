@@ -13,15 +13,12 @@ import { getDefaultUsdcMint } from '@/lib/solana/constants'
 import { DatePickerInput } from '@/components/ui/date-picker-input'
 import { apiClient } from '@/lib/api/client'
 import { useLinks } from '@/lib/hooks/use-links'
+import { shorten } from '@/lib/utils'
 
 interface Partner {
   id: string
   wallet: string
   percent: string
-}
-
-function shorten(s: string, start = 6, end = 4) {
-  return `${s.slice(0, start)}…${s.slice(-end)}`
 }
 
 function toBasisPoints(percent: string): number {

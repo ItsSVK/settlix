@@ -10,9 +10,7 @@ import type { JupiterOrderBody } from '@/lib/validation'
 
 export async function executeJupiterOrderRequest(body: JupiterOrderBody) {
   try {
-    const pay = body.invoiceId
-      ? await getInvoicePayDetails(body.invoiceId)
-      : await getPaymentLinkByDetails(body.payId!)
+    const pay = body.invoiceId ? await getInvoicePayDetails(body.invoiceId) : await getPaymentLinkByDetails(body.payId!)
     const rawOut = decimalToBigIntUSDC(pay.amount)
 
     // ── Same-mint shortcut ────────────────────────────────────────────────────

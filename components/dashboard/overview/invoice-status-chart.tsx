@@ -76,7 +76,7 @@ export function InvoiceStatusChart({ data, loading = false }: InvoiceStatusChart
                 <Tooltip
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
-                      const item = payload[0].payload as typeof chartData[number]
+                      const item = payload[0].payload as (typeof chartData)[number]
                       return (
                         <div className='rounded-xl border border-border/50 bg-background/95 p-3 shadow-xl backdrop-blur-md'>
                           <p className='text-sm font-medium text-foreground'>{item.label}</p>

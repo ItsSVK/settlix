@@ -42,7 +42,7 @@ export async function buildSubscriptionAuthorizationTx(params: {
   mintDecimals: number
   planId: string
 }): Promise<VersionedTransaction> {
-  const { connection, subscriber, relayer, settlementMint, transferAmountRaw, totalDelegationRaw, mintDecimals, planId } = params
+  const { connection, subscriber, relayer, settlementMint, totalDelegationRaw, mintDecimals, planId } = params
 
   const tokenProgram = await resolveTokenProgram(connection, settlementMint)
   const subscriberAta = getAssociatedTokenAddressSync(settlementMint, subscriber, false, tokenProgram)
@@ -93,7 +93,16 @@ export async function buildRenewalTx(params: {
   mintDecimals: number
   subscriptionId: string
 }): Promise<VersionedTransaction> {
-  const { connection, subscriber, merchant, relayerKeypair, settlementMint, transferAmountRaw, mintDecimals, subscriptionId } = params
+  const {
+    connection,
+    subscriber,
+    merchant,
+    relayerKeypair,
+    settlementMint,
+    transferAmountRaw,
+    mintDecimals,
+    subscriptionId,
+  } = params
 
   const tokenProgram = await resolveTokenProgram(connection, settlementMint)
   const subscriberAta = getAssociatedTokenAddressSync(settlementMint, subscriber, false, tokenProgram)

@@ -92,10 +92,10 @@ export function ConnectButton({ className, onSuccess }: ConnectButtonProps) {
     step === 'signing' || step === 'done'
       ? step
       : connectRequested && visible && !wallet
-      ? 'selecting'
-      : connectRequested && (connecting || (!!wallet && !connected))
-      ? 'connecting'
-      : 'idle'
+        ? 'selecting'
+        : connectRequested && (connecting || (!!wallet && !connected))
+          ? 'connecting'
+          : 'idle'
 
   const labels: Record<Step, string> = {
     idle: connected ? 'Sign in' : 'Connect Wallet',

@@ -1,16 +1,7 @@
 'use client'
 
 import { motion } from 'motion/react'
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-  Cell,
-} from 'recharts'
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, Cell } from 'recharts'
 import type { TopLink } from '@/lib/hooks/use-dashboard-stats'
 
 interface TopLinksChartProps {
@@ -84,7 +75,11 @@ export function TopLinksChart({ data, loading = false }: TopLinksChartProps) {
                           {item.title ?? 'Untitled'}
                         </p>
                         <p className='text-base font-bold text-foreground'>
-                          ${item.volume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          $
+                          {item.volume.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
                         </p>
                         <p className='text-xs text-muted-foreground'>{item.paidCount} payments</p>
                       </div>
@@ -96,11 +91,7 @@ export function TopLinksChart({ data, loading = false }: TopLinksChartProps) {
               />
               <Bar dataKey='volume' radius={[6, 6, 0, 0]}>
                 {chartData.map((_, i) => (
-                  <Cell
-                    key={i}
-                    fill='var(--color-primary)'
-                    opacity={1 - i * 0.15}
-                  />
+                  <Cell key={i} fill='var(--color-primary)' opacity={1 - i * 0.15} />
                 ))}
               </Bar>
             </BarChart>

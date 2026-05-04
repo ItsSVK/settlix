@@ -14,7 +14,7 @@ export default function ApiKeysPage() {
           initial={false}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className='mb-8 flex items-center justify-between'
+          className='mb-8 flex flex-col items-center justify-between gap-4 sm:flex-row'
         >
           <span>
             <h1 className='text-2xl font-bold text-foreground'>API Keys</h1>

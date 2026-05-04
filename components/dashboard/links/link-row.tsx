@@ -1,22 +1,17 @@
 'use client'
 
-const SOLSCAN_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK === 'devnet' ? '?cluster=devnet' : ''
-
 import { useState } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'motion/react'
 import { Copy, Check, ExternalLink, ToggleLeft, ToggleRight, QrCode, GitFork, Loader2 } from 'lucide-react'
 import { useLinks, type Link } from '@/lib/hooks/use-links'
 import { Button } from '@/components/ui/button'
-import { copyText } from '@/lib/utils'
+import { copyText, shorten } from '@/lib/utils'
 import { QRModal } from './qr-modal'
 import { SplitModal } from './split-modal'
-import { getDecimalsByMint, getLogoByMint, getNameByMint, TOKENS } from '@/lib/tokens/tokens'
+import { getDecimalsByMint, getLogoByMint, getNameByMint } from '@/lib/tokens/tokens'
 import { ConfirmationModal } from '@/components/shared/confirmation-modal'
-
-function shorten(s: string, start = 6, end = 4) {
-  return `${s.slice(0, start)}…${s.slice(-end)}`
-}
+import { SOLSCAN_CLUSTER } from '@/lib/solana/constants'
 
 interface LinkRowProps {
   link: Link

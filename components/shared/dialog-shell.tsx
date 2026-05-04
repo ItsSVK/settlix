@@ -21,14 +21,7 @@ interface DialogShellProps {
   align?: 'center' | 'top'
 }
 
-export function DialogShell({
-  open,
-  onClose,
-  title,
-  children,
-  maxWidth = 'lg',
-  align = 'center',
-}: DialogShellProps) {
+export function DialogShell({ open, onClose, title, children, maxWidth = 'lg', align = 'center' }: DialogShellProps) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -42,9 +35,7 @@ export function DialogShell({
       {open && (
         <div className='fixed inset-0 z-100 overflow-y-auto'>
           <div
-            className={`flex min-h-full justify-center p-4 ${
-              align === 'top' ? 'items-start pt-12' : 'items-center'
-            }`}
+            className={`flex min-h-full justify-center p-4 ${align === 'top' ? 'items-start pt-12' : 'items-center'}`}
           >
             <motion.div
               initial={{ opacity: 0 }}

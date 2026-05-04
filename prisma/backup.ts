@@ -32,11 +32,7 @@ async function main() {
   }
 
   // BigInt → { __bigint: "123" } so JSON.stringify doesn't throw
-  const json = JSON.stringify(
-    payload,
-    (_, v) => (typeof v === 'bigint' ? { __bigint: v.toString() } : v),
-    2,
-  )
+  const json = JSON.stringify(payload, (_, v) => (typeof v === 'bigint' ? { __bigint: v.toString() } : v), 2)
 
   writeFileSync('backup.json', json, 'utf-8')
 

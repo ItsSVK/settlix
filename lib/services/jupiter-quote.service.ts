@@ -7,9 +7,7 @@ import { decimalToBigIntUSDC } from '@/lib/solana/amount'
 
 export async function executeJupiterQuoteRequest(body: JupiterQuoteBody) {
   try {
-    const pay = body.invoiceId
-      ? await getInvoicePayDetails(body.invoiceId)
-      : await getPaymentLinkByDetails(body.payId!)
+    const pay = body.invoiceId ? await getInvoicePayDetails(body.invoiceId) : await getPaymentLinkByDetails(body.payId!)
     const rawOut = decimalToBigIntUSDC(pay.amount)
 
     // Same-mint shortcut — buyer is paying with the exact settlement token.
