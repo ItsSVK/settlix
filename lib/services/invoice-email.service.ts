@@ -1,7 +1,7 @@
 import { Resend } from 'resend'
 
 import { apiLogger } from '@/lib/api/logger'
-import { getResendApiKey } from '@/lib/env/server'
+import { getEmailSender, getResendApiKey } from '@/lib/env/server'
 import { getSymbolByMint, getTokenByMint } from '@/lib/tokens/tokens'
 import { rawToHumanAmount } from '@/lib/solana/amount'
 import { buildReceiptEmailHtml, buildReceiptEmailSubject, type ReceiptEmailData } from '@/lib/email/invoice-email'
@@ -54,7 +54,7 @@ export async function sendInvoiceReceiptIfApplicable(
   try {
     const resend = new Resend(getResendApiKey())
     const { error } = await resend.emails.send({
-      from: 'Settlix <settlix@settlix.itssvk.dev>',
+      from: getEmailSender(),
       to: invoice.clientEmail,
       subject: buildReceiptEmailSubject(emailData),
       html: buildReceiptEmailHtml(emailData),

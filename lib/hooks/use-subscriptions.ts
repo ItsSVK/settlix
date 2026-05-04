@@ -86,6 +86,8 @@ export function useSubscriptions() {
 }
 
 export function useSubscriptionPlans() {
+  const queryClient = useQueryClient()
+
   const {
     data: plans = [],
     isLoading,
@@ -99,11 +101,38 @@ export function useSubscriptionPlans() {
     },
   })
 
+  const toggleActiveMutation = useMutation({
+    mutationFn: ({ id, active }: { id: string; active: boolean }) =>
+      apiClient.patch(`/api/subscription-plans/${id}`, { active }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subscription-plans'] })
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : 'Failed to update plan')
+    },
+  })
+
+  const archiveMutation = useMutation({
+    mutationFn: (id: string) => apiClient.delete(`/api/subscription-plans/${id}`),
+    onSuccess: () => {
+      toast.success('Plan archived')
+      queryClient.invalidateQueries({ queryKey: ['subscription-plans'] })
+      queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : 'Failed to archive plan')
+    },
+  })
+
   return {
     plans,
     isLoading,
     error,
     refresh: refetch,
+    togglePlanActive: async (id: string, active: boolean) => { await toggleActiveMutation.mutateAsync({ id, active }) },
+    togglePlanActivePending: toggleActiveMutation.isPending,
+    archivePlan: async (id: string) => { await archiveMutation.mutateAsync(id) },
+    archivePlanPending: archiveMutation.isPending,
   }
 }
 

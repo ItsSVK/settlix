@@ -2,21 +2,30 @@
 
 import { useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { AlertCircle, ChevronDown, CreditCard, RefreshCw, UsersRound } from 'lucide-react'
+import {
+  AlertCircle,
+  Check,
+  ChevronDown,
+  Copy,
+  CreditCard,
+  Loader2,
+  RefreshCw,
+  ToggleLeft,
+  ToggleRight,
+  UsersRound,
+} from 'lucide-react'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/shared/empty-state'
 import { SkeletonRow } from '@/components/shared/skeletons'
+import { ConfirmationModal } from '@/components/shared/confirmation-modal'
 import { getLogoByMint } from '@/lib/tokens/tokens'
+import { copyText } from '@/lib/utils'
+import { INTERVAL_LABEL as INTERVAL_LABELS } from '@/lib/subscriptions/constants'
 import type { Subscription, SubscriptionPlan } from '@/lib/hooks/use-subscriptions'
 import { SubscriptionRow } from './subscription-row'
 import { CreateSubscriptionDialog } from './create-subscription-dialog'
-
-const INTERVAL_LABELS: Record<string, string> = {
-  weekly: 'Weekly',
-  monthly: 'Monthly',
-}
 
 interface SubscriptionPlansListProps {
   plans: SubscriptionPlan[]
@@ -25,6 +34,10 @@ interface SubscriptionPlansListProps {
   hasError: boolean
   onRefresh: () => void
   cancelSubscription: (id: string) => Promise<void>
+  togglePlanActive: (id: string, active: boolean) => Promise<void>
+  togglePlanActivePending: boolean
+  archivePlan: (id: string) => Promise<void>
+  archivePlanPending: boolean
 }
 
 function formatTokenAmount(amount: string) {
@@ -36,7 +49,9 @@ function formatTokenAmount(amount: string) {
 
 function PlanStatus({ active }: { active: boolean }) {
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${active ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground'}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${active ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground'}`}
+    >
       <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-green-500' : 'bg-muted-foreground'}`} />
       {active ? 'Live' : 'Paused'}
     </span>
@@ -49,17 +64,28 @@ function PlanRow({
   index,
   onRefresh,
   cancelSubscription,
+  togglePlanActive,
+  togglePlanActivePending,
+  archivePlan,
+  archivePlanPending,
 }: {
   plan: SubscriptionPlan
   subscribers: Subscription[]
   index: number
   onRefresh: () => void
   cancelSubscription: (id: string) => Promise<void>
+  togglePlanActive: (id: string, active: boolean) => Promise<void>
+  togglePlanActivePending: boolean
+  archivePlan: (id: string) => Promise<void>
+  archivePlanPending: boolean
 }) {
   const [expanded, setExpanded] = useState(index === 0)
+  const [copied, setCopied] = useState(false)
   const logo = getLogoByMint(plan.token)
-  const activeSubscribers = subscribers.filter((subscriber) => subscriber.status === 'active').length
-  const nextRenewals = subscribers.filter((subscriber) => subscriber.status !== 'cancelled').length
+  const activeSubscribers = subscribers.filter((s) => s.status === 'active').length
+  const nextRenewals = subscribers.filter((s) => s.status !== 'cancelled').length
+
+  const subscribeUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/subscribe/${plan.id}`
 
   return (
     <motion.div
@@ -68,13 +94,15 @@ function PlanRow({
       transition={{ duration: 0.28, delay: index * 0.04 }}
       className='overflow-hidden rounded-2xl border border-border/40 bg-card shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition-all hover:border-border/70 hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)] dark:shadow-none dark:hover:shadow-none'
     >
-      <button
-        type='button'
-        aria-expanded={expanded}
-        onClick={() => setExpanded((value) => !value)}
-        className='flex w-full flex-col gap-4 p-4 text-left transition-colors hover:bg-muted/30 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:flex-row sm:items-center sm:justify-between'
-      >
-        <span className='flex min-w-0 items-start gap-3'>
+      {/* Plan header row */}
+      <div className='flex items-center gap-3 p-4'>
+        {/* Expand trigger — left side only */}
+        <button
+          type='button'
+          aria-expanded={expanded}
+          onClick={() => setExpanded((v) => !v)}
+          className='flex min-w-0 flex-1 items-start gap-3 text-left transition-colors hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card'
+        >
           <span className='flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border/50 bg-muted/40'>
             {logo ? (
               <Image src={logo} alt='' width={22} height={22} />
@@ -96,14 +124,24 @@ function PlanRow({
               <span>{formatTokenAmount(plan.amount)}</span>
               <span className='text-muted-foreground'>/ {INTERVAL_LABELS[plan.interval] ?? plan.interval}</span>
               <span className='hidden text-muted-foreground sm:inline'>•</span>
-              <span className='text-muted-foreground'>Created {new Date(plan.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+              <span className='text-muted-foreground'>
+                Created{' '}
+                {new Date(plan.createdAt).toLocaleDateString(undefined, {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+              </span>
             </span>
           </span>
-        </span>
+        </button>
 
-        <span className='grid w-full grid-cols-3 gap-2 sm:w-auto sm:min-w-[280px]'>
+        {/* Stats mini-grid */}
+        <div className='hidden w-auto min-w-[200px] grid-cols-3 gap-2 sm:grid'>
           <span className='rounded-xl border border-border/50 bg-background/70 px-3 py-2'>
-            <span className='block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground'>Subscribers</span>
+            <span className='block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground'>
+              Subscribers
+            </span>
             <span className='mt-1 flex items-baseline gap-1 text-sm font-bold text-foreground'>
               {activeSubscribers}
               <span className='text-[10px] font-medium text-muted-foreground'>active</span>
@@ -113,19 +151,77 @@ function PlanRow({
             <span className='block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground'>Total</span>
             <span className='mt-1 text-sm font-bold text-foreground'>{subscribers.length}</span>
           </span>
-          <span className='flex items-center justify-between rounded-xl border border-border/50 bg-background/70 px-3 py-2'>
-            <span>
-              <span className='block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground'>Renewing</span>
-              <span className='mt-1 text-sm font-bold text-foreground'>{nextRenewals}</span>
+          <span className='rounded-xl border border-border/50 bg-background/70 px-3 py-2'>
+            <span className='block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground'>
+              Renewing
             </span>
+            <span className='mt-1 text-sm font-bold text-foreground'>{nextRenewals}</span>
+          </span>
+        </div>
+
+        {/* Action strip */}
+        <div className='flex items-center gap-1 rounded-xl border border-border/30 bg-muted/40 pl-2'>
+          {/* Copy subscribe link */}
+          <Button
+            onClick={() => copyText(subscribeUrl, setCopied)}
+            title='Copy subscribe link'
+            variant='ghost'
+            size='sm'
+            className='h-8 w-8 rounded-lg p-0 text-muted-foreground transition-colors hover:bg-background/80 hover:text-foreground'
+          >
+            {copied ? <Check className='h-3.5 w-3.5 text-green-500' /> : <Copy className='h-3.5 w-3.5' />}
+          </Button>
+
+          <div className='mx-1 h-4 w-px bg-border/50' />
+
+          {/* Toggle active */}
+          {togglePlanActivePending ? (
+            <div className='flex h-8 w-8 items-center justify-center'>
+              <Loader2
+                className={`h-3.5 w-3.5 animate-spin ${plan.active ? 'text-green-500' : 'text-muted-foreground'}`}
+              />
+            </div>
+          ) : (
+            <Button
+              onClick={() => void togglePlanActive(plan.id, !plan.active)}
+              title={plan.active ? 'Deactivate plan' : 'Activate plan'}
+              variant='ghost'
+              size='sm'
+              className='h-8 w-8 rounded-lg p-0 text-muted-foreground transition-colors hover:bg-background/80 hover:text-foreground'
+            >
+              {plan.active ? (
+                <ToggleRight className='h-5 w-5 text-green-500' />
+              ) : (
+                <ToggleLeft className='h-5 w-5' />
+              )}
+            </Button>
+          )}
+
+          {/* Archive */}
+          <ConfirmationModal
+            className='h-8 w-8 rounded-lg p-0 text-red-500 transition-colors hover:bg-background/80 hover:text-foreground'
+            onConfirm={archivePlan}
+            isPending={archivePlanPending}
+            id={plan.id}
+            type='Archive'
+          />
+
+          {/* Expand chevron */}
+          <button
+            type='button'
+            onClick={() => setExpanded((v) => !v)}
+            aria-label={expanded ? 'Collapse' : 'Expand'}
+            className='flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-background/80 hover:text-foreground'
+          >
             <ChevronDown
-              className={`h-4 w-4 text-muted-foreground transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}
+              className={`h-4 w-4 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}
               aria-hidden='true'
             />
-          </span>
-        </span>
-      </button>
+          </button>
+        </div>
+      </div>
 
+      {/* Subscribers panel */}
       <AnimatePresence initial={false}>
         {expanded && (
           <motion.div
@@ -140,7 +236,7 @@ function PlanRow({
                 <div>
                   <p className='text-xs font-bold uppercase tracking-wider text-muted-foreground'>Subscribers</p>
                   <p className='mt-1 text-xs text-muted-foreground'>
-                    Select a subscriber to view renewal transactions and subscription details.
+                    Select a subscriber to view renewal transactions and details.
                   </p>
                 </div>
                 <div className='hidden items-center gap-2 rounded-full border border-border/50 bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground sm:flex'>
@@ -165,7 +261,7 @@ function PlanRow({
                   <UsersRound className='h-8 w-8 text-muted-foreground' aria-hidden='true' />
                   <p className='mt-3 text-sm font-semibold text-foreground'>No subscribers yet</p>
                   <p className='mt-1 max-w-sm text-xs text-muted-foreground'>
-                    This plan is visible now. Subscribers will collect here after customers authorize recurring payments.
+                    Share the subscribe link — customers will appear here after authorizing recurring payments.
                   </p>
                 </div>
               )}
@@ -184,6 +280,10 @@ export function SubscriptionPlansList({
   hasError,
   onRefresh,
   cancelSubscription,
+  togglePlanActive,
+  togglePlanActivePending,
+  archivePlan,
+  archivePlanPending,
 }: SubscriptionPlansListProps) {
   const subscriptionsByPlan = useMemo(() => {
     return subscriptions.reduce<Record<string, Subscription[]>>((acc, subscription) => {
@@ -239,6 +339,10 @@ export function SubscriptionPlansList({
           index={index}
           onRefresh={onRefresh}
           cancelSubscription={cancelSubscription}
+          togglePlanActive={togglePlanActive}
+          togglePlanActivePending={togglePlanActivePending}
+          archivePlan={archivePlan}
+          archivePlanPending={archivePlanPending}
         />
       ))}
       <div className='flex justify-end'>

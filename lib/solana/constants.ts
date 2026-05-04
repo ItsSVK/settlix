@@ -22,6 +22,8 @@ export function isAllowedSettlementMint(mint: string, cluster: SolanaCluster): b
 /** SPL Memo program (matches on-chain program and `@solana/spl-memo`). */
 export const MEMO_PROGRAM_ID = 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'
 
+export const SOLSCAN_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK === 'devnet' ? '?cluster=devnet' : ''
+
 /** User-facing: payment link only allows USDC settlement for MVP. */
 export function parseCluster(raw: string | undefined): SolanaCluster {
   return raw === 'devnet' ? 'devnet' : 'mainnet-beta'

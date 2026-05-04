@@ -9,7 +9,16 @@ import { StatsBar } from '@/components/dashboard/stats-bar'
 
 export default function SubscriptionsPage() {
   const { subscriptions, isLoading, error: subscriptionsError, refresh, cancelSubscription } = useSubscriptions()
-  const { plans, isLoading: plansLoading, error: plansError, refresh: refreshPlans } = useSubscriptionPlans()
+  const {
+    plans,
+    isLoading: plansLoading,
+    error: plansError,
+    refresh: refreshPlans,
+    togglePlanActive,
+    togglePlanActivePending,
+    archivePlan,
+    archivePlanPending,
+  } = useSubscriptionPlans()
   const isPageLoading = isLoading || plansLoading
   const hasError = Boolean(subscriptionsError || plansError)
 
@@ -80,6 +89,10 @@ export default function SubscriptionsPage() {
             hasError={hasError}
             onRefresh={refreshAll}
             cancelSubscription={cancelSubscription}
+            togglePlanActive={togglePlanActive}
+            togglePlanActivePending={togglePlanActivePending}
+            archivePlan={archivePlan}
+            archivePlanPending={archivePlanPending}
           />
         </motion.div>
       </div>

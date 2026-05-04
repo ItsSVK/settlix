@@ -5,7 +5,7 @@ import { ApiError, handleApi } from '@/lib/api/errors'
 import { NOT_FOUND, INVOICE_ALREADY_PAID } from '@/lib/api/constants'
 import { requireAuth } from '@/lib/auth/require-auth'
 import { getInvoiceById } from '@/lib/services/invoice.service'
-import { getResendApiKey } from '@/lib/env/server'
+import { getEmailSender, getResendApiKey } from '@/lib/env/server'
 import { getSymbolByMint } from '@/lib/tokens/tokens'
 import { buildInvoiceEmailHtml, buildInvoiceEmailSubject, type InvoiceEmailData } from '@/lib/email/invoice-email'
 
@@ -22,7 +22,12 @@ export async function POST(req: NextRequest, { params }: Params) {
     if (invoice.merchant.wallet !== wallet) throw new ApiError(403, 'Forbidden', 'FORBIDDEN')
 
     const isPaid = invoice.executions.length > 0
-    if (isPaid) throw new ApiError(409, 'Invoice is already paid — receipt was sent automatically at payment time', INVOICE_ALREADY_PAID)
+    if (isPaid)
+      throw new ApiError(
+        409,
+        'Invoice is already paid — receipt was sent automatically at payment time',
+        INVOICE_ALREADY_PAID,
+      )
 
     if (!invoice.clientEmail) {
       return NextResponse.json({ error: 'Invoice has no client email' }, { status: 400 })
@@ -53,7 +58,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     const resend = new Resend(getResendApiKey())
 
     const { error } = await resend.emails.send({
-      from: 'Settlix <invoices@settlix.itssvk.dev>',
+      from: getEmailSender(),
       to: invoice.clientEmail,
       subject: buildInvoiceEmailSubject(emailData),
       html: buildInvoiceEmailHtml(emailData),

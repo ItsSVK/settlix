@@ -37,17 +37,19 @@ export async function buildSubscriptionAuthorizationTx(params: {
   relayer: PublicKey
   settlementMint: PublicKey
   transferAmountRaw: bigint
+  /** Total delegation to set = sum of all active subscriptions (same token) + this plan, × 12 months. */
+  totalDelegationRaw: bigint
   mintDecimals: number
   planId: string
 }): Promise<VersionedTransaction> {
-  const { connection, subscriber, relayer, settlementMint, transferAmountRaw, mintDecimals, planId } = params
+  const { connection, subscriber, relayer, settlementMint, transferAmountRaw, totalDelegationRaw, mintDecimals, planId } = params
 
   const tokenProgram = await resolveTokenProgram(connection, settlementMint)
   const subscriberAta = getAssociatedTokenAddressSync(settlementMint, subscriber, false, tokenProgram)
 
   const { blockhash } = await connection.getLatestBlockhash(RPC_COMMITMENT)
 
-  const delegatedAmount = transferAmountRaw * BigInt(DELEGATION_MONTHS)
+  const delegatedAmount = totalDelegationRaw * BigInt(DELEGATION_MONTHS)
 
   const instructions: TransactionInstruction[] = [
     // Approve relayer to pull up to 12 months of payments

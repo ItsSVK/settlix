@@ -24,12 +24,12 @@ import { prisma } from '@/lib/db'
 // Helpers
 // ---------------------------------------------------------------------------
 
-function nextPeriodEnd(from: Date, interval: SubscriptionInterval): Date {
-  const date = new Date(from)
-  if (interval === SubscriptionInterval.weekly) date.setDate(date.getDate() + 7)
-  else if (interval === SubscriptionInterval.monthly) date.setMonth(date.getMonth() + 1)
-  else if (interval === SubscriptionInterval.yearly) date.setFullYear(date.getFullYear() + 1)
-  return date
+export function nextPeriodEnd(from: Date, interval: SubscriptionInterval): Date {
+  const d = new Date(from)
+  if (interval === SubscriptionInterval.daily) d.setUTCDate(d.getUTCDate() + 1)
+  else if (interval === SubscriptionInterval.weekly) d.setUTCDate(d.getUTCDate() + 7)
+  d.setUTCHours(0, 0, 0, 0)
+  return d
 }
 
 // ---------------------------------------------------------------------------
@@ -146,6 +146,8 @@ export async function updateSubscriptionPlanActive(id: string, merchantWallet: s
 export async function createSubscriber(data: {
   planId: string
   subscriberWallet: string
+  subscriberName?: string
+  subscriberEmail?: string
   firstPayment: {
     executionId: string
     txSignature: string
@@ -179,6 +181,8 @@ export async function createSubscriber(data: {
         create: {
           planId: data.planId,
           subscriberWallet: data.subscriberWallet,
+          subscriberName: data.subscriberName ?? null,
+          subscriberEmail: data.subscriberEmail ?? null,
           status: SubscriptionStatus.active,
           currentPeriodEnd,
         },
@@ -186,6 +190,8 @@ export async function createSubscriber(data: {
           status: SubscriptionStatus.active,
           currentPeriodEnd,
           cancelledAt: null,
+          subscriberName: data.subscriberName ?? null,
+          subscriberEmail: data.subscriberEmail ?? null,
         },
       })
 
@@ -266,6 +272,47 @@ export async function getSubscribersByMerchant(merchantWallet: string) {
   } catch (e) {
     apiLogger.error('Subscriber findMany by merchant failed', e, { merchantWallet })
     throw new ApiError(500, 'Database error', DB_UNEXPECTED, { error: e })
+  }
+}
+
+/**
+ * Returns the sum of monthly amounts for all active subscriptions a wallet
+ * has on a given token. Used to compute the correct top-up delegation amount
+ * when a subscriber authorizes a new plan.
+ */
+export async function getActiveDelegationTotal(subscriberWallet: string, token: string): Promise<Decimal> {
+  try {
+    const active = await prisma.subscriber.findMany({
+      where: {
+        subscriberWallet,
+        status: SubscriptionStatus.active,
+        plan: { token, archivedAt: null },
+      },
+      include: { plan: { select: { amount: true } } },
+    })
+    return active.reduce((sum, s) => sum.add(s.plan.amount), new Decimal(0))
+  } catch (e) {
+    apiLogger.error('getActiveDelegationTotal failed', e, { subscriberWallet, token })
+    throw new ApiError(500, 'Database error', DB_QUERY_FAILED, { error: e })
+  }
+}
+
+export async function getSubscriberByPlanAndWallet(planId: string, subscriberWallet: string) {
+  try {
+    return await prisma.subscriber.findUnique({
+      where: { planId_subscriberWallet: { planId, subscriberWallet } },
+      include: {
+        plan: { select: { id: true, title: true, amount: true, token: true, interval: true, active: true } },
+        renewals: {
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          include: { execution: { select: { txSignature: true, outputAmount: true, status: true } } },
+        },
+      },
+    })
+  } catch (e) {
+    apiLogger.error('getSubscriberByPlanAndWallet failed', e, { planId, subscriberWallet })
+    throw new ApiError(500, 'Database error', DB_QUERY_FAILED, { error: e })
   }
 }
 

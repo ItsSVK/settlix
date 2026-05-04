@@ -1,7 +1,5 @@
 'use client'
 
-const SOLSCAN_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK === 'devnet' ? '?cluster=devnet' : ''
-
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { ChevronDown, ExternalLink, ReceiptText, RefreshCw, XCircle } from 'lucide-react'
@@ -11,33 +9,14 @@ import type { Subscription } from '@/lib/hooks/use-subscriptions'
 import { Button } from '@/components/ui/button'
 import { ConfirmationModal } from '@/components/shared/confirmation-modal'
 import { getLogoByMint } from '@/lib/tokens/tokens'
-
-function shorten(s: string, start = 6, end = 4) {
-  return `${s.slice(0, start)}…${s.slice(-end)}`
-}
-
-const STATUS_STYLES: Record<string, string> = {
-  active: 'bg-green-500/10 text-green-500',
-  past_due: 'bg-amber-500/10 text-amber-500',
-  cancelled: 'bg-muted text-muted-foreground',
-}
-
-const STATUS_DOT: Record<string, string> = {
-  active: 'bg-green-500',
-  past_due: 'bg-amber-500',
-  cancelled: 'bg-muted-foreground',
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  active: 'Active',
-  past_due: 'Past Due',
-  cancelled: 'Cancelled',
-}
-
-const INTERVAL_LABELS: Record<string, string> = {
-  weekly: 'weekly',
-  monthly: 'monthly',
-}
+import { shorten } from '@/lib/utils'
+import { SOLSCAN_CLUSTER } from '@/lib/solana/constants'
+import {
+  SUBSCRIPTION_STATUS_STYLES as STATUS_STYLES,
+  SUBSCRIPTION_STATUS_DOT as STATUS_DOT,
+  SUBSCRIPTION_STATUS_LABELS as STATUS_LABELS,
+  INTERVAL_LABEL as INTERVAL_LABELS,
+} from '@/lib/subscriptions/constants'
 
 const RENEWAL_STATUS_DOT: Record<string, string> = {
   succeeded: 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]',
@@ -53,8 +32,7 @@ interface SubscriptionRowProps {
 
 export function SubscriptionRow({ subscription: sub, onCancel, onRefresh }: SubscriptionRowProps) {
   const [expanded, setExpanded] = useState(false)
-  const [cancelling, setCancelling] = useState<string | null>(null)
-  const [confirmCancel, setConfirmCancel] = useState<string | null>(null)
+  const [cancelling, setCancelling] = useState(false)
 
   const isCancelled = sub.status === 'cancelled'
   const periodEnd = new Date(sub.currentPeriodEnd)
@@ -62,15 +40,14 @@ export function SubscriptionRow({ subscription: sub, onCancel, onRefresh }: Subs
   const tokenLogo = getLogoByMint(sub.plan.token)
 
   const handleCancel = async (id: string) => {
-    setCancelling(id)
+    setCancelling(true)
     try {
       await onCancel(id)
       onRefresh()
     } catch {
       toast.error('Failed to cancel subscription')
     } finally {
-      setCancelling(null)
-      setConfirmCancel(null)
+      setCancelling(false)
     }
   }
 
@@ -160,12 +137,10 @@ export function SubscriptionRow({ subscription: sub, onCancel, onRefresh }: Subs
             <>
               <div className='w-px h-4 bg-border/50 mx-1' />
               <ConfirmationModal
-                className='text-red-500 h-10 w-10 rounded-lg p-0 hover:bg-background/80 hover:text-foreground transition-colors'
-                handleArchive={handleCancel}
-                archiving={cancelling}
-                confirmArchive={confirmCancel}
-                setConfirmArchive={setConfirmCancel}
-                item={{ id: sub.id }}
+                className='h-10 w-10 rounded-lg p-0 text-red-500 transition-colors hover:bg-background/80 hover:text-foreground'
+                onConfirm={handleCancel}
+                isPending={cancelling}
+                id={sub.id}
                 type='Cancel'
               />
             </>

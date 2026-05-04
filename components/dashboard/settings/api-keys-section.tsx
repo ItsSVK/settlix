@@ -31,7 +31,6 @@ interface ApiKeysSectionProps {
 
 export function ApiKeysSection({ keys, isLoading, revokeKey }: ApiKeysSectionProps) {
   const [revoking, setRevoking] = useState<string | null>(null)
-  const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null)
 
   const handleRevoke = async (id: string) => {
     setRevoking(id)
@@ -42,7 +41,6 @@ export function ApiKeysSection({ keys, isLoading, revokeKey }: ApiKeysSectionPro
       // Error toast is handled by the mutation
     } finally {
       setRevoking(null)
-      setConfirmRevoke(null)
     }
   }
 
@@ -109,11 +107,9 @@ export function ApiKeysSection({ keys, isLoading, revokeKey }: ApiKeysSectionPro
 
                 <ConfirmationModal
                   className='text-red-500 h-6 w-6 rounded-lg p-0 hover:bg-background/80 hover:text-foreground transition-colors'
-                  handleArchive={handleRevoke}
-                  archiving={revoking}
-                  confirmArchive={confirmRevoke}
-                  setConfirmArchive={setConfirmRevoke}
-                  item={key}
+                  onConfirm={handleRevoke}
+                  isPending={revoking === key.id}
+                  id={key.id}
                   type='Revoke'
                 />
               </motion.div>

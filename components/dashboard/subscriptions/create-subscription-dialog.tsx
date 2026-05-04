@@ -23,7 +23,7 @@ function limitDecimals(val: string): string {
 export function CreateSubscriptionDialog({ onCreated }: CreateSubscriptionDialogProps) {
   const [open, setOpen] = useState(false)
   const [amount, setAmount] = useState('')
-  const [interval, setInterval] = useState<'weekly' | 'monthly'>('monthly')
+  const [interval, setInterval] = useState<'daily' | 'weekly'>('weekly')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -33,7 +33,7 @@ export function CreateSubscriptionDialog({ onCreated }: CreateSubscriptionDialog
   const reset = () => {
     const wasCreated = !!result
     setAmount('')
-    setInterval('monthly')
+    setInterval('weekly')
     setTitle('')
     setDescription('')
     setError('')
@@ -68,7 +68,9 @@ export function CreateSubscriptionDialog({ onCreated }: CreateSubscriptionDialog
     }
   }
 
-  const payUrl = result ? `${typeof window !== 'undefined' ? window.location.origin : ''}/pay/${result.id}` : ''
+  const subscribeUrl = result
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/subscribe/${result.id}`
+    : ''
 
   return (
     <>
@@ -85,7 +87,7 @@ export function CreateSubscriptionDialog({ onCreated }: CreateSubscriptionDialog
           <DialogSuccess
             title='Your plan is ready'
             subtitle='Share this link with subscribers'
-            url={payUrl}
+            url={subscribeUrl}
             onDone={reset}
           />
         ) : (
@@ -93,7 +95,7 @@ export function CreateSubscriptionDialog({ onCreated }: CreateSubscriptionDialog
             {/* Amount + interval card */}
             <div className='flex flex-col items-center justify-center rounded-3xl border border-border/30 bg-muted/90 px-4 pt-4 pb-6 transition-all focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/10'>
               <span className='mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground'>
-                Amount per {interval === 'monthly' ? 'month' : 'week'}
+                Amount per {interval === 'daily' ? 'day' : 'week'}
               </span>
               <div className='flex items-center justify-center gap-2'>
                 <span className='text-3xl font-medium text-muted-foreground/50'>$</span>
@@ -120,7 +122,7 @@ export function CreateSubscriptionDialog({ onCreated }: CreateSubscriptionDialog
                   animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
                   className='flex items-center gap-1.5 rounded-xl border border-border/40 bg-background px-1 py-1'
                 >
-                  {(['weekly', 'monthly'] as const).map((opt) => (
+                  {(['daily', 'weekly'] as const).map((opt) => (
                     <button
                       key={opt}
                       type='button'
@@ -129,7 +131,7 @@ export function CreateSubscriptionDialog({ onCreated }: CreateSubscriptionDialog
                         interval === opt ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'
                       }`}
                     >
-                      {opt === 'weekly' ? 'Weekly' : 'Monthly'}
+                      {opt === 'daily' ? 'Daily' : 'Weekly'}
                     </button>
                   ))}
                 </motion.div>

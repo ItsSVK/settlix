@@ -3,26 +3,21 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { ApiError, handleApi } from '@/lib/api/errors'
 import { SUBSCRIPTION_NOT_FOUND } from '@/lib/api/constants'
 import { getSubscriberById } from '@/lib/services/subscription.service'
-import { requireAuth } from '@/lib/auth/require-auth'
 
 type Params = { params: Promise<{ id: string }> }
 
 /**
  * GET /api/subscriptions/[id]
  *
- * Returns subscriber details. Accessible by the subscriber or merchant.
+ * Public endpoint — subscription IDs are unguessable CUIDs, so possession of
+ * the ID is sufficient proof. Used by the subscriber-facing manage page.
  */
-export async function GET(req: NextRequest, { params }: Params) {
+export async function GET(_req: NextRequest, { params }: Params) {
   return handleApi(async () => {
-    const { wallet } = await requireAuth(req)
     const { id } = await params
 
     const sub = await getSubscriberById(id)
     if (!sub) throw new ApiError(404, 'Subscription not found', SUBSCRIPTION_NOT_FOUND)
-
-    const isSubscriber = sub.subscriberWallet === wallet
-    const isMerchant = sub.plan.merchant.wallet === wallet
-    if (!isSubscriber && !isMerchant) throw new ApiError(403, 'Not authorized', 'FORBIDDEN')
 
     return NextResponse.json({
       id: sub.id,

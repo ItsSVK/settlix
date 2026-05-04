@@ -6,6 +6,7 @@ import { ApiError, handleApi, readJsonBody } from '@/lib/api/errors'
 import { RELAYER_NOT_CONFIGURED, VALIDATION } from '@/lib/api/constants'
 import { apiLogger } from '@/lib/api/logger'
 import { createSubscriber, getSubscribersByMerchant, getSubscriptionPlanById } from '@/lib/services/subscription.service'
+import { sendSubscriptionConfirmationEmail } from '@/lib/services/subscription-renewal.service'
 import { createServerConnection } from '@/lib/solana/connection'
 import { RPC_COMMITMENT } from '@/lib/solana/constants'
 import { humanToRawAmount } from '@/lib/solana/amount'
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { planId, subscriberWallet, signedTransaction, executionId } = parsed.data
+    const { planId, subscriberWallet, signedTransaction, executionId, subscriberName, subscriberEmail } = parsed.data
 
     const plan = await getSubscriptionPlanById(planId)
     if (!plan || !plan.active) throw new ApiError(404, 'Subscription plan not found', 'PLAN_NOT_FOUND')
@@ -103,6 +104,8 @@ export async function POST(req: NextRequest) {
     const subscriber = await createSubscriber({
       planId,
       subscriberWallet,
+      subscriberName: subscriberName ?? undefined,
+      subscriberEmail: subscriberEmail ?? undefined,
       firstPayment: {
         executionId,
         txSignature: firstPaymentSig,
@@ -110,6 +113,19 @@ export async function POST(req: NextRequest) {
         inputAmount: transferAmountRaw,
         outputAmount: transferAmountRaw,
       },
+    })
+
+    void sendSubscriptionConfirmationEmail({
+      subscriberEmail: subscriberEmail ?? null,
+      subscriberName: subscriberName ?? null,
+      planTitle: plan.title,
+      planId,
+      subscriberId: subscriber.id,
+      amount: plan.amount.toString(),
+      token: plan.token,
+      interval: plan.interval,
+      nextBillingDate: subscriber.currentPeriodEnd.toISOString(),
+      txSignature: firstPaymentSig,
     })
 
     return NextResponse.json(

@@ -6,6 +6,10 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+export function shorten(addr: string, start = 6, end = 4): string {
+  return `${addr.slice(0, start)}…${addr.slice(-end)}`
+}
+
 function fallbackCopyText(text: string) {
   const textarea = document.createElement('textarea')
   textarea.value = text

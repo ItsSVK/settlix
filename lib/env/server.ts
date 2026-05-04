@@ -46,3 +46,7 @@ export function getCronSecret(): string {
   if (!secret) throw new ConfigurationError('CRON_SECRET is not configured')
   return secret
 }
+
+export function getEmailSender(): string {
+  return process.env.EMAIL_SENDER?.trim() || 'Settlix <payments@settlix.itssvk.dev>'
+}

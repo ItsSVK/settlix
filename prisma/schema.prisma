@@ -23,9 +23,8 @@ enum PaymentExecutionStatus {
 }
 
 enum SubscriptionInterval {
+  daily
   weekly
-  monthly
-  yearly
 }
 
 enum SubscriptionStatus {
@@ -165,6 +164,8 @@ model Subscriber {
   planId           String
   plan             SubscriptionPlan     @relation(fields: [planId], references: [id], onDelete: Cascade)
   subscriberWallet String
+  subscriberName   String?
+  subscriberEmail  String?
   status           SubscriptionStatus   @default(active)
   currentPeriodEnd DateTime
   cancelledAt      DateTime?
