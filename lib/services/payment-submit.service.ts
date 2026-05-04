@@ -21,8 +21,6 @@ import { humanToRawAmount } from '@/lib/solana/amount'
 import { createServerConnection } from '@/lib/solana/connection'
 import { RPC_COMMITMENT } from '@/lib/solana/constants'
 import { verifyPaymentTransaction } from '@/lib/solana/verify'
-import { publishDashboardPaymentPaid } from '@/lib/realtime/dashboard-stream'
-
 import { getPaymentLinkById } from './payment-link.service'
 import { getInvoiceById } from './invoice.service'
 import { deliverPaymentWebhook } from './payment-webhook.service'
@@ -293,17 +291,6 @@ async function upsertPaymentExecution(data: UpsertPaymentExecutionData): Promise
     })
 
     if (data.status === PaymentExecutionStatus.paid && existing?.status !== PaymentExecutionStatus.paid) {
-      publishDashboardPaymentPaid({
-        type: 'payment_paid',
-        merchantWallet: data.merchantWallet,
-        ...(data.source === 'payment_link' ? { linkId: data.linkId } : { invoiceId: data.invoiceId }),
-        executionId: saved.id,
-        txSignature: data.txSignature,
-        outputAmount: data.outputAmount.toString(),
-        settlementToken: data.settlementToken,
-        createdAt: saved.createdAt.toISOString(),
-      })
-
       if (data.webhookUrl) {
         void deliverPaymentWebhook({
           webhookUrl: data.webhookUrl,

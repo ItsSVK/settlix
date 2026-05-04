@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from 'sonner'
 import { FloatingThemeToggle } from '@/components/shared/floating-theme-toggle'
 import { Providers } from './providers'
+import { Analytics } from '@vercel/analytics/next'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 const fontMono = Geist_Mono({ subsets: ['latin'], variable: '--font-mono' })
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Toaster richColors position='bottom-right' />
           </Providers>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   )

@@ -2,8 +2,9 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { motion } from 'motion/react'
-import { Zap } from 'lucide-react'
+import { Zap, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 import { Section } from './doc-section'
 import { CheckoutOverlay } from './checkout-overlay'
 
@@ -53,7 +54,12 @@ export function LiveDemo() {
 
   return (
     <>
-      <Section id='live-demo' icon={Zap} title='Live Demo' subtitle='Enter your payment link ID and fire the checkout right here.'>
+      <Section
+        id='live-demo'
+        icon={Zap}
+        title='Live Demo'
+        subtitle='Enter your payment link ID and fire the checkout right here.'
+      >
         <div className='rounded-2xl border border-border/50 bg-card/60 p-6 shadow-sm backdrop-blur-md'>
           <label className='mb-2.5 block text-sm font-medium text-foreground'>Payment Link ID</label>
           <div className='flex items-center gap-3 rounded-2xl border border-border/40 bg-muted/40 p-2 transition-all focus-within:border-indigo-500/40 dark:focus-within:border-indigo-400/40 focus-within:ring-2 focus-within:ring-indigo-500/10 dark:focus-within:ring-indigo-400/10'>
@@ -73,6 +79,31 @@ export function LiveDemo() {
               Open Checkout
             </Button>
           </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className='mt-2 ml-2 flex items-center gap-1.5 text-[12.5px] text-muted-foreground/80'
+          >
+            <Info className='h-3.5 w-3.5 shrink-0 text-indigo-500/70 dark:text-indigo-400/70' />
+            <p>
+              Sign in and create a payment link to get your Payment Link ID.{' '}
+              <Link
+                href='/dashboard/links'
+                className='inline-flex items-center font-medium text-indigo-600 transition-colors hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300'
+              >
+                Go to Dashboard
+                <svg
+                  className='ml-0.5 h-3.5 w-3.5'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  stroke='currentColor'
+                  strokeWidth={2.5}
+                >
+                  <path strokeLinecap='round' strokeLinejoin='round' d='M9 5l7 7-7 7' />
+                </svg>
+              </Link>
+            </p>
+          </motion.div>
 
           <div className='mt-8'>
             <div className='mb-2.5 flex items-center justify-between'>

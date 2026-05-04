@@ -14,6 +14,7 @@ import { apiLogger } from '@/lib/api/logger'
 import { prisma } from '@/lib/db'
 import { getSubscriptionRelayerKeypair, getResendApiKey, getEmailSender } from '@/lib/env/server'
 import { nextPeriodEnd } from '@/lib/services/subscription.service'
+import { deliverPaymentWebhook } from '@/lib/services/payment-webhook.service'
 import { humanToRawAmount } from '@/lib/solana/amount'
 import { createServerConnection } from '@/lib/solana/connection'
 import { RPC_COMMITMENT } from '@/lib/solana/constants'
@@ -94,7 +95,7 @@ async function runAttemptWindow(attempt: 1 | 2 | 3, now: Date): Promise<RenewalS
           amount: true,
           interval: true,
           title: true,
-          merchant: { select: { wallet: true } },
+          merchant: { select: { wallet: true, webhookUrl: true, webhookSecret: true } },
         },
       },
       renewals: {
@@ -123,6 +124,8 @@ async function runAttemptWindow(attempt: 1 | 2 | 3, now: Date): Promise<RenewalS
       subscriberEmail: sub.subscriberEmail,
       subscriberName: sub.subscriberName,
       merchantWallet: sub.plan.merchant.wallet,
+      webhookUrl: sub.plan.merchant.webhookUrl,
+      webhookSecret: sub.plan.merchant.webhookSecret,
       planId: sub.plan.id,
       planTitle: sub.plan.title,
       token: sub.plan.token,
@@ -188,6 +191,8 @@ async function executeRenewal(
     subscriberEmail: string | null
     subscriberName: string | null
     merchantWallet: string
+    webhookUrl: string | null
+    webhookSecret: string | null
     planId: string
     planTitle: string | null
     token: string
@@ -307,6 +312,24 @@ async function executeRenewal(
   })
 
   apiLogger.info('Subscription renewal succeeded', { subscriberId, txSignature, attempt: data.attemptNumber })
+
+  if (data.webhookUrl) {
+    void deliverPaymentWebhook({
+      webhookUrl: data.webhookUrl,
+      webhookSecret: data.webhookSecret,
+      payload: {
+        subscriberId,
+        planId: data.planId,
+        txSignature: txSignature!,
+        inputToken: data.token,
+        inputAmount: humanToRawAmount(data.amountSnapshot, 6).toString(),
+        outputAmount: humanToRawAmount(data.amountSnapshot, 6).toString(),
+        userWallet: data.subscriberWallet,
+        timestamp: new Date().toISOString(),
+      },
+    })
+  }
+
   return { ok: true }
 }
 

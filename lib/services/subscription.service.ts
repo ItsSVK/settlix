@@ -19,6 +19,7 @@ import {
 } from '@/lib/api/constants'
 import { apiLogger } from '@/lib/api/logger'
 import { prisma } from '@/lib/db'
+import { deliverPaymentWebhook } from './payment-webhook.service'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -158,7 +159,12 @@ export async function createSubscriber(data: {
 }) {
   const plan = await prisma.subscriptionPlan.findFirst({
     where: { id: data.planId, archivedAt: null },
-    select: { amount: true, token: true, interval: true },
+    select: {
+      amount: true,
+      token: true,
+      interval: true,
+      merchant: { select: { webhookUrl: true, webhookSecret: true } },
+    },
   })
   if (!plan) throw new ApiError(404, 'Subscription plan not found', NOT_FOUND)
 
@@ -173,10 +179,11 @@ export async function createSubscriber(data: {
   const now = new Date()
   const currentPeriodEnd = nextPeriodEnd(now, plan.interval)
 
+  let subscriber: Awaited<ReturnType<typeof prisma.subscriber.upsert>>
   try {
-    return await prisma.$transaction(async (tx) => {
+    subscriber = await prisma.$transaction(async (tx) => {
       // Upsert handles re-subscription (cancelled → active) via the unique constraint.
-      const subscriber = await tx.subscriber.upsert({
+      const s = await tx.subscriber.upsert({
         where: { planId_subscriberWallet: { planId: data.planId, subscriberWallet: data.subscriberWallet } },
         create: {
           planId: data.planId,
@@ -197,7 +204,7 @@ export async function createSubscriber(data: {
 
       const renewal = await tx.subscriptionRenewal.create({
         data: {
-          subscriberId: subscriber.id,
+          subscriberId: s.id,
           amountSnapshot: plan.amount,
           tokenSnapshot: plan.token,
           periodStart: now,
@@ -222,7 +229,7 @@ export async function createSubscriber(data: {
         },
       })
 
-      return subscriber
+      return s
     })
   } catch (e) {
     apiLogger.error('Subscriber create failed', e, { planId: data.planId })
@@ -231,6 +238,25 @@ export async function createSubscriber(data: {
     }
     throw new ApiError(500, 'Could not create subscription', DB_UNEXPECTED, { error: e })
   }
+
+  if (plan.merchant.webhookUrl) {
+    void deliverPaymentWebhook({
+      webhookUrl: plan.merchant.webhookUrl,
+      webhookSecret: plan.merchant.webhookSecret,
+      payload: {
+        subscriberId: subscriber.id,
+        planId: data.planId,
+        txSignature: data.firstPayment.txSignature,
+        inputToken: data.firstPayment.inputToken,
+        inputAmount: data.firstPayment.inputAmount.toString(),
+        outputAmount: data.firstPayment.outputAmount.toString(),
+        userWallet: data.subscriberWallet,
+        timestamp: now.toISOString(),
+      },
+    })
+  }
+
+  return subscriber
 }
 
 export async function getSubscriberById(id: string) {

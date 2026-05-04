@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'motion/react'
-import { ArrowRight, Terminal, Webhook, ShieldCheck, Code2, Key, List, ToggleLeft, Zap, FileText } from 'lucide-react'
+import { ArrowRight, Terminal, Webhook, ShieldCheck, Code2, Key, List, ToggleLeft, Zap, FileText, RefreshCw } from 'lucide-react'
 import { Section } from './doc-section'
 import { CodeBlock } from './code-block'
 import { MethodBadge } from './method-badge'
@@ -204,6 +204,87 @@ export function RestApiSections({ apiSnippets }: RestApiSectionsProps) {
             <strong className='text-amber-700 dark:text-amber-300'>Already paid?</strong> A receipt email is sent
             automatically when the client pays. Calling this endpoint on an already-paid invoice returns{' '}
             <code className='font-mono text-amber-700/80 dark:text-amber-200'>409 INVOICE_ALREADY_PAID</code>.
+          </div>
+        </div>
+      </Section>
+
+      <Section id='subscriptions' icon={RefreshCw} title='Subscriptions' subtitle='Create recurring payment plans and manage subscribers.'>
+        <div className='space-y-4'>
+          <p className='text-sm text-muted-foreground leading-relaxed'>
+            Subscribers authorize an SPL token delegation from the{' '}
+            <code className='rounded bg-muted/60 px-1.5 font-mono text-foreground'>/subscribe/:planId</code> page.
+            The relayer then charges them automatically at each renewal. Merchants get a webhook on every successful charge.
+          </p>
+
+          <MethodBadge method='GET' path='/api/subscription-plans' />
+          <CodeBlock label='bash' code={apiSnippets.listPlans} />
+
+          <div className='h-px bg-border/30' />
+
+          <MethodBadge method='POST' path='/api/subscription-plans' />
+          <CodeBlock label='bash' code={apiSnippets.createPlan} />
+
+          <div className='mt-6 overflow-hidden rounded-2xl border border-border/40 bg-card/30 shadow-sm'>
+            <table className='w-full text-sm'>
+              <thead>
+                <tr className='border-b border-border/40 bg-muted/40'>
+                  {['Field', 'Type', 'Description'].map((h) => (
+                    <th key={h} className='px-5 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground'>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className='divide-y divide-border/30'>
+                {[
+                  ['token', 'string', 'Required. Settlement token mint address (USDC).'],
+                  ['amount', 'string', 'Required. Amount charged per interval, e.g. "10.00".'],
+                  ['interval', '"daily" | "weekly"', 'Required. Billing frequency.'],
+                  ['title', 'string?', 'Optional. Shown to subscribers at sign-up.'],
+                  ['description', 'string?', 'Optional. Up to 300 characters.'],
+                ].map(([f, t, d]) => (
+                  <tr key={f} className='transition-colors hover:bg-muted/20'>
+                    <td className='px-5 py-3.5 font-mono text-[13px] font-medium text-indigo-600 dark:text-indigo-400'>{f}</td>
+                    <td className='px-5 py-3.5 font-mono text-[13px] text-muted-foreground'>{t}</td>
+                    <td className='px-5 py-3.5 text-[13px] leading-relaxed text-foreground/80'>{d}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className='h-px bg-border/30' />
+
+          <MethodBadge method='PATCH' path='/api/subscription-plans/:id' />
+          <CodeBlock label='bash' code={apiSnippets.togglePlan} />
+          <p className='text-sm text-muted-foreground'>Pausing a plan prevents new sign-ups but does not cancel existing subscribers.</p>
+
+          <div className='h-px bg-border/30' />
+
+          <MethodBadge method='DELETE' path='/api/subscription-plans/:id' />
+          <CodeBlock label='bash' code={apiSnippets.archivePlan} />
+
+          <div className='h-px bg-border/30' />
+
+          <MethodBadge method='GET' path='/api/subscriptions' />
+          <CodeBlock label='bash' code={apiSnippets.listSubscribers} />
+
+          <div className='h-px bg-border/30' />
+
+          <MethodBadge method='POST' path='/api/subscriptions/:id/cancel' />
+          <CodeBlock label='bash' code={apiSnippets.cancelSubscriber} />
+          <p className='text-sm text-muted-foreground'>
+            Subscribers can also self-cancel from their{' '}
+            <code className='rounded bg-muted/60 px-1.5 font-mono text-foreground'>/manage/:subscriberId</code> page
+            by connecting the wallet they subscribed with.
+          </p>
+
+          <div className='rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-4 text-sm dark:border-indigo-400/20 dark:bg-indigo-400/5'>
+            <p className='font-semibold text-indigo-600 dark:text-indigo-400'>Renewal schedule</p>
+            <p className='mt-1 leading-relaxed text-muted-foreground'>
+              Renewals run at midnight UTC. The relayer attempts each charge up to 3 times (10 PM, 11 PM, 12 AM).
+              If all attempts fail the subscriber is cancelled and notified by email.
+            </p>
           </div>
         </div>
       </Section>

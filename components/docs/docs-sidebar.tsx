@@ -22,6 +22,7 @@ const REST_NAV = [
   { href: '#list-links', label: 'List Links' },
   { href: '#manage-link', label: 'Manage a Link' },
   { href: '#invoices', label: 'Invoices' },
+  { href: '#subscriptions', label: 'Subscriptions' },
   { href: '#api-webhooks', label: 'Webhooks' },
   { href: '#errors', label: 'Errors' },
 ]
@@ -52,16 +53,22 @@ export function DocsSidebar() {
 
   return (
     <aside className='hidden lg:block w-56 shrink-0 relative'>
-      <div className='fixed top-24 w-56 max-h-[calc(100vh-8rem)] overflow-y-auto pr-4'>
-        <p className='mb-4 px-4 text-xs font-bold uppercase tracking-widest text-muted-foreground'>Embed SDK</p>
+      <div className='fixed top-24 w-56 max-h-[calc(100vh-8rem)] overflow-y-auto pr-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted-foreground/10 hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/20'>
+        <div className='flex items-center gap-2 mb-4 px-3'>
+          <div className='h-4 w-1 rounded-full bg-primary/50 shadow-sm' />
+          <p className='text-xs font-bold uppercase tracking-widest text-muted-foreground'>Embed SDK</p>
+        </div>
         <nav className='flex flex-col gap-1 mb-8'>
           {EMBED_NAV.map(({ href, label }) => (
             <NavPill key={href} href={href} label={label} isActive={activeSection === href.slice(1)} />
           ))}
         </nav>
 
-        <p className='mb-4 px-4 text-xs font-bold uppercase tracking-widest text-muted-foreground'>REST API</p>
-        <nav className='flex flex-col gap-1'>
+        <div className='flex items-center gap-2 mb-4 px-3'>
+          <div className='h-4 w-1 rounded-full bg-primary/50 shadow-sm' />
+          <p className='text-xs font-bold uppercase tracking-widest text-muted-foreground'>REST API</p>
+        </div>
+        <nav className='flex flex-col gap-1 pb-10'>
           {REST_NAV.map(({ href, label }) => (
             <NavPill key={href} href={href} label={label} isActive={activeSection === href.slice(1)} />
           ))}
@@ -70,3 +77,4 @@ export function DocsSidebar() {
     </aside>
   )
 }
+

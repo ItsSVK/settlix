@@ -1,3 +1,8 @@
+'use client'
+
+import { motion } from 'motion/react'
+import Link from 'next/link'
+
 interface NavPillProps {
   href: string
   label: string
@@ -6,15 +11,27 @@ interface NavPillProps {
 
 export function NavPill({ href, label, isActive }: NavPillProps) {
   return (
-    <a
+    <Link
       href={href}
-      className={`block rounded-xl px-4 py-2 text-sm transition-all duration-200 ${
+      className={`relative flex items-center w-full rounded-xl px-3 h-10 text-sm tracking-wide transition-all duration-300 ease-out group ${
         isActive
-          ? 'bg-indigo-500/10 dark:bg-indigo-400/10 text-indigo-600 dark:text-indigo-300 font-semibold'
-          : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+          ? 'text-primary-foreground font-medium'
+          : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground hover:translate-x-1'
       }`}
     >
-      {label}
-    </a>
+      {isActive && (
+        <motion.div
+          layoutId="activeDocsPill"
+          className="absolute inset-0 rounded-xl bg-primary shadow-md shadow-primary/20"
+          initial={false}
+          transition={{
+            type: 'spring',
+            stiffness: 500,
+            damping: 35,
+          }}
+        />
+      )}
+      <span className="relative z-10">{label}</span>
+    </Link>
   )
 }

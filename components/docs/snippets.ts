@@ -44,22 +44,42 @@ Settlix.open({
   },
 })`,
 
-    webhookPayload: `// POST to your configured webhook URL on every successful payment
+    webhookPayload: `// Payment link payment
 {
   "linkId":       "clxyz1234abcd",
   "txSignature":  "5Yf3...k9mZ",
   "userWallet":   "9xKp...wQ2r",
-  "inputToken":   "So11111111111111111111111111111111111111112",
-  "inputAmount":  "25.000000",
-  "outputAmount": "25.000000",
+  "inputToken":   "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+  "inputAmount":  "25000000",
+  "outputAmount": "25000000",
   "timestamp":    "2025-04-26T10:30:00.000Z",
-  "metadata": {
-    "orderId": "order_789",
-    "userId":  "user_456"
-  }
+  "metadata":     { "orderId": "order_789" }
 }
 
-// Verify the signature header
+// Invoice payment
+{
+  "invoiceId":    "clxyz5678efgh",
+  "txSignature":  "5Yf3...k9mZ",
+  "userWallet":   "9xKp...wQ2r",
+  "inputToken":   "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+  "inputAmount":  "500000000",
+  "outputAmount": "500000000",
+  "timestamp":    "2025-04-26T10:30:00.000Z"
+}
+
+// Subscription payment (first payment or renewal)
+{
+  "subscriberId": "clxyz9012ijkl",
+  "planId":       "clxyz3456mnop",
+  "txSignature":  "5Yf3...k9mZ",
+  "userWallet":   "9xKp...wQ2r",
+  "inputToken":   "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+  "inputAmount":  "10000000",
+  "outputAmount": "10000000",
+  "timestamp":    "2025-04-26T10:30:00.000Z"
+}
+
+// All events include the signature header:
 // X-Settlix-Signature: sha256=<hmac-hex>`,
 
     csp: `Content-Security-Policy:
@@ -213,6 +233,52 @@ curl -X DELETE ${origin}/api/invoices/clxyz... \\
     sendInvoice: `# Send (or resend) the invoice email to the client
 # Returns 409 INVOICE_ALREADY_PAID if the invoice has been paid
 curl -X POST ${origin}/api/invoices/clxyz.../send \\
+  -H "Authorization: Bearer sk_live_..."`,
+
+    listPlans: `# List your subscription plans
+curl ${origin}/api/subscription-plans \\
+  -H "Authorization: Bearer sk_live_..."`,
+
+    createPlan: `# Create a subscription plan
+curl -X POST ${origin}/api/subscription-plans \\
+  -H "Authorization: Bearer sk_live_..." \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "token":       "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    "amount":      "10.00",
+    "interval":    "weekly",
+    "title":       "Pro Plan",
+    "description": "Weekly access to all features"
+  }'
+
+# Response — 201 Created
+{ "id": "clxyz1234abcd" }
+
+# Share this URL with subscribers:
+# ${origin}/subscribe/clxyz1234abcd`,
+
+    togglePlan: `# Pause a plan (stops new subscriptions, existing ones continue)
+curl -X PATCH ${origin}/api/subscription-plans/clxyz1234abcd \\
+  -H "Authorization: Bearer sk_live_..." \\
+  -H "Content-Type: application/json" \\
+  -d '{ "active": false }'
+
+# Reactivate
+curl -X PATCH ${origin}/api/subscription-plans/clxyz1234abcd \\
+  -H "Authorization: Bearer sk_live_..." \\
+  -H "Content-Type: application/json" \\
+  -d '{ "active": true }'`,
+
+    archivePlan: `# Archive a plan — returns 204 No Content
+curl -X DELETE ${origin}/api/subscription-plans/clxyz1234abcd \\
+  -H "Authorization: Bearer sk_live_..."`,
+
+    listSubscribers: `# List all subscribers across your plans
+curl ${origin}/api/subscriptions \\
+  -H "Authorization: Bearer sk_live_..."`,
+
+    cancelSubscriber: `# Cancel a subscriber (merchant-initiated)
+curl -X POST ${origin}/api/subscriptions/clxyz9012ijkl/cancel \\
   -H "Authorization: Bearer sk_live_..."`,
 
     errorShape: `// Every error response follows this shape
