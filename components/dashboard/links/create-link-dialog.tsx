@@ -125,6 +125,11 @@ export function CreateLinkDialog() {
       return
     }
 
+    if (!title.trim()) {
+      setError('Link title is required.')
+      return
+    }
+
     if (splitEnabled) {
       const err = splitError()
       if (err) {
@@ -150,7 +155,7 @@ export function CreateLinkDialog() {
       const data = await apiClient.post<{ id: string; payPath: string }>('/api/links', {
         token: getDefaultUsdcMint(),
         amount,
-        title: title.trim() || undefined,
+        title: title.trim(),
         description: description.trim() || undefined,
         recipients,
         expiresAt: limitsEnabled && expiresAt ? expiresAt : undefined,
@@ -216,14 +221,15 @@ export function CreateLinkDialog() {
             <div className='space-y-3'>
               <input
                 type='text'
-                maxLength={80}
+                maxLength={30}
+                required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder='Link title (optional)'
+                placeholder='Link title'
                 className='w-full rounded-2xl border border-border/40 bg-background/30 px-4 py-3.5 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30 hover:bg-background/40'
               />
               <textarea
-                maxLength={300}
+                maxLength={100}
                 rows={2}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -419,7 +425,7 @@ export function CreateLinkDialog() {
 
             <Button
               type='submit'
-              disabled={isLoading || !amount || parseFloat(amount) <= 0}
+              disabled={isLoading || !amount || parseFloat(amount) <= 0 || !title.trim()}
               className='relative mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-sm font-semibold text-background transition-all hover:opacity-90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 dark:text-foreground'
             >
               {isLoading ? (

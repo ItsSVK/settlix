@@ -50,6 +50,11 @@ export function CreateSubscriptionDialog({ onCreated }: CreateSubscriptionDialog
       return
     }
 
+    if (!title.trim()) {
+      setError('Plan name is required.')
+      return
+    }
+
     setIsLoading(true)
     setError('')
     try {
@@ -57,7 +62,7 @@ export function CreateSubscriptionDialog({ onCreated }: CreateSubscriptionDialog
         token: getDefaultUsdcMint(),
         amount,
         interval,
-        title: title.trim() || undefined,
+        title: title.trim(),
         description: description.trim() || undefined,
       })
       setResult(data)
@@ -153,10 +158,11 @@ export function CreateSubscriptionDialog({ onCreated }: CreateSubscriptionDialog
                 <RefreshCw className='pointer-events-none absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50' />
                 <input
                   type='text'
-                  maxLength={80}
+                  maxLength={70}
+                  required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder='Plan name (optional)'
+                  placeholder='Plan name'
                   className='w-full rounded-2xl border border-border/40 bg-background/30 py-3.5 pl-9 pr-4 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:ring-1 focus:ring-primary/30 hover:bg-background/40'
                 />
               </div>
@@ -174,7 +180,7 @@ export function CreateSubscriptionDialog({ onCreated }: CreateSubscriptionDialog
 
             <Button
               type='submit'
-              disabled={isLoading || !amount || parseFloat(amount) <= 0}
+              disabled={isLoading || !amount || parseFloat(amount) <= 0 || !title.trim()}
               className='relative mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-sm font-semibold text-background transition-all hover:opacity-90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 dark:text-primary-foreground'
             >
               {isLoading ? (

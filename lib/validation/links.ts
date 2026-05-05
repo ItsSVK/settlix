@@ -11,8 +11,8 @@ export const splitRecipientInput = z.object({
 export const createLinkBody = z.object({
   token: z.string().min(32).max(64),
   amount: z.union([z.number().positive(), z.string()]),
-  title: z.string().max(80).optional(),
-  description: z.string().max(300).optional(),
+  title: z.string().min(1, 'Title is required').max(30),
+  description: z.string().max(100).optional(),
   /**
    * Optional split config — up to 10 recipients (including the merchant).
    * basisPoints across all entries must sum to exactly 10000.

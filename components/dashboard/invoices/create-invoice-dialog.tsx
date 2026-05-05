@@ -103,6 +103,11 @@ export function CreateInvoiceDialog() {
       }
     }
 
+    if (!clientName.trim()) {
+      setError('Client name is required.')
+      return
+    }
+
     if (total <= 0) {
       setError('Invoice total must be greater than 0.')
       return
@@ -114,7 +119,7 @@ export function CreateInvoiceDialog() {
     try {
       const data = await apiClient.post<{ id: string; invoicePath: string }>('/api/invoices', {
         token: getDefaultUsdcMint(),
-        clientName: clientName.trim() || undefined,
+        clientName: clientName.trim(),
         clientEmail: clientEmail.trim() || undefined,
         dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
         memo: memo.trim() || undefined,
@@ -158,12 +163,13 @@ export function CreateInvoiceDialog() {
             <div className='overflow-hidden rounded-2xl border border-border/40 bg-background/30 transition-all'>
               <div className='px-4 py-3.5'>
                 <p className='text-sm font-medium text-foreground'>Client</p>
-                <p className='mt-0.5 text-xs text-muted-foreground'>Add client details (optional)</p>
+                <p className='mt-0.5 text-xs text-muted-foreground'>Client name is required</p>
               </div>
               <div className='space-y-4 border-t border-border/40 px-4 pb-4 pt-4'>
                 <div>
                   <input
                     type='text'
+                    required
                     value={clientName}
                     onChange={(e) => {
                       setClientName(e.target.value)
@@ -309,7 +315,7 @@ export function CreateInvoiceDialog() {
 
             <Button
               type='submit'
-              disabled={isLoading || lineItems.length === 0 || total <= 0}
+              disabled={isLoading || lineItems.length === 0 || total <= 0 || !clientName.trim()}
               className='relative mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-sm font-semibold text-background transition-all hover:opacity-90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 dark:text-foreground'
             >
               {isLoading ? (

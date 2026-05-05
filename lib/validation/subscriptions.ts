@@ -4,7 +4,7 @@ export const createSubscriptionPlanBody = z.object({
   token: z.string().min(32).max(64),
   amount: z.union([z.number().positive(), z.string()]),
   interval: z.enum(['daily', 'weekly']),
-  title: z.string().max(80).optional(),
+  title: z.string().min(1, 'Plan name is required').max(70),
   description: z.string().max(300).optional(),
 })
 

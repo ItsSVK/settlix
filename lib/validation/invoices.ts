@@ -11,9 +11,9 @@ export const invoiceLineItemSchema = z.object({
 })
 
 export const createInvoiceBody = z.object({
-  clientName: z.string().trim().min(1).max(100).optional(),
-  clientEmail: z.preprocess(emptyStringToUndefined, z.string().email('Invalid email').optional()),
-  dueDate: z.string().datetime({ offset: true }).optional(),
+  clientName: z.string().trim().min(1, 'Client name is required').max(100),
+  clientEmail: z.preprocess(emptyStringToUndefined, z.email('Invalid email').optional()),
+  dueDate: z.iso.datetime({ offset: true }).optional(),
   memo: z.string().trim().max(1000).optional(),
   token: z.string().min(32).max(64),
   lineItems: z.array(invoiceLineItemSchema).min(1, 'At least one line item required').max(50),

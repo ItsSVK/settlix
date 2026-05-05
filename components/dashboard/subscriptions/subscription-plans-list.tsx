@@ -79,7 +79,7 @@ function PlanRow({
   archivePlan: (id: string) => Promise<void>
   archivePlanPending: boolean
 }) {
-  const [expanded, setExpanded] = useState(index === 0)
+  const [expanded, setExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
   const logo = getLogoByMint(plan.token)
   const activeSubscribers = subscribers.filter((s) => s.status === 'active').length
@@ -329,6 +329,12 @@ export function SubscriptionPlansList({
 
   return (
     <div className='space-y-4'>
+      {/* <div className='flex justify-end'>
+        <Button variant='outline' size='sm' onClick={onRefresh} className='h-10 rounded-xl'>
+          <RefreshCw className='mr-2 h-3.5 w-3.5' aria-hidden='true' />
+          Refresh
+        </Button>
+      </div> */}
       {plans.map((plan, index) => (
         <PlanRow
           key={plan.id}
@@ -343,12 +349,6 @@ export function SubscriptionPlansList({
           archivePlanPending={archivePlanPending}
         />
       ))}
-      <div className='flex justify-end'>
-        <Button variant='outline' size='sm' onClick={onRefresh} className='h-10 rounded-xl'>
-          <RefreshCw className='mr-2 h-3.5 w-3.5' aria-hidden='true' />
-          Refresh
-        </Button>
-      </div>
     </div>
   )
 }
