@@ -1,0 +1,26 @@
+<svg viewBox="0 0 32 32" width="512" height="512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="primary-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="100%" stop-color="#4f46e5" stop-opacity="0.4" />
+    </linearGradient>
+  </defs>
+  <path
+    d="M16 6 Q 6 6 10 10"
+    stroke="#0f172a"
+    stroke-width="6"
+    stroke-linecap="round"
+  />
+  <path
+    d="M16 26 Q 26 26 22 22"
+    stroke="#0f172a"
+    stroke-width="6"
+    stroke-linecap="round"
+  />
+  <path
+    d="M6 26L26 6"
+    stroke="url(#primary-gradient)"
+    stroke-width="6"
+    stroke-linecap="round"
+  />
+</svg>

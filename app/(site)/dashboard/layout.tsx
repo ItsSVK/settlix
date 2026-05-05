@@ -5,6 +5,7 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { AppSidebar } from '@/components/dashboard/app-sidebar'
 import { DashboardTopbar } from '@/components/dashboard/dashboard-topbar'
+import { MobileBottomNav } from '@/components/dashboard/mobile-bottom-nav'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies()
@@ -23,8 +24,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <AppSidebar />
         <SidebarInset>
           <DashboardTopbar />
-          {children}
+          <div className='pb-20 md:pb-0'>{children}</div>
         </SidebarInset>
+        <MobileBottomNav />
       </SidebarProvider>
     </TooltipProvider>
   )
