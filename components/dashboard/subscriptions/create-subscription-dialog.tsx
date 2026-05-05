@@ -9,10 +9,7 @@ import { DialogShell } from '@/components/shared/dialog-shell'
 import { DialogSuccess } from '@/components/shared/dialog-success'
 import { getDefaultUsdcMint } from '@/lib/solana/constants'
 import { apiClient } from '@/lib/api/client'
-
-interface CreateSubscriptionDialogProps {
-  onCreated: () => void
-}
+import { useSubscriptions } from '@/lib/hooks/use-subscriptions'
 
 function limitDecimals(val: string): string {
   if (!val.includes('.')) return val
@@ -20,7 +17,7 @@ function limitDecimals(val: string): string {
   return decimal && decimal.length > 2 ? `${whole}.${decimal.slice(0, 2)}` : val
 }
 
-export function CreateSubscriptionDialog({ onCreated }: CreateSubscriptionDialogProps) {
+export function CreateSubscriptionDialog() {
   const [open, setOpen] = useState(false)
   const [amount, setAmount] = useState('')
   const [interval, setInterval] = useState<'daily' | 'weekly'>('weekly')
@@ -29,6 +26,7 @@ export function CreateSubscriptionDialog({ onCreated }: CreateSubscriptionDialog
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState<{ id: string; payPath: string } | null>(null)
+  const { refresh } = useSubscriptions()
 
   const reset = () => {
     const wasCreated = !!result
@@ -39,7 +37,7 @@ export function CreateSubscriptionDialog({ onCreated }: CreateSubscriptionDialog
     setError('')
     setResult(null)
     setOpen(false)
-    if (wasCreated) setTimeout(() => onCreated(), 300)
+    if (wasCreated) setTimeout(() => refresh(), 300)
   }
 
   const submit = async (e: React.FormEvent) => {

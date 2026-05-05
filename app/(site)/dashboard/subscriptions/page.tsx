@@ -8,24 +8,10 @@ import { SkeletonGrid } from '@/components/shared/skeletons'
 import { StatsBar } from '@/components/dashboard/stats-bar'
 
 export default function SubscriptionsPage() {
-  const { subscriptions, isLoading, error: subscriptionsError, refresh, cancelSubscription } = useSubscriptions()
-  const {
-    plans,
-    isLoading: plansLoading,
-    error: plansError,
-    refresh: refreshPlans,
-    togglePlanActive,
-    togglePlanActivePending,
-    archivePlan,
-    archivePlanPending,
-  } = useSubscriptionPlans()
+  const { subscriptions, isLoading, error: subscriptionsError } = useSubscriptions()
+  const { plans, isLoading: plansLoading, error: plansError } = useSubscriptionPlans()
   const isPageLoading = isLoading || plansLoading
   const hasError = Boolean(subscriptionsError || plansError)
-
-  const refreshAll = () => {
-    void refresh()
-    void refreshPlans()
-  }
 
   const active = subscriptions.filter((s) => s.status === 'active').length
   const pastDue = subscriptions.filter((s) => s.status === 'past_due').length
@@ -54,7 +40,7 @@ export default function SubscriptionsPage() {
               Manage recurring plans, subscriber status, and renewal history from one place.
             </p>
           </div>
-          <CreateSubscriptionDialog onCreated={refreshAll} />
+          <CreateSubscriptionDialog />
         </motion.div>
 
         {/* Stats */}
@@ -85,12 +71,6 @@ export default function SubscriptionsPage() {
             subscriptions={subscriptions}
             isLoading={isPageLoading}
             hasError={hasError}
-            onRefresh={refreshAll}
-            cancelSubscription={cancelSubscription}
-            togglePlanActive={togglePlanActive}
-            togglePlanActivePending={togglePlanActivePending}
-            archivePlan={archivePlan}
-            archivePlanPending={archivePlanPending}
           />
         </motion.div>
       </div>

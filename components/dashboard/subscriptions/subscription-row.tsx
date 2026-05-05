@@ -3,9 +3,9 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { ChevronDown, ExternalLink, ReceiptText, RefreshCw, XCircle } from 'lucide-react'
-import { toast } from 'sonner'
 import Image from 'next/image'
 import type { Subscription } from '@/lib/hooks/use-subscriptions'
+import { useSubscriptions } from '@/lib/hooks/use-subscriptions'
 import { Button } from '@/components/ui/button'
 import { ConfirmationModal } from '@/components/shared/confirmation-modal'
 import { getLogoByMint } from '@/lib/tokens/tokens'
@@ -26,30 +26,16 @@ const RENEWAL_STATUS_DOT: Record<string, string> = {
 
 interface SubscriptionRowProps {
   subscription: Subscription
-  onCancel: (id: string) => Promise<void>
-  onRefresh: () => void
 }
 
-export function SubscriptionRow({ subscription: sub, onCancel, onRefresh }: SubscriptionRowProps) {
+export function SubscriptionRow({ subscription: sub }: SubscriptionRowProps) {
   const [expanded, setExpanded] = useState(false)
-  const [cancelling, setCancelling] = useState(false)
+  const { cancelSubscription, cancelSubscriptionPending } = useSubscriptions()
 
   const isCancelled = sub.status === 'cancelled'
   const periodEnd = new Date(sub.currentPeriodEnd)
   const isOverdue = !isCancelled && periodEnd < new Date()
   const tokenLogo = getLogoByMint(sub.plan.token)
-
-  const handleCancel = async (id: string) => {
-    setCancelling(true)
-    try {
-      await onCancel(id)
-      onRefresh()
-    } catch {
-      toast.error('Failed to cancel subscription')
-    } finally {
-      setCancelling(false)
-    }
-  }
 
   return (
     <div className='group rounded-2xl border border-border/40 bg-card/40 backdrop-blur-sm shadow-sm transition-all hover:bg-card/60 hover:border-border/60 hover:shadow-md'>
@@ -138,8 +124,8 @@ export function SubscriptionRow({ subscription: sub, onCancel, onRefresh }: Subs
               <div className='w-px h-4 bg-border/50 mx-1' />
               <ConfirmationModal
                 className='h-10 w-10 rounded-lg p-0 text-red-500 transition-colors hover:bg-background/80 hover:text-foreground'
-                onConfirm={handleCancel}
-                isPending={cancelling}
+                onConfirm={cancelSubscription}
+                isPending={cancelSubscriptionPending}
                 id={sub.id}
                 type='Cancel'
               />
