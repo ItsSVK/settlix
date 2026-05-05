@@ -1,11 +1,12 @@
 'use client'
 
 import { motion } from 'motion/react'
-import { ArrowRight, Terminal, Webhook, ShieldCheck, Code2, FileCode, Zap } from 'lucide-react'
+import { ArrowRight, Terminal, Webhook, ShieldCheck, Code2, FileCode, Zap, ExternalLink } from 'lucide-react'
 import { Section } from './doc-section'
 import { Step } from './doc-step'
 import { CodeBlock } from './code-block'
 import { LiveDemo } from './live-demo'
+
 import type { makeSnippets } from './snippets'
 
 type Snippets = ReturnType<typeof makeSnippets>
@@ -70,7 +71,7 @@ export function EmbedSections({ snippets }: EmbedSectionsProps) {
           <Step n={1} title='Load the checkout script once — anywhere in your HTML'>
             <CodeBlock code={snippets.loadScript} label='html' />
           </Step>
-          <Step n={2} title='Trigger the checkout from any button or link'>
+          <Step n={2} title='Trigger the checkout from any button'>
             <CodeBlock code={snippets.basicButton} label='html' />
             <p className='mt-4 text-sm text-muted-foreground/80'>
               Replace{' '}
@@ -79,6 +80,15 @@ export function EmbedSections({ snippets }: EmbedSectionsProps) {
               </code>{' '}
               with the ID from your Settlix dashboard.
             </p>
+            <a
+              href='/demo.html'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='mt-5 inline-flex items-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-4 py-2.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 transition-colors hover:bg-indigo-500/20'
+            >
+              <ExternalLink className='h-3.5 w-3.5' />
+              Open live HTML demo
+            </a>
           </Step>
         </div>
       </Section>
@@ -193,7 +203,7 @@ export function EmbedSections({ snippets }: EmbedSectionsProps) {
         id='typescript'
         icon={Code2}
         title='TypeScript'
-        subtitle='Add types for window.Settlix — no npm package needed.'
+        subtitle='Full type declaration — paste this into any global.d.ts if you skipped the Quick Start.'
       >
         <CodeBlock code={snippets.typescript} label='typescript' />
       </Section>

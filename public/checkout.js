@@ -169,12 +169,11 @@
     iframe.setAttribute('loading', 'eager')
     _applyStyles(iframe, {
       width: '100%',
-      // Fixed height — the pay card fits comfortably; wallet modals scroll
-      height: '640px',
-      maxHeight: '90vh',
+      height: '580px', // initial estimate — settlix:resize will correct this
       border: 'none',
       display: 'block',
       borderRadius: '24px',
+      transition: 'height 220ms ease',
     })
 
     // ── postMessage bridge ──────────────────────────────────────────────────
@@ -184,7 +183,11 @@
       var data = ev.data
       if (!data || typeof data !== 'object' || typeof data.type !== 'string') return
 
-      if (data.type === 'settlix:paid') {
+      if (data.type === 'settlix:resize') {
+        // Clamp to 90% of the viewport so the modal never overflows the screen
+        var maxH = Math.floor(win.innerHeight * 0.9)
+        iframe.style.height = Math.min(data.height, maxH) + 'px'
+      } else if (data.type === 'settlix:paid') {
         _paid = true
         // Fire the merchant callback immediately so fulfillment can start.
         // metadata is echoed from the iframe so the merchant can correlate order/user.

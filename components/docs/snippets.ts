@@ -6,6 +6,81 @@ export function makeSnippets(origin: string) {
   Pay with Settlix
 </button>`,
 
+    // ── React quick-start ──────────────────────────────────────────────────
+    reactLoadScript: `<!-- public/index.html — before </body> -->
+<script src="${origin}/checkout.js"></script>`,
+
+    reactMinimal: `// Any component — call window.Settlix.open() directly
+<button onClick={() => window.Settlix.open({ linkId: 'YOUR_LINK_ID' })}>
+  Pay with Settlix
+</button>`,
+
+    reactInstallTypes: `# TypeScript users — one command, types become globally available
+bun add -D @settlix/types
+# or: npm install --save-dev @settlix/types`,
+
+    // ── Next.js quick-start ────────────────────────────────────────────────
+    nextjsLayout: `// app/layout.tsx — add Script once, it loads on every page
+import Script from 'next/script'
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        {children}
+        <Script src="${origin}/checkout.js" strategy="lazyOnload" />
+      </body>
+    </html>
+  )
+}`,
+
+    nextjsMinimal: `'use client'  // window.Settlix only exists in the browser
+
+// Any Client Component
+export function PayButton() {
+  return (
+    <button onClick={() => window.Settlix.open({ linkId: 'YOUR_LINK_ID' })}>
+      Pay with Settlix
+    </button>
+  )
+}`,
+
+    nextjsInstallTypes: `# TypeScript users — one command, types become globally available
+bun add -D @settlix/types
+# or: npm install --save-dev @settlix/types`,
+
+    // ── Optional: reusable pre-styled component (React + Next.js) ─────────
+    reusableComponent: `// Drop this anywhere in your project — no extra dependencies
+// Next.js: add 'use client' at the top
+
+type Size = 'sm' | 'md' | 'lg'
+
+const STYLES: Record<Size, React.CSSProperties> = {
+  sm: { display: 'inline-flex', alignItems: 'center', gap: 6,  borderRadius: 8,  background: '#4f46e5', padding: '6px 12px',  fontSize: 12, fontWeight: 600, color: '#fff', border: 'none', cursor: 'pointer' },
+  md: { display: 'inline-flex', alignItems: 'center', gap: 8,  borderRadius: 12, background: '#4f46e5', padding: '10px 20px', fontSize: 14, fontWeight: 600, color: '#fff', border: 'none', cursor: 'pointer' },
+  lg: { display: 'inline-flex', alignItems: 'center', gap: 10, borderRadius: 16, background: '#4f46e5', padding: '14px 32px', fontSize: 16, fontWeight: 700, color: '#fff', border: 'none', cursor: 'pointer' },
+}
+
+interface Props {
+  linkId: string
+  size?: Size
+  label?: string
+  metadata?: Record<string, unknown>
+  onSuccess?: (txSignature: string, metadata: Record<string, unknown> | null) => void
+  onClose?:   (metadata: Record<string, unknown> | null) => void
+}
+
+export function SettlixButton({ linkId, size = 'md', label = '⚡ Pay with Settlix', metadata, onSuccess, onClose }: Props) {
+  return (
+    <button
+      style={STYLES[size]}
+      onClick={() => window.Settlix.open({ linkId, metadata, onSuccess, onClose })}
+    >
+      {label}
+    </button>
+  )
+}`,
+
     fullApi: `Settlix.open({
   linkId: 'YOUR_LINK_ID',
 
