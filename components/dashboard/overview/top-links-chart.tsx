@@ -7,6 +7,7 @@ import type { TopLink } from '@/lib/hooks/use-dashboard-stats'
 interface TopLinksChartProps {
   data: TopLink[]
   loading?: boolean
+  className?: string
 }
 
 function truncate(str: string | null, max: number) {
@@ -14,10 +15,10 @@ function truncate(str: string | null, max: number) {
   return str.length > max ? str.slice(0, max) + '…' : str
 }
 
-export function TopLinksChart({ data, loading = false }: TopLinksChartProps) {
+export function TopLinksChart({ data, loading = false, className }: TopLinksChartProps) {
   if (loading) {
     return (
-      <div className='rounded-2xl border border-border/50 bg-background/50 p-6 backdrop-blur-xl shadow-sm'>
+      <div className={`rounded-2xl border border-border/50 bg-background/50 p-6 backdrop-blur-xl shadow-sm${className ? ` ${className}` : ''}`}>
         <div className='mb-5 space-y-2'>
           <div className='h-5 w-32 rounded-md bg-muted animate-pulse' />
           <div className='h-3.5 w-48 rounded-md bg-muted animate-pulse' />
@@ -34,14 +35,14 @@ export function TopLinksChart({ data, loading = false }: TopLinksChartProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.5, ease: 'easeOut' }}
-      className='rounded-2xl border border-border/50 bg-background/50 p-6 backdrop-blur-xl shadow-sm'
+      className={`rounded-2xl border border-border/50 bg-background/50 p-6 backdrop-blur-xl shadow-sm flex flex-col${className ? ` ${className}` : ''}`}
     >
       <div className='mb-5'>
         <h2 className='text-lg font-semibold text-foreground'>Top Payment Links</h2>
         <p className='text-sm text-muted-foreground'>By USDC volume collected</p>
       </div>
 
-      <div className='h-[220px] w-full'>
+      <div className='flex-1 min-h-[220px] w-full'>
         {chartData.length === 0 ? (
           <div className='flex h-full items-center justify-center'>
             <p className='text-sm text-muted-foreground'>No payment links yet</p>

@@ -9,7 +9,7 @@ import { DialogShell } from '@/components/shared/dialog-shell'
 import { DialogSuccess } from '@/components/shared/dialog-success'
 import { getDefaultUsdcMint } from '@/lib/solana/constants'
 import { apiClient } from '@/lib/api/client'
-import { useSubscriptions } from '@/lib/hooks/use-subscriptions'
+import { useSubscriptionPlans } from '@/lib/hooks/use-subscriptions'
 
 function limitDecimals(val: string): string {
   if (!val.includes('.')) return val
@@ -26,7 +26,7 @@ export function CreateSubscriptionDialog() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState<{ id: string; payPath: string } | null>(null)
-  const { refresh } = useSubscriptions()
+  const { refresh } = useSubscriptionPlans()
 
   const reset = () => {
     const wasCreated = !!result

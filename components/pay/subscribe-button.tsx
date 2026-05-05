@@ -9,10 +9,11 @@ interface SubscribeButtonProps {
   planId: string
   onSuccess: (result: SubscribeResult) => void
   meta?: { subscriberName?: string; subscriberEmail?: string }
+  disabled?: boolean
   className?: string
 }
 
-export function SubscribeButton({ planId, onSuccess, meta, className }: SubscribeButtonProps) {
+export function SubscribeButton({ planId, onSuccess, meta, disabled: disabledProp, className }: SubscribeButtonProps) {
   const { step, errorMsg, isLoading, connected, requestWalletConnection, subscribe } = useSubscriptionFlow({
     onSuccess,
   })
@@ -35,7 +36,7 @@ export function SubscribeButton({ planId, onSuccess, meta, className }: Subscrib
     <div className='space-y-2'>
       <button
         onClick={() => subscribe(planId, meta)}
-        disabled={isLoading || step === 'done'}
+        disabled={isLoading || step === 'done' || disabledProp}
         className={cn(
           'flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-semibold text-primary-foreground',
           'transition-all duration-200 hover:opacity-90 active:scale-[0.98]',

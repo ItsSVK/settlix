@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
     // Delegation must cover all active subscriptions for this token + the new plan,
     // because a Solana ATA has a single delegate slot — each Approve overwrites the last.
     const existingTotal = await getActiveDelegationTotal(subscriberWallet, plan.token)
+    const delegationIterations = plan.interval === 'daily' ? 7 : 4
     const newTotal = existingTotal.add(new Decimal(plan.amount.toString()))
     const totalDelegationRaw = humanToRawAmount(newTotal, mintInfo.decimals)
 
@@ -73,6 +74,7 @@ export async function POST(req: NextRequest) {
       settlementMint: mintPk,
       transferAmountRaw,
       totalDelegationRaw,
+      delegationIterations,
       mintDecimals: mintInfo.decimals,
       planId,
     })
@@ -81,7 +83,7 @@ export async function POST(req: NextRequest) {
       transaction: Buffer.from(tx.serialize()).toString('base64'),
       amount: plan.amount.toString(),
       interval: plan.interval,
-      delegationMonths: 12,
+      delegationIterations: delegationIterations,
       subscriberName: subscriberName ?? null,
       subscriberEmail: subscriberEmail ?? null,
     })

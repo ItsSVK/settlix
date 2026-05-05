@@ -24,8 +24,6 @@ async function resolveTokenProgram(connection: Connection, mint: PublicKey): Pro
   return info.owner.equals(TOKEN_2022_PROGRAM_ID) ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID
 }
 
-/** Months of billing capacity to pre-authorise — transparent to the subscriber. */
-const DELEGATION_MONTHS = 12
 
 /**
  * Builds the subscription authorization transaction signed by the subscriber.
@@ -37,22 +35,27 @@ export async function buildSubscriptionAuthorizationTx(params: {
   relayer: PublicKey
   settlementMint: PublicKey
   transferAmountRaw: bigint
-  /** Total delegation to set = sum of all active subscriptions (same token) + this plan, × 12 months. */
+  /** Total delegation to set = sum of all active subscriptions (same token) + this plan, × iterations.
+   * daily = 7 iterations,
+   * weekly = 4 iterations,
+   */
   totalDelegationRaw: bigint
+  /** Number of billing periods to pre-authorise (7 for daily, 4 for weekly). */
+  delegationIterations: number
   mintDecimals: number
   planId: string
 }): Promise<VersionedTransaction> {
-  const { connection, subscriber, relayer, settlementMint, totalDelegationRaw, mintDecimals, planId } = params
+  const { connection, subscriber, relayer, settlementMint, totalDelegationRaw, delegationIterations, mintDecimals, planId } = params
 
   const tokenProgram = await resolveTokenProgram(connection, settlementMint)
   const subscriberAta = getAssociatedTokenAddressSync(settlementMint, subscriber, false, tokenProgram)
 
   const { blockhash } = await connection.getLatestBlockhash(RPC_COMMITMENT)
 
-  const delegatedAmount = totalDelegationRaw * BigInt(DELEGATION_MONTHS)
+  const delegatedAmount = totalDelegationRaw * BigInt(delegationIterations)
 
   const instructions: TransactionInstruction[] = [
-    // Approve relayer to pull up to 12 months of payments
+    // Approve relayer to pull up to 7 or 4 iterations of payments based on daily or weekly subscription respectively
     createApproveCheckedInstruction(
       subscriberAta,
       settlementMint,

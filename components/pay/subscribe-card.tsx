@@ -2,13 +2,14 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { CheckCircle, ExternalLink, Mail, RefreshCw, User } from 'lucide-react'
+import { CheckCircle, ExternalLink, Mail, RefreshCw, ShieldCheck, User } from 'lucide-react'
 import Image from 'next/image'
 import { SubscribeButton } from './subscribe-button'
 import type { SubscribeResult } from '@/lib/hooks/use-subscription-flow'
 import { SOLSCAN_CLUSTER } from '@/lib/solana/constants'
 
 const INTERVAL_LABELS: Record<string, string> = {
+  daily: 'day',
   weekly: 'week',
   monthly: 'month',
   yearly: 'year',
@@ -118,6 +119,13 @@ export function SubscribeCard({ plan }: { plan: PlanData | null }) {
   const [result, setResult] = useState<SubscribeResult | null>(null)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [nameError, setNameError] = useState(false)
+  const [emailError, setEmailError] = useState(false)
+
+  const trimmedName = name.trim()
+  const trimmedEmail = email.trim()
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)
+  const canSubmit = trimmedName.length > 0 && isValidEmail
 
   const body = (() => {
     if (!plan) {
@@ -174,44 +182,82 @@ export function SubscribeCard({ plan }: { plan: PlanData | null }) {
               {plan.tokenSymbol} / {INTERVAL_LABELS[plan.interval] ?? plan.interval}
             </span>
           </div>
+          <div className='mt-2 flex items-center justify-center'>
+            <span className='inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400'>
+              <ShieldCheck className='h-3 w-3' aria-hidden='true' />
+              Delegated for {plan.interval === 'daily' ? '7 days' : plan.interval === 'weekly' ? '4 weeks' : '1 year'}
+            </span>
+          </div>
         </div>
 
         {/* Name + email */}
         <div className='space-y-2'>
-          <div className='relative'>
-            <User className='pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50' />
-            <input
-              type='text'
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder='Your name (optional)'
-              maxLength={100}
-              className='w-full rounded-xl border border-border/40 bg-muted/30 py-2.5 pl-9 pr-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/50 focus:border-primary/40 focus:ring-1 focus:ring-primary/20'
-            />
+          <div className='space-y-1'>
+            <div className='relative'>
+              <User className='pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50' />
+              <input
+                type='text'
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value)
+                  setNameError(false)
+                }}
+                onBlur={() => setNameError(name.trim().length === 0)}
+                placeholder='Your name'
+                required
+                maxLength={100}
+                className={`w-full rounded-xl border bg-muted/30 py-2.5 pl-9 pr-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/50 focus:ring-1 ${
+                  nameError
+                    ? 'border-destructive/60 focus:border-destructive/60 focus:ring-destructive/20'
+                    : 'border-border/40 focus:border-primary/40 focus:ring-primary/20'
+                }`}
+              />
+            </div>
+            {nameError && <p className='pl-1 text-[11px] text-destructive'>Name is required</p>}
           </div>
-          <div className='relative'>
-            <Mail className='pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50' />
-            <input
-              type='email'
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder='Email for renewal alerts (optional)'
-              className='w-full rounded-xl border border-border/40 bg-muted/30 py-2.5 pl-9 pr-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/50 focus:border-primary/40 focus:ring-1 focus:ring-primary/20'
-            />
+
+          <div className='space-y-1'>
+            <div className='relative'>
+              <Mail className='pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50' />
+              <input
+                type='email'
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  setEmailError(false)
+                }}
+                onBlur={() =>
+                  setEmailError(email.trim().length === 0 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
+                }
+                placeholder='Email for renewal alerts'
+                required
+                className={`w-full rounded-xl border bg-muted/30 py-2.5 pl-9 pr-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/50 focus:ring-1 ${
+                  emailError
+                    ? 'border-destructive/60 focus:border-destructive/60 focus:ring-destructive/20'
+                    : 'border-border/40 focus:border-primary/40 focus:ring-primary/20'
+                }`}
+              />
+            </div>
+            {emailError && (
+              <p className='pl-1 text-[11px] text-destructive'>
+                {email.trim().length === 0 ? 'Email is required' : 'Enter a valid email address'}
+              </p>
+            )}
           </div>
         </div>
 
         <SubscribeButton
           planId={plan.id}
           onSuccess={setResult}
-          meta={{ subscriberName: name.trim() || undefined, subscriberEmail: email.trim() || undefined }}
+          disabled={!canSubmit}
+          meta={{ subscriberName: trimmedName, subscriberEmail: trimmedEmail }}
         />
       </motion.div>
     )
   })()
 
   return (
-    <div className='flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 py-12'>
+    <div className='flex min-h-[calc(100vh-8rem)] items-start justify-center px-4 pt-32 pb-8'>
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -230,7 +276,9 @@ export function SubscribeCard({ plan }: { plan: PlanData | null }) {
             {plan?.title && <h1 className='mt-2 text-2xl font-bold tracking-tight text-foreground'>{plan.title}</h1>}
 
             {plan?.description && (
-              <p className='mt-2 max-w-[280px] text-sm text-muted-foreground leading-relaxed'>{plan.description}</p>
+              <p className='mt-2 max-w-[280px] text-sm text-muted-foreground leading-relaxed line-clamp-2'>
+                {plan.description}
+              </p>
             )}
 
             {plan && (
@@ -243,7 +291,9 @@ export function SubscribeCard({ plan }: { plan: PlanData | null }) {
             <div className='mx-auto mt-2 h-px w-48 bg-linear-to-r from-transparent via-border to-transparent' />
           </div>
 
-          <AnimatePresence mode='wait'>{body}</AnimatePresence>
+          <div className='flex min-h-[380px] flex-col justify-center'>
+            <AnimatePresence mode='wait'>{body}</AnimatePresence>
+          </div>
         </div>
       </motion.div>
     </div>

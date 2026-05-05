@@ -114,7 +114,7 @@ export function SubscriptionRow({ subscription: sub }: SubscriptionRowProps) {
             aria-label='View subscriber wallet on Solscan'
             variant='ghost'
             size='sm'
-            className='hidden md:flex h-10 w-10 rounded-lg p-0 text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors'
+            className='hidden md:flex h-6 w-6 rounded-lg p-0 text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors'
           >
             <ExternalLink className='h-3.5 w-3.5' />
           </Button>
@@ -123,7 +123,7 @@ export function SubscriptionRow({ subscription: sub }: SubscriptionRowProps) {
             <>
               <div className='w-px h-4 bg-border/50 mx-1' />
               <ConfirmationModal
-                className='h-10 w-10 rounded-lg p-0 text-red-500 transition-colors hover:bg-background/80 hover:text-foreground'
+                className='h-6 w-6 rounded-lg p-0 text-red-500 transition-colors hover:bg-background/80 hover:text-foreground'
                 onConfirm={cancelSubscription}
                 isPending={cancelSubscriptionPending}
                 id={sub.id}
@@ -203,7 +203,7 @@ export function SubscriptionRow({ subscription: sub }: SubscriptionRowProps) {
                             href={`https://solscan.io/tx/${renewal.txSignature}${SOLSCAN_CLUSTER}`}
                             target='_blank'
                             rel='noopener noreferrer'
-                            className='flex h-10 w-10 items-center justify-center rounded-lg bg-muted/50 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card'
+                            className='flex h-6 w-6 items-center justify-center rounded-lg bg-muted/50 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card'
                             title='View transaction'
                             aria-label='View renewal transaction'
                           >

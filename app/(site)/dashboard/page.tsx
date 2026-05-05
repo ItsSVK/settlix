@@ -1,22 +1,27 @@
 'use client'
 
 import { motion } from 'motion/react'
-import { DollarSign, Link as LinkIcon, FileText, TrendingUp } from 'lucide-react'
+import { DollarSign, Link as LinkIcon, FileText, TrendingUp, Users } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-context'
 import { useDashboardStats } from '@/lib/hooks/use-dashboard-stats'
 import { StatCard } from '@/components/dashboard/overview/stat-card'
 import { RevenueChart } from '@/components/dashboard/overview/revenue-chart'
 import { TopLinksChart } from '@/components/dashboard/overview/top-links-chart'
 import { InvoiceStatusChart } from '@/components/dashboard/overview/invoice-status-chart'
+import { SubscriberStatusChart } from '@/components/dashboard/overview/subscriber-status-chart'
 import { RecentTransactions } from '@/components/dashboard/overview/recent-transactions'
 
 export default function DashboardOverviewPage() {
   const { wallet } = useAuth()
   const { data: stats, isLoading } = useDashboardStats()
 
-  const totalRevenue = stats
-    ? `$${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-    : '$0.00'
+  function formatRevenue(value: number): string {
+    if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}M`
+    if (value >= 1_000) return `$${(value / 1_000).toFixed(2)}K`
+    return `$${value.toFixed(2)}`
+  }
+
+  const totalRevenue = stats ? formatRevenue(stats.totalRevenue) : '$0.00'
 
   const successRate = stats?.overallSuccessRate != null ? `${stats.overallSuccessRate}%` : '—'
 
@@ -37,7 +42,7 @@ export default function DashboardOverviewPage() {
         </motion.div>
 
         {/* Stat cards */}
-        <div className='grid gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6'>
+        <div className='grid gap-5 sm:grid-cols-2 lg:grid-cols-5 mb-6'>
           <StatCard
             title='Total Revenue'
             value={totalRevenue}
@@ -49,7 +54,7 @@ export default function DashboardOverviewPage() {
           <StatCard
             title='Active Links'
             value={isLoading ? '—' : String(stats?.activeLinksCount ?? 0)}
-            sub='Non-archived payment links'
+            sub='Non-archived links'
             icon={LinkIcon}
             delay={0.15}
             loading={isLoading}
@@ -63,11 +68,19 @@ export default function DashboardOverviewPage() {
             loading={isLoading}
           />
           <StatCard
+            title='Active Subscribers'
+            value={isLoading ? '—' : String(stats?.subscriptionStats.active ?? 0)}
+            sub={`${stats?.subscriptionStats.past_due ?? 0} past due`}
+            icon={Users}
+            delay={0.25}
+            loading={isLoading}
+          />
+          <StatCard
             title='Success Rate'
             value={isLoading ? '—' : successRate}
             sub={`${stats?.totalTransactions ?? 0} total attempts`}
             icon={TrendingUp}
-            delay={0.25}
+            delay={0.3}
             loading={isLoading}
           />
         </div>
@@ -79,11 +92,15 @@ export default function DashboardOverviewPage() {
 
         {/* Bottom row */}
         <div className='grid gap-6 lg:grid-cols-5 mb-6'>
-          <div className='lg:col-span-3'>
-            <TopLinksChart data={stats?.topLinks ?? []} loading={isLoading} />
+          <div className='lg:col-span-3 flex'>
+            <TopLinksChart data={stats?.topLinks ?? []} loading={isLoading} className='flex-1' />
           </div>
-          <div className='lg:col-span-2'>
+          <div className='lg:col-span-2 flex flex-col gap-6'>
             <InvoiceStatusChart data={stats?.invoiceStats ?? { paid: 0, unpaid: 0, overdue: 0 }} loading={isLoading} />
+            <SubscriberStatusChart
+              data={stats?.subscriptionStats ?? { active: 0, past_due: 0, cancelled: 0 }}
+              loading={isLoading}
+            />
           </div>
         </div>
 

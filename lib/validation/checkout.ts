@@ -6,7 +6,7 @@ export const submitTxBody = z.object({
   txSignature: z.string().min(80).max(128),
   source: z.enum(['payment_link', 'invoice']),
   linkId: paymentLinkId.optional(),
-  invoiceId: z.string().uuid().optional(),
+  invoiceId: z.string().cuid().optional(),
   userWallet: z.string().min(32).max(64).optional(),
   inputToken: z.string().min(32).max(64).optional(),
   inputAmount: z.string().optional(),
@@ -18,7 +18,7 @@ export const jupiterOrderBody = z.object({
   inputMint: z.string().min(32).max(64),
   taker: z.string().min(32).max(64),
   payId: paymentLinkId.optional(),
-  invoiceId: z.string().uuid().optional(),
+  invoiceId: z.string().cuid().optional(),
 })
 
 /** Quote-only: no wallet / taker. */
@@ -30,7 +30,7 @@ const paymentRecordContext = z.object({
   executionId: z.uuid(),
   source: z.enum(['payment_link', 'invoice']),
   linkId: paymentLinkId.optional(),
-  invoiceId: z.string().uuid().optional(),
+  invoiceId: z.string().cuid().optional(),
   userWallet: z.string().min(32).max(64),
   inputToken: z.string().min(32).max(64),
   inAmount: z.string(),

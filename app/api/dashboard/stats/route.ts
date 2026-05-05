@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   return handleApi(async () => {
     const { wallet } = await requireSession(req)
 
-    const [paidExecutions, allExecutionStatuses, links, invoices] = await Promise.all([
+    const [paidExecutions, allExecutionStatuses, links, invoices, subscribers] = await Promise.all([
       prisma.paymentExecution.findMany({
         where: { status: 'paid', link: { merchant: { wallet } } },
         select: {
@@ -51,6 +51,10 @@ export async function GET(req: NextRequest) {
             take: 1,
           },
         },
+      }),
+      prisma.subscriber.findMany({
+        where: { plan: { merchant: { wallet }, archivedAt: null } },
+        select: { status: true },
       }),
     ])
 
@@ -104,6 +108,13 @@ export async function GET(req: NextRequest) {
       invoiceStats[status]++
     }
 
+    const subscriptionStats = { active: 0, past_due: 0, cancelled: 0 }
+    for (const sub of subscribers) {
+      if (sub.status === 'active') subscriptionStats.active++
+      else if (sub.status === 'past_due') subscriptionStats.past_due++
+      else if (sub.status === 'cancelled') subscriptionStats.cancelled++
+    }
+
     return NextResponse.json({
       totalRevenue,
       activeLinksCount,
@@ -113,6 +124,7 @@ export async function GET(req: NextRequest) {
       topLinks,
       recentTransactions,
       invoiceStats,
+      subscriptionStats,
     })
   })
 }

@@ -30,6 +30,12 @@ export interface InvoiceStats {
   overdue: number
 }
 
+export interface SubscriptionStats {
+  active: number
+  past_due: number
+  cancelled: number
+}
+
 export interface DashboardStats {
   totalRevenue: number
   activeLinksCount: number
@@ -39,6 +45,7 @@ export interface DashboardStats {
   topLinks: TopLink[]
   recentTransactions: RecentTransaction[]
   invoiceStats: InvoiceStats
+  subscriptionStats: SubscriptionStats
 }
 
 export function useDashboardStats() {
