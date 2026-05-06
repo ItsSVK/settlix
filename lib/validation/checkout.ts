@@ -68,10 +68,22 @@ export const directPayOrderBody = z.object({
 export const directPayExecuteBody = z.object({
   signedTransaction: z.string().min(1),
   requestId: z.string().min(1),
+  // Optional recording context.
+  receiverWallet: z.string().min(32).max(64).optional(),
+  userWallet: z.string().min(32).max(64).optional(),
+  inputMint: z.string().min(32).max(64).optional(),
 })
 
 export const directPaySendBody = z.object({
   signedTransaction: z.string().min(1),
+  // When merchantId is provided the sender used the personal pay link.
+  // When receiverWallet is provided instead we look the merchant up by wallet.
+  merchantId: z.string().cuid().optional(),
+  receiverWallet: z.string().min(32).max(64).optional(),
+  userWallet: z.string().min(32).max(64).optional(),
+  inputMint: z.string().min(32).max(64).optional(),
+  inputAmount: z.string().regex(/^\d+$/).optional(),
+  outputAmount: z.string().regex(/^\d+$/).optional(),
 })
 
 export type SubmitTxBody = z.infer<typeof submitTxBody>

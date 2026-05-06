@@ -1,16 +1,12 @@
 import { NextResponse } from 'next/server'
+import { randomUUID } from 'crypto'
 
 import { VALIDATION } from '@/lib/api/constants'
 import { handleApi, readJsonBody } from '@/lib/api/errors'
+import { prisma } from '@/lib/db'
 import { executeSwap } from '@/lib/solana/jupiter'
 import { directPayExecuteBody } from '@/lib/validation'
 
-/**
- * POST /api/checkout/transfer/execute
- *
- * Executes a Jupiter swap for the direct-pay (pay any address) flow.
- * No payment link, no DB recording — the on-chain tx is the full record.
- */
 export async function POST(req: Request) {
   return handleApi(async () => {
     const json = await readJsonBody(req)
@@ -22,7 +18,37 @@ export async function POST(req: Request) {
       )
     }
 
-    const result = await executeSwap(parsed.data.signedTransaction, parsed.data.requestId)
+    const { signedTransaction, requestId, receiverWallet, userWallet, inputMint } = parsed.data
+
+    const result = await executeSwap(signedTransaction, requestId)
+
+    // Record for dashboard if the receiver is a known merchant.
+    if (result.status === 'Success' && receiverWallet && userWallet && inputMint) {
+      const merchant = await prisma.merchant.findUnique({
+        where: { wallet: receiverWallet },
+        select: { id: true },
+      })
+      if (merchant) {
+        const inAmt = result.inputAmountResult ? BigInt(result.inputAmountResult) : BigInt(0)
+        const outAmt = result.outputAmountResult ? BigInt(result.outputAmountResult) : BigInt(0)
+        await prisma.paymentExecution
+          .create({
+            data: {
+              clientExecutionId: randomUUID(),
+              source: 'direct_transfer',
+              merchantId: merchant.id,
+              userWallet,
+              inputToken: inputMint,
+              inputAmount: inAmt,
+              outputAmount: outAmt,
+              txSignature: result.signature,
+              status: 'paid',
+              metadata: { label: 'Direct Send' },
+            },
+          })
+          .catch(() => {})
+      }
+    }
 
     return NextResponse.json({
       status: result.status,

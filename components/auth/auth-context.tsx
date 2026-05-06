@@ -6,16 +6,16 @@ import { useRouter } from 'next/navigation'
 import { apiClient } from '@/lib/api/client'
 
 interface AuthState {
-  /** Wallet address from the JWT session — null when not logged in */
   wallet: string | null
+  merchantId: string | null
   isLoading: boolean
-  /** Run the nonce→sign→login flow for the currently connected wallet */
   login: () => Promise<void>
   logout: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthState>({
   wallet: null,
+  merchantId: null,
   isLoading: true,
   login: async () => {},
   logout: async () => {},
@@ -23,49 +23,60 @@ const AuthContext = createContext<AuthState>({
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [wallet, setWallet] = useState<string | null>(null)
+  const [merchantId, setMerchantId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const { publicKey, signMessage, disconnect } = useWallet()
   const router = useRouter()
 
-  // Check existing session on mount
   useEffect(() => {
     apiClient
-      .get<{ wallet: string | null }>('/api/auth/me')
-      .then((d) => setWallet(d.wallet ?? null))
-      .catch(() => setWallet(null))
+      .get<{ wallet: string | null; merchantId: string | null }>('/api/auth/me')
+      .then((d) => {
+        setWallet(d.wallet ?? null)
+        setMerchantId(d.merchantId ?? null)
+      })
+      .catch(() => {
+        setWallet(null)
+        setMerchantId(null)
+      })
       .finally(() => setIsLoading(false))
   }, [])
 
   const login = useCallback(async () => {
     if (!publicKey || !signMessage) throw new Error('Wallet not connected')
 
-    // 1. Get nonce
     const { nonce } = await apiClient.get<{ nonce: string }>('/api/auth/nonce')
 
-    // 2. Sign message
     const message = `Sign in to Settlix:\n${nonce}`
     const msgBytes = new TextEncoder().encode(message)
     const sigBytes = await signMessage(msgBytes)
     const signature = Buffer.from(sigBytes).toString('base64')
 
-    // 3. Login → server sets HttpOnly JWT cookie
     const data = await apiClient.post<{ wallet: string }>('/api/auth/login', {
       wallet: publicKey.toBase58(),
       signature,
       nonce,
     })
     setWallet(data.wallet)
+    // Fetch merchantId immediately after login
+    const me = await apiClient.get<{ wallet: string | null; merchantId: string | null }>('/api/auth/me')
+    setMerchantId(me.merchantId ?? null)
     router.push('/dashboard')
   }, [publicKey, signMessage, router])
 
   const logout = useCallback(async () => {
     await apiClient.post('/api/auth/logout', {})
     setWallet(null)
+    setMerchantId(null)
     await disconnect()
     router.push('/')
   }, [disconnect, router])
 
-  return <AuthContext.Provider value={{ wallet, isLoading, login, logout }}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={{ wallet, merchantId, isLoading, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
 export function useAuth() {

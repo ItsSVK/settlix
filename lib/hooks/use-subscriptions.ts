@@ -7,6 +7,8 @@ import { apiClient } from '@/lib/api/client'
 export interface MerchantSubscription {
   id: string
   planId: string
+  subscriberName: string | null
+  subscriberEmail: string | null
   subscriberWallet: string
   status: 'active' | 'past_due' | 'cancelled'
   currentPeriodEnd: string

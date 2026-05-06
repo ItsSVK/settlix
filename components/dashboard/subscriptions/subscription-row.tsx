@@ -57,8 +57,15 @@ export function SubscriptionRow({ subscription: sub }: SubscriptionRowProps) {
 
           {/* Info */}
           <span className='flex min-w-0 flex-1 flex-col'>
-            <span className='truncate font-mono text-[12px] font-medium text-foreground'>
-              {shorten(sub.subscriberWallet, 8, 6)}
+            <span className='truncate text-[13px] text-foreground'>
+              {sub.subscriberName ? (
+                <span className='font-semibold'>{sub.subscriberName}</span>
+              ) : (
+                <span className='font-mono text-[12px] font-medium'>{shorten(sub.subscriberWallet, 8, 6)}</span>
+              )}
+              {sub.subscriberEmail && (
+                <span className='ml-1.5 font-normal text-[12px] text-muted-foreground'>({sub.subscriberEmail})</span>
+              )}
             </span>
             <span className='flex flex-wrap items-center gap-1.5'>
               <span className='flex items-center gap-1 text-xs font-bold text-foreground'>
@@ -170,7 +177,7 @@ export function SubscriptionRow({ subscription: sub }: SubscriptionRowProps) {
               {sub.renewals.length > 0 ? (
                 <div className='space-y-1.5'>
                   <p className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground'>
-                    Renewal history
+                    Payment history
                   </p>
                   <div className='space-y-2'>
                     {sub.renewals.map((renewal) => (

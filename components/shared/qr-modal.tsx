@@ -36,9 +36,34 @@ export function QRModal({ open, onClose, payUrl, label }: QRModalProps) {
   const handleDownload = () => {
     const canvas = canvasRef.current
     if (!canvas) return
+
+    const pad = 28
+    const labelH = 36
+    const out = document.createElement('canvas')
+    out.width = canvas.width + pad * 2
+    out.height = canvas.height + pad * 2 + labelH
+    const ctx = out.getContext('2d')
+    if (!ctx) return
+
+    // White background with rounded corners
+    ctx.fillStyle = '#ffffff'
+    const r = 20
+    ctx.beginPath()
+    ctx.roundRect(0, 0, out.width, out.height, r)
+    ctx.fill()
+
+    // QR code
+    ctx.drawImage(canvas, pad, pad)
+
+    // "settlix.itssvk.dev" label at bottom
+    ctx.fillStyle = '#94a3b8'
+    ctx.font = `500 11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`
+    ctx.textAlign = 'center'
+    ctx.fillText('settlix.itssvk.dev', out.width / 2, canvas.height + pad * 2 + labelH / 2 + 4)
+
     const link = document.createElement('a')
     link.download = `settlix-qr-${Date.now()}.png`
-    link.href = canvas.toDataURL('image/png')
+    link.href = out.toDataURL('image/png')
     link.click()
   }
 
@@ -84,7 +109,7 @@ export function QRModal({ open, onClose, payUrl, label }: QRModalProps) {
                 </div>
                 <div>
                   <p className='text-sm font-semibold text-foreground'>Payment QR</p>
-                  <p className='text-[11px] font-medium text-muted-foreground'>{label}</p>
+                  <p className='mt-0.5 text-xs font-medium text-muted-foreground'>{label}</p>
                 </div>
               </div>
 
@@ -98,7 +123,7 @@ export function QRModal({ open, onClose, payUrl, label }: QRModalProps) {
                     fgColor='#0f172a'
                     level='M'
                     imageSettings={{
-                      src: '/favicon.ico',
+                      src: '/logo.png',
                       height: 28,
                       width: 28,
                       excavate: true,
@@ -108,9 +133,9 @@ export function QRModal({ open, onClose, payUrl, label }: QRModalProps) {
               </div>
 
               {/* URL pill */}
-              <div className='mt-4 rounded-xl border border-border/30 bg-muted/30 px-3 py-2 text-center'>
+              {/* <div className='mt-4 rounded-xl border border-border/30 bg-muted/30 px-3 py-2 text-center'>
                 <p className='truncate font-mono text-[10px] text-muted-foreground'>{payUrl}</p>
-              </div>
+              </div> */}
 
               {/* Actions */}
               <div className='mt-4 flex gap-2'>
@@ -130,7 +155,7 @@ export function QRModal({ open, onClose, payUrl, label }: QRModalProps) {
                   onClick={handleDownload}
                 >
                   <Download className='h-3.5 w-3.5' />
-                  Download PNG
+                  Download
                 </Button>
               </div>
 

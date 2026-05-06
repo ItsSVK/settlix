@@ -22,7 +22,7 @@ export default function InvoicesPage() {
   ]
 
   return (
-    <div className='flex-1 bg-muted/40 dark:bg-background'>
+    <div className='flex-1 bg-muted/40 dark:bg-background min-h-screen'>
       <div className='mx-auto max-w-6xl px-6 py-6'>
         {/* Header */}
         <motion.div

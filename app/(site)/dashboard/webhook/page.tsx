@@ -12,7 +12,7 @@ export default function WebhookPage() {
   const { webhook, isLoading } = useWebhook()
 
   return (
-    <div className='flex-1 bg-muted/40 dark:bg-background'>
+    <div className='flex-1 bg-muted/40 dark:bg-background min-h-screen'>
       <div className='mx-auto max-w-3xl px-6 py-6'>
         <div className='mb-8 flex items-center gap-3'>
           <div className='flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10'>

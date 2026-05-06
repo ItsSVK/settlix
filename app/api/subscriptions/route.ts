@@ -155,6 +155,8 @@ export async function GET(req: NextRequest) {
       subscriptions: subscribers.map((s) => ({
         id: s.id,
         planId: s.planId,
+        subscriberName: s.subscriberName ?? null,
+        subscriberEmail: s.subscriberEmail ?? null,
         subscriberWallet: s.subscriberWallet,
         status: s.status,
         currentPeriodEnd: s.currentPeriodEnd.toISOString(),

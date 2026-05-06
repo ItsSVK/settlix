@@ -229,7 +229,7 @@
 
       /* ── Code section ── */
       .code-section {
-        max-width: 560px;
+        max-width: 700px;
         margin: 64px auto 80px;
         padding: 0 24px;
       }
@@ -299,9 +299,8 @@
         font-size: 13px;
         font-family: 'SF Mono', 'Fira Code', monospace;
         color: var(--text-sub);
-        white-space: pre-wrap;
-        word-break: break-all;
-        overflow: hidden;
+        white-space: pre;
+        overflow-x: auto;
         line-height: 1.75;
         margin: 0;
       }
@@ -356,10 +355,11 @@
           id="linkId"
           type="text"
           placeholder="Paste your Payment Link ID…"
-          oninput="document.getElementById('payBtn').disabled = !this.value.trim()"
+          oninput="onLinkIdInput(this)"
           onkeydown="if (event.key === 'Enter' && this.value.trim()) openCheckout()"
           autocomplete="off"
           spellcheck="false"
+          maxlength="30"
         />
         <button id="payBtn" class="pay-btn" onclick="openCheckout()" disabled>
           <svg
@@ -411,17 +411,28 @@
           <div class="dot" style="background: #f59e0b"></div>
           <div class="dot" style="background: #22c55e"></div>
         </div>
-        <pre><span class="kw">&lt;script</span> src=<span class="str">"/checkout.js"</span><span class="kw">&gt;&lt;/script&gt;</span>
+        <pre><span class="kw">&lt;script</span> src=<span class="str">"<span id="scriptSrc"></span>"</span><span class="kw">&gt;&lt;/script&gt;</span>
 
-      <span class="kw">&lt;button</span> <span class="fn">onclick</span>=<span class="str">"Settlix.open({ linkId: '...' })"</span><span class="kw">&gt;</span>
-        Pay with Settlix
-      <span class="kw">&lt;/button&gt;</span></pre>
+<span class="kw">&lt;button</span> <span class="fn">onclick</span>=<span class="str">"Settlix.open({ linkId: '<span id="codeLinkId">...</span>' })"</span><span class="kw">&gt;</span>
+  Pay with Settlix
+<span class="kw">&lt;/button&gt;</span></pre>
       </div>
     </div>
 
     <script>
-      var CODE =
-        '<script src="/checkout.js"><\/script>\n\n<button onclick="Settlix.open({ linkId: \'...\' })">\n  Pay with Settlix\n</button>'
+      var scriptUrl = window.location.origin + '/checkout.js'
+      document.getElementById('scriptSrc').textContent = scriptUrl
+
+      function getCodeString(linkId) {
+        var id = linkId || '...'
+        return '<script src="' + scriptUrl + '"><\/script>\n\n<button onclick="Settlix.open({ linkId: \'' + id + '\' })">\n  Pay with Settlix\n</button>'
+      }
+
+      function onLinkIdInput(input) {
+        var val = input.value.trim()
+        document.getElementById('payBtn').disabled = !val
+        document.getElementById('codeLinkId').textContent = val || '...'
+      }
 
       function openCheckout() {
         var id = document.getElementById('linkId').value.trim()
@@ -439,7 +450,8 @@
 
       function copyCode() {
         var btn = document.getElementById('copyBtn')
-        navigator.clipboard.writeText(CODE).then(function () {
+        var currentId = document.getElementById('linkId').value.trim()
+        navigator.clipboard.writeText(getCodeString(currentId)).then(function () {
           btn.classList.add('copied')
           btn.innerHTML =
             '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied'

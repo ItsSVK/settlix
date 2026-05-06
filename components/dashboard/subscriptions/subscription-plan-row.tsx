@@ -145,13 +145,6 @@ export function SubscriptionPlanRow({ plan, subscribers, index }: SubscriptionPl
               <div className='mb-3 flex items-center justify-between gap-3'>
                 <div>
                   <p className='text-xs font-bold uppercase tracking-wider text-muted-foreground'>Subscribers</p>
-                  <p className='mt-1 text-xs text-muted-foreground'>
-                    Select a subscriber to view renewal transactions and details.
-                  </p>
-                </div>
-                <div className='hidden items-center gap-2 rounded-full border border-border/50 bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground sm:flex'>
-                  <RefreshCw className='h-3.5 w-3.5' aria-hidden='true' />
-                  {INTERVAL_LABELS[plan.interval] ?? plan.interval}
                 </div>
               </div>
 

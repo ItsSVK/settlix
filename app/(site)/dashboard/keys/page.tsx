@@ -8,7 +8,7 @@ import { useKeys } from '@/lib/hooks/use-keys'
 export default function ApiKeysPage() {
   const { keys, isLoading, refresh, revokeKey } = useKeys()
   return (
-    <div className='flex-1 bg-muted/40 dark:bg-background'>
+    <div className='flex-1 bg-muted/40 dark:bg-background min-h-screen'>
       <div className='mx-auto max-w-6xl px-6 py-6'>
         <motion.div
           initial={false}

@@ -1,7 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'motion/react'
-import { DollarSign, Link as LinkIcon, FileText, TrendingUp, Users } from 'lucide-react'
+import { DollarSign, Link as LinkIcon, FileText, TrendingUp, Users, QrCode } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-context'
 import { useDashboardStats } from '@/lib/hooks/use-dashboard-stats'
 import { StatCard } from '@/components/dashboard/overview/stat-card'
@@ -10,10 +11,13 @@ import { TopLinksChart } from '@/components/dashboard/overview/top-links-chart'
 import { InvoiceStatusChart } from '@/components/dashboard/overview/invoice-status-chart'
 import { SubscriberStatusChart } from '@/components/dashboard/overview/subscriber-status-chart'
 import { RecentTransactions } from '@/components/dashboard/overview/recent-transactions'
+import { QRModal } from '@/components/shared/qr-modal'
+import { Button } from '@/components/ui/button'
 
 export default function DashboardOverviewPage() {
-  const { wallet } = useAuth()
+  const { wallet, merchantId } = useAuth()
   const { data: stats, isLoading } = useDashboardStats()
+  const [qrOpen, setQROpen] = useState(false)
 
   function formatRevenue(value: number): string {
     if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}M`
@@ -25,6 +29,9 @@ export default function DashboardOverviewPage() {
 
   const successRate = stats?.overallSuccessRate != null ? `${stats.overallSuccessRate}%` : '—'
 
+  const payUrl =
+    typeof window !== 'undefined' ? `${window.location.origin}/pay/u/${merchantId}` : `/pay/u/${merchantId}`
+
   return (
     <div className='flex-1 bg-muted/40 dark:bg-background/90 min-h-screen'>
       <div className='mx-auto max-w-6xl px-6 py-8'>
@@ -32,14 +39,34 @@ export default function DashboardOverviewPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
-          className='mb-8'
+          className='mb-8 flex items-start justify-between gap-4'
         >
-          <h1 className='text-3xl font-bold tracking-tight text-foreground'>Welcome back,</h1>
-          <p className='text-muted-foreground mt-1'>
-            {wallet ? `${wallet.slice(0, 4)}...${wallet.slice(-4)}` : 'Merchant'} · Here&apos;s your business at a
-            glance.
-          </p>
+          <div>
+            <h1 className='text-3xl font-bold tracking-tight text-foreground'>Welcome back,</h1>
+            <p className='text-muted-foreground mt-1'>
+              {wallet ? `${wallet.slice(0, 4)}...${wallet.slice(-4)}` : 'Merchant'} · Here&apos;s your business at a
+              glance.
+            </p>
+          </div>
+
+          {merchantId && (
+            <Button
+              onClick={() => setQROpen(true)}
+              variant='ghost'
+              className='flex shrink-0 items-center gap-2 rounded-xl border-none bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/40 transition-all hover:bg-indigo-500 hover:shadow-indigo-500/50 hover:text-white hover:scale-[1.03] dark:hover:bg-indigo-500'
+            >
+              <QrCode className='h-4 w-4' />
+              My QR
+            </Button>
+          )}
         </motion.div>
+
+        <QRModal
+          open={qrOpen}
+          onClose={() => setQROpen(false)}
+          payUrl={payUrl}
+          label='Quick pay - scan & enter amount'
+        />
 
         {/* Stat cards */}
         <div className='grid gap-5 sm:grid-cols-2 lg:grid-cols-5 mb-6'>

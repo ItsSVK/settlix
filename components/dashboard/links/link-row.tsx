@@ -7,11 +7,11 @@ import { Copy, Check, ExternalLink, ToggleLeft, ToggleRight, QrCode, GitFork, Lo
 import { useLinks, type Link } from '@/lib/hooks/use-links'
 import { Button } from '@/components/ui/button'
 import { copyText, shorten } from '@/lib/utils'
-import { QRModal } from './qr-modal'
 import { SplitModal } from './split-modal'
 import { getDecimalsByMint, getLogoByMint, getNameByMint } from '@/lib/tokens/tokens'
 import { ConfirmationModal } from '@/components/shared/confirmation-modal'
 import { SOLSCAN_CLUSTER } from '@/lib/solana/constants'
+import { QRModal } from '@/components/shared/qr-modal'
 
 interface LinkRowProps {
   link: Link

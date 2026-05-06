@@ -66,6 +66,12 @@ export function DirectPayButton({
 
       const { transaction: txBase64, requestId, isDirect, inAmount } = orderData
 
+      const recordingContext = {
+        receiverWallet,
+        userWallet: publicKey.toBase58(),
+        inputMint: selectedToken.mint,
+      }
+
       // 2 + 3. Sign and execute
       await signAndExecute(
         txBase64,
@@ -74,7 +80,12 @@ export function DirectPayButton({
             const res = await fetch('/api/checkout/transfer/submit', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ signedTransaction: signedBase64 }),
+              body: JSON.stringify({
+                signedTransaction: signedBase64,
+                ...recordingContext,
+                inputAmount: inAmount,
+                outputAmount: String(Math.round(parseFloat(amount) * 1_000_000)),
+              }),
             })
             const body = await res.json()
             if (!res.ok || body.status !== 'Success') throw new Error(body.error || 'Transfer failed')
@@ -83,7 +94,7 @@ export function DirectPayButton({
             const res = await fetch('/api/checkout/transfer/execute', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ signedTransaction: signedBase64, requestId }),
+              body: JSON.stringify({ signedTransaction: signedBase64, requestId, ...recordingContext }),
             })
             if (!res.ok) throw new Error('Execution failed')
             const execData = await res.json()

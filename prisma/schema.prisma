@@ -43,6 +43,7 @@ enum PaymentExecutionSource {
   payment_link
   invoice
   subscription
+  direct_transfer
 }
 
 // ---------------------------------------------------------------------------
@@ -61,6 +62,7 @@ model Merchant {
   invoices          Invoice[]
   subscriptionPlans SubscriptionPlan[]
   apiKeys           ApiKey[]
+  directTransfers   PaymentExecution[]
 }
 
 // ---------------------------------------------------------------------------
@@ -232,6 +234,10 @@ model PaymentExecution {
   renewalId         String?                @unique
   renewal           SubscriptionRenewal?   @relation(fields: [renewalId], references: [id], onDelete: Restrict)
 
+  // Populated only when source = direct_transfer (personal pay link).
+  merchantId        String?
+  merchant          Merchant?              @relation(fields: [merchantId], references: [id], onDelete: Restrict)
+
   userWallet        String
   inputToken        String
   inputAmount       BigInt
@@ -244,6 +250,7 @@ model PaymentExecution {
 
   @@index([linkId])
   @@index([invoiceId])
+  @@index([merchantId])
   @@index([userWallet])
   @@index([source])
 }
