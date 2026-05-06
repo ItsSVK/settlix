@@ -9,9 +9,21 @@ export interface StatItem {
   format?: 'count' | 'usdc'
 }
 
+function formatDisplay(v: number, format: 'count' | 'usdc'): string {
+  if (format === 'usdc') {
+    if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(2)}M`
+    if (v >= 1_000) return `$${(v / 1_000).toFixed(2)}K`
+    return `$${v.toFixed(2)}`
+  }
+  const n = Math.round(v)
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
+  return n.toLocaleString()
+}
+
 function StatCard({ label, value, format = 'count' }: StatItem) {
   const count = useMotionValue(0)
-  const rounded = useTransform(count, (v) => Math.round(v).toLocaleString())
+  const display = useTransform(count, (v) => formatDisplay(v, format))
 
   useEffect(() => {
     const c = animate(count, value, { duration: 1, ease: 'easeOut' })
@@ -24,13 +36,7 @@ function StatCard({ label, value, format = 'count' }: StatItem) {
   return (
     <div className={cardClass}>
       <p className='text-xs font-medium text-muted-foreground'>{label}</p>
-      {format === 'usdc' ? (
-        <p className='mt-1 text-3xl font-bold tracking-tight text-foreground'>
-          {value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-        </p>
-      ) : (
-        <motion.p className='mt-1 text-3xl font-bold tracking-tight text-foreground'>{rounded}</motion.p>
-      )}
+      <motion.p className='mt-1 text-3xl font-bold tracking-tight text-foreground'>{display}</motion.p>
     </div>
   )
 }

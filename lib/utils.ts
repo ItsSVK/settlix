@@ -39,3 +39,9 @@ export const copyText = async (text: string, setCopied: (copied: boolean) => voi
     toast.error(e instanceof Error ? e.message : 'Could not copy')
   }
 }
+
+export function formatRevenue(value: number): string {
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}M`
+  if (value >= 1_000) return `$${(value / 1_000).toFixed(2)}K`
+  return `$${value.toFixed(2)}`
+}

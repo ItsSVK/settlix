@@ -20,7 +20,7 @@ interface RevenueChartProps {
 }
 
 export function RevenueChart({ data, loading = false }: RevenueChartProps) {
-  const [range, setRange] = useState<Range>('30d')
+  const [range, setRange] = useState<Range>('7d')
 
   const chartData = range === '7d' ? data.slice(-7) : data
 

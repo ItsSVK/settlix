@@ -13,17 +13,12 @@ import { SubscriberStatusChart } from '@/components/dashboard/overview/subscribe
 import { RecentTransactions } from '@/components/dashboard/overview/recent-transactions'
 import { QRModal } from '@/components/shared/qr-modal'
 import { Button } from '@/components/ui/button'
+import { formatRevenue } from '@/lib/utils'
 
 export default function DashboardOverviewPage() {
   const { wallet, merchantId } = useAuth()
   const { data: stats, isLoading } = useDashboardStats()
   const [qrOpen, setQROpen] = useState(false)
-
-  function formatRevenue(value: number): string {
-    if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}M`
-    if (value >= 1_000) return `$${(value / 1_000).toFixed(2)}K`
-    return `$${value.toFixed(2)}`
-  }
 
   const totalRevenue = stats ? formatRevenue(stats.totalRevenue) : '$0.00'
 
