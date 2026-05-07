@@ -112,7 +112,7 @@
         flex-direction: column;
         align-items: center;
         text-align: center;
-        padding: 80px 24px 40px;
+        padding: 30px 24px 40px;
       }
 
       .badge {
@@ -230,7 +230,7 @@
       /* ── Code section ── */
       .code-section {
         max-width: 700px;
-        margin: 64px auto 80px;
+        margin: 0px auto 80px;
         padding: 0 24px;
       }
 
@@ -328,17 +328,41 @@
   <body>
     <nav>
       <a class="logo" href="/">
-        <img
+        <!-- <img
           src="/logo.png"
           alt="Settlix Logo"
           style="width: 40px; height: 40px; border-radius: 0; margin-right: 10px"
-        />
-        <span
+        /> -->
+        <!-- <span
           class="text-xl font-bold tracking-tight truncate"
           style="color: var(--text); font-size: 20px; margin-right: 10px"
         >
           Settl<span style="color: var(--primary)">i</span>X
-        </span>
+        </span> -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 48" width="150" height="48" fill="none">
+          <defs>
+            <linearGradient id="g" x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#432dd7" />
+              <stop offset="100%" stop-color="#432dd7" stop-opacity="0.4" />
+            </linearGradient>
+          </defs>
+          <!-- Icon (32x32), centered vertically in 48px: (48-32)/2 = 8 -->
+          <g transform="translate(0,8)">
+            <path d="M16 6 Q 6 6 10 10" stroke="var(--text)" stroke-width="6" stroke-linecap="round" />
+            <path d="M16 26 Q 26 26 22 22" stroke="var(--text)" stroke-width="6" stroke-linecap="round" />
+            <path d="M6 26L26 6" stroke="url(#g)" stroke-width="6" stroke-linecap="round" />
+          </g>
+          <!-- Text "SettliX" with "i" in primary color, baseline vertically centered -->
+          <text
+            x="42"
+            y="32"
+            font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+            font-weight="700"
+            font-size="22"
+            letter-spacing="-0.5"
+            fill="var(--text)"
+          >Settl<tspan fill="#432dd7">i</tspan>X</text>
+        </svg>
       </a>
       <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">☀️</button>
     </nav>
@@ -425,7 +449,13 @@
 
       function getCodeString(linkId) {
         var id = linkId || '...'
-        return '<script src="' + scriptUrl + '"><\/script>\n\n<button onclick="Settlix.open({ linkId: \'' + id + '\' })">\n  Pay with Settlix\n</button>'
+        return (
+          '<script src="' +
+          scriptUrl +
+          '"><\/script>\n\n<button onclick="Settlix.open({ linkId: \'' +
+          id +
+          '\' })">\n  Pay with Settlix\n</button>'
+        )
       }
 
       function onLinkIdInput(input) {

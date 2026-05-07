@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" width="200" height="48" fill="none">
+  <rect width="200" height="48" rx="8" fill="#0c0a09"/>
+  <defs>
+    <linearGradient id="gd" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#432dd7"/>
+      <stop offset="100%" stop-color="#432dd7" stop-opacity="0.4"/>
+    </linearGradient>
+  </defs>
+  <!-- Icon (32x32), centered vertically in 48px: (48-32)/2 = 8 -->
+  <g transform="translate(8,8)">
+    <path d="M16 6 Q 6 6 10 10" stroke="#fafaf9" stroke-width="6" stroke-linecap="round"/>
+    <path d="M16 26 Q 26 26 22 22" stroke="#fafaf9" stroke-width="6" stroke-linecap="round"/>
+    <path d="M6 26L26 6" stroke="url(#gd)" stroke-width="6" stroke-linecap="round"/>
+  </g>
+  <!-- Text "SettliX" with "i" in primary color -->
+  <text x="50" y="32"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+    font-weight="700"
+    font-size="22"
+    letter-spacing="-0.5"
+    fill="#fafaf9">Settl<tspan fill="#432dd7">i</tspan>X</text>
+</svg>
