@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Copy, Check, ToggleLeft, ToggleRight, RefreshCw, UsersRound, Loader2 } from 'lucide-react'
+import { Copy, Check, ToggleLeft, ToggleRight, UsersRound, Loader2 } from 'lucide-react'
 import Image from 'next/image'
 import { useSubscriptionPlans, type Subscription, type SubscriptionPlan } from '@/lib/hooks/use-subscriptions'
 import { SubscriptionRow } from './subscription-row'

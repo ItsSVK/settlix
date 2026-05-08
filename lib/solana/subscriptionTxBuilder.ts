@@ -24,7 +24,6 @@ async function resolveTokenProgram(connection: Connection, mint: PublicKey): Pro
   return info.owner.equals(TOKEN_2022_PROGRAM_ID) ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID
 }
 
-
 /**
  * Builds the subscription authorization transaction signed by the subscriber.
  * Contains two instructions: approve (delegate relayer) + first-period transferChecked.
@@ -45,7 +44,16 @@ export async function buildSubscriptionAuthorizationTx(params: {
   mintDecimals: number
   planId: string
 }): Promise<VersionedTransaction> {
-  const { connection, subscriber, relayer, settlementMint, totalDelegationRaw, delegationIterations, mintDecimals, planId } = params
+  const {
+    connection,
+    subscriber,
+    relayer,
+    settlementMint,
+    totalDelegationRaw,
+    delegationIterations,
+    mintDecimals,
+    planId,
+  } = params
 
   const tokenProgram = await resolveTokenProgram(connection, settlementMint)
   const subscriberAta = getAssociatedTokenAddressSync(settlementMint, subscriber, false, tokenProgram)

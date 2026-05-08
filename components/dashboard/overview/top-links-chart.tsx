@@ -18,7 +18,9 @@ function truncate(str: string | null, max: number) {
 export function TopLinksChart({ data, loading = false, className }: TopLinksChartProps) {
   if (loading) {
     return (
-      <div className={`rounded-2xl border border-border/50 bg-background/50 p-6 backdrop-blur-xl shadow-sm${className ? ` ${className}` : ''}`}>
+      <div
+        className={`rounded-2xl border border-border/50 bg-background/50 p-6 backdrop-blur-xl shadow-sm${className ? ` ${className}` : ''}`}
+      >
         <div className='mb-5 space-y-2'>
           <div className='h-5 w-32 rounded-md bg-muted animate-pulse' />
           <div className='h-3.5 w-48 rounded-md bg-muted animate-pulse' />

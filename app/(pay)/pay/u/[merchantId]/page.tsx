@@ -10,7 +10,9 @@ interface Props {
 
 export async function generateMetadata({ params }: Props) {
   const { merchantId } = await params
-  const merchant = await prisma.merchant.findUnique({ where: { id: merchantId }, select: { wallet: true } }).catch(() => null)
+  const merchant = await prisma.merchant
+    .findUnique({ where: { id: merchantId }, select: { wallet: true } })
+    .catch(() => null)
   const short = merchant ? `${merchant.wallet.slice(0, 4)}…${merchant.wallet.slice(-4)}` : 'Merchant'
   return { title: `Pay ${short} · Settlix` }
 }

@@ -14,110 +14,102 @@ export async function GET(req: NextRequest) {
     const merchant = await prisma.merchant.findUnique({ where: { wallet }, select: { id: true } })
     const merchantId = merchant?.id
 
-    const [
-      linkPaid,
-      linkStatuses,
-      invoicePaid,
-      subscriptionPaid,
-      directPaid,
-      links,
-      invoices,
-      subscribers,
-    ] = await Promise.all([
-      // Payment link executions
-      prisma.paymentExecution.findMany({
-        where: { status: 'paid', link: { merchant: { wallet } } },
-        select: {
-          id: true,
-          outputAmount: true,
-          createdAt: true,
-          userWallet: true,
-          txSignature: true,
-          link: { select: { title: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-      }),
-      // All link-based statuses (for success rate)
-      prisma.paymentExecution.findMany({
-        where: { link: { merchant: { wallet } } },
-        select: { status: true },
-      }),
-      // Invoice executions
-      prisma.paymentExecution.findMany({
-        where: { status: 'paid', invoice: { merchant: { wallet } } },
-        select: {
-          id: true,
-          outputAmount: true,
-          createdAt: true,
-          userWallet: true,
-          txSignature: true,
-          invoice: { select: { clientName: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-      }),
-      // Subscription renewal executions
-      prisma.paymentExecution.findMany({
-        where: {
-          status: 'paid',
-          renewal: { subscriber: { plan: { merchant: { wallet } } } },
-        },
-        select: {
-          id: true,
-          outputAmount: true,
-          createdAt: true,
-          userWallet: true,
-          txSignature: true,
-          renewal: {
-            select: {
-              subscriber: { select: { subscriberName: true, plan: { select: { title: true } } } },
+    const [linkPaid, linkStatuses, invoicePaid, subscriptionPaid, directPaid, links, invoices, subscribers] =
+      await Promise.all([
+        // Payment link executions
+        prisma.paymentExecution.findMany({
+          where: { status: 'paid', link: { merchant: { wallet } } },
+          select: {
+            id: true,
+            outputAmount: true,
+            createdAt: true,
+            userWallet: true,
+            txSignature: true,
+            link: { select: { title: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+        // All link-based statuses (for success rate)
+        prisma.paymentExecution.findMany({
+          where: { link: { merchant: { wallet } } },
+          select: { status: true },
+        }),
+        // Invoice executions
+        prisma.paymentExecution.findMany({
+          where: { status: 'paid', invoice: { merchant: { wallet } } },
+          select: {
+            id: true,
+            outputAmount: true,
+            createdAt: true,
+            userWallet: true,
+            txSignature: true,
+            invoice: { select: { clientName: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+        // Subscription renewal executions
+        prisma.paymentExecution.findMany({
+          where: {
+            status: 'paid',
+            renewal: { subscriber: { plan: { merchant: { wallet } } } },
+          },
+          select: {
+            id: true,
+            outputAmount: true,
+            createdAt: true,
+            userWallet: true,
+            txSignature: true,
+            renewal: {
+              select: {
+                subscriber: { select: { subscriberName: true, plan: { select: { title: true } } } },
+              },
             },
           },
-        },
-        orderBy: { createdAt: 'desc' },
-      }),
-      // Direct transfer executions (personal pay link + landing page send)
-      merchantId
-        ? prisma.paymentExecution.findMany({
-            where: { source: 'direct_transfer', merchantId, status: 'paid' },
-            select: {
-              id: true,
-              outputAmount: true,
-              createdAt: true,
-              userWallet: true,
-              txSignature: true,
-              metadata: true,
+          orderBy: { createdAt: 'desc' },
+        }),
+        // Direct transfer executions (personal pay link + landing page send)
+        merchantId
+          ? prisma.paymentExecution.findMany({
+              where: { source: 'direct_transfer', merchantId, status: 'paid' },
+              select: {
+                id: true,
+                outputAmount: true,
+                createdAt: true,
+                userWallet: true,
+                txSignature: true,
+                metadata: true,
+              },
+              orderBy: { createdAt: 'desc' },
+            })
+          : Promise.resolve([]),
+        prisma.paymentLink.findMany({
+          where: { merchant: { wallet }, archivedAt: null },
+          select: {
+            id: true,
+            title: true,
+            active: true,
+            executions: {
+              where: { status: 'paid' },
+              select: { outputAmount: true },
             },
-            orderBy: { createdAt: 'desc' },
-          })
-        : Promise.resolve([]),
-      prisma.paymentLink.findMany({
-        where: { merchant: { wallet }, archivedAt: null },
-        select: {
-          id: true,
-          title: true,
-          active: true,
-          executions: {
-            where: { status: 'paid' },
-            select: { outputAmount: true },
           },
-        },
-      }),
-      prisma.invoice.findMany({
-        where: { merchant: { wallet }, archivedAt: null },
-        select: {
-          dueDate: true,
-          executions: {
-            where: { status: 'paid' },
-            select: { createdAt: true },
-            take: 1,
+        }),
+        prisma.invoice.findMany({
+          where: { merchant: { wallet }, archivedAt: null },
+          select: {
+            dueDate: true,
+            executions: {
+              where: { status: 'paid' },
+              select: { createdAt: true },
+              take: 1,
+            },
           },
-        },
-      }),
-      prisma.subscriber.findMany({
-        where: { plan: { merchant: { wallet }, archivedAt: null } },
-        select: { status: true },
-      }),
-    ])
+        }),
+        prisma.subscriber.findMany({
+          where: { plan: { merchant: { wallet }, archivedAt: null } },
+          select: { status: true },
+        }),
+      ])
 
     // Merge all paid executions with a human-readable source label.
     const allPaid = [
@@ -145,10 +137,8 @@ export async function GET(req: NextRequest) {
     const activeLinksCount = links.filter((l) => l.active).length
 
     const totalPaidCount = allPaid.length
-    const totalAttempts =
-      linkStatuses.length + invoicePaid.length + subscriptionPaid.length + directPaid.length
-    const overallSuccessRate =
-      totalAttempts > 0 ? Math.round((totalPaidCount / totalAttempts) * 100) : null
+    const totalAttempts = linkStatuses.length + invoicePaid.length + subscriptionPaid.length + directPaid.length
+    const overallSuccessRate = totalAttempts > 0 ? Math.round((totalPaidCount / totalAttempts) * 100) : null
 
     const dayMap = new Map<string, number>()
     for (let i = DAYS - 1; i >= 0; i--) {

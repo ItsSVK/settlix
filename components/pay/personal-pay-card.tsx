@@ -67,10 +67,19 @@ export function PersonalPayCard({ merchantId, merchantWallet }: PersonalPayCardP
   const amountValid = !isNaN(parsedAmount) && parsedAmount >= MIN_AMOUNT
   const quoteReady = !!quote && !quoteLoading
 
-  const { step, setStep, errorMsg, isLoading, connected, publicKey, requestWalletConnection, signAndExecute, handleError } =
-    usePaymentFlow({
-      onSuccess: (txSig, swap) => setSuccessResult({ sig: txSig, swap }),
-    })
+  const {
+    step,
+    setStep,
+    errorMsg,
+    isLoading,
+    connected,
+    publicKey,
+    requestWalletConnection,
+    signAndExecute,
+    handleError,
+  } = usePaymentFlow({
+    onSuccess: (txSig, swap) => setSuccessResult({ sig: txSig, swap }),
+  })
 
   const handlePay = useCallback(async () => {
     if (!connected || !publicKey) {
@@ -117,8 +126,18 @@ export function PersonalPayCard({ merchantId, merchantWallet }: PersonalPayCardP
       handleError(e)
     }
   }, [
-    connected, publicKey, selectedToken, quote, amountValid, debouncedAmount,
-    merchantWallet, requestWalletConnection, setStep, signAndExecute, handleError,
+    connected,
+    publicKey,
+    selectedToken,
+    quote,
+    amountValid,
+    debouncedAmount,
+    merchantWallet,
+    merchantId,
+    requestWalletConnection,
+    setStep,
+    signAndExecute,
+    handleError,
   ])
 
   return (
@@ -167,9 +186,7 @@ export function PersonalPayCard({ merchantId, merchantWallet }: PersonalPayCardP
                     className='w-full rounded-xl border border-border/50 bg-muted/20 py-3 pl-7 pr-4 font-mono text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50'
                   />
                 </div>
-                {amount && !amountValid && (
-                  <p className='mt-1.5 text-xs text-destructive'>Minimum amount is $0.01</p>
-                )}
+                {amount && !amountValid && <p className='mt-1.5 text-xs text-destructive'>Minimum amount is $0.01</p>}
               </div>
 
               {/* Token selector */}
