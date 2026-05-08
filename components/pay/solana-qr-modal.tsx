@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { CheckCircle, ExternalLink, Loader2, X, XCircle } from 'lucide-react'
@@ -35,6 +36,11 @@ export function SolanaQRModal({ linkId, selectedToken, onClose, onSuccess }: Sol
   const [sessionId] = useState(() => generateSessionId())
   const [status, setStatus] = useState<ModalStatus>('waiting')
   const [txSignature, setTxSignature] = useState<string | null>(null)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Build the Solana Pay Transaction Request URL.
   // inputMint and sessionId are in the PATH (not query params) because SolanaPay
@@ -92,7 +98,9 @@ export function SolanaQRModal({ linkId, selectedToken, onClose, onSuccess }: Sol
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
 
-  return (
+  if (!mounted) return null
+
+  return createPortal(
     <AnimatePresence>
       {/* Backdrop */}
       <motion.div
@@ -152,7 +160,7 @@ export function SolanaQRModal({ linkId, selectedToken, onClose, onSuccess }: Sol
                       fgColor='#0f172a'
                       level='M'
                       imageSettings={{
-                        src: '/icon.png',
+                        src: '/logo.png',
                         height: 28,
                         width: 28,
                         excavate: true,
@@ -247,6 +255,7 @@ export function SolanaQRModal({ linkId, selectedToken, onClose, onSuccess }: Sol
           </AnimatePresence>
         </div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   )
 }
