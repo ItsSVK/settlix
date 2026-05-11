@@ -142,7 +142,7 @@ export const Card = ({
         width,
         boxShadow: cardShadow,
       }}
-      className='relative z-20 mx-auto h-128 w-[92vw] max-w-none shrink-0 overflow-hidden border border-primary/20 bg-background/55 p-2 shadow-[0_24px_90px_rgba(0,0,0,0.34)] backdrop-blur-xl md:h-168 md:w-[72vw] md:p-6'
+      className='relative z-20 mx-auto h-128 w-[92vw] max-w-none shrink-0 overflow-hidden bg-background/55 p-2 shadow-[0_24px_90px_rgba(0,0,0,0.34)] backdrop-blur-xl md:h-168 md:w-[72vw] md:p-6'
     >
       <motion.div
         aria-hidden='true'

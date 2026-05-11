@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 
   description:
-    'Settlix is a non-custodial Solana payments platform. Accept SOL, BONK, or any SPL token — your buyers pay in any token, you always receive USDC. Create payment links, invoices, subscriptions, and embed a one-line checkout on any site.',
+    'Settlix is a non-custodial Solana payments platform. Accept SOL, BONK, or any SPL token — your buyers pay in any token, you receive USDC instantly. Create payment links, invoices, subscriptions, and embed a one-line checkout on any site.',
 
   keywords: [
     'Solana payments',
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
     siteName: 'Settlix',
     title: 'Settlix — Accept Any Token. Receive USDC.',
     description:
-      'Non-custodial Solana payments. Create payment links, invoices, subscriptions, and embed a checkout — your buyers pay in any token, you always receive USDC.',
+      'Non-custodial Solana payments. Create payment links, invoices, subscriptions, and embed a checkout — your buyers pay in any token, you receive USDC instantly.',
     images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'Settlix — Accept any token. Receive USDC.' }],
   },
 
@@ -65,7 +65,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Settlix — Accept Any Token. Receive USDC.',
     description:
-      'Non-custodial Solana payments. Accept SOL, BONK, or any SPL token. You always receive USDC. Payment links, invoices, subscriptions, checkout.',
+      'Non-custodial Solana payments. Accept SOL, BONK, or any SPL token. You receive USDC instantly. Payment links, invoices, subscriptions, checkout.',
     images: ['/opengraph-image'],
     creator: '@ShouvikMohanta',
     site: '@ShouvikMohanta',
@@ -104,7 +104,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={cn('h-full antialiased', fontMono.variable, inter.variable, 'font-sans')}
     >
       <body className='flex min-h-full flex-col bg-background text-foreground no-scrollbar overflow-x-hidden'>
-        <ThemeProvider attribute='class' defaultTheme='dark' enableSystem disableTransitionOnChange>
+        <ThemeProvider attribute='class' defaultTheme='light' enableSystem disableTransitionOnChange>
           <Providers>
             <FloatingThemeToggle />
             <div className='flex min-h-screen flex-col bg-background'>{children}</div>

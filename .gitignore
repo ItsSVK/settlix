@@ -57,3 +57,4 @@ server.ts
 webhook.log
 backup.dump
 backup.json
+**/*.html

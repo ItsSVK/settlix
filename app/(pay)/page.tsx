@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { HeroSection } from '@/components/landing/hero-section'
 import { FlowSection } from '@/components/landing/flow-section'
 import { SendShowcaseSection } from '@/components/landing/send-showcase-section'
+import { FaqSection } from '@/components/landing/faq-section'
 
 export const metadata: Metadata = {
   alternates: { canonical: 'https://settlix.itssvk.dev' },
@@ -15,7 +16,7 @@ const jsonLd = {
   applicationCategory: 'FinanceApplication',
   operatingSystem: 'Web',
   description:
-    'Non-custodial Solana payments platform. Accept any SPL token — SOL, BONK, or others — and always receive USDC. Create payment links, invoices, subscriptions, and embed a checkout with one script tag.',
+    'Non-custodial Solana payments platform. Accept any SPL token — SOL, BONK, or others — and receive USDC instantly. Create payment links, invoices, subscriptions, and embed a checkout with one script tag.',
   featureList: [
     'Shareable Payment Links',
     'Crypto Invoicing',
@@ -43,6 +44,7 @@ export default function LandingPage() {
         <HeroSection />
         <FlowSection />
         <SendShowcaseSection />
+        <FaqSection />
       </main>
     </>
   )

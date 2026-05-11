@@ -91,7 +91,7 @@ export function HeroSection() {
           transition={{ duration: 0.6, delay: 0.4 }}
           className='max-w-xl text-lg text-muted-foreground'
         >
-          Create a shareable payment link. Your buyers pay in SOL, BONK, or any token — you always receive USDC.
+          Create a shareable payment link. Your buyers pay in SOL, BONK, or any token — you receive USDC instantly.
           Non-custodial. No middleman.
         </motion.p>
 
