@@ -1,103 +1,181 @@
-# Settlix ⚡️
+# Settlix
 
-**Non-custodial Solana checkout and payment links.**
+**Non-custodial Solana payment infrastructure for merchants and creators.**
 
-Settlix is a modern, decentralized payment platform built on the Solana blockchain. It enables merchants, creators, and freelancers to generate payment links and seamlessly accept cryptocurrency payments directly into their own wallets.
+Settlix lets merchants generate payment links, invoices, and subscriptions that accept any SPL token. Buyers pay with whatever they hold; merchants always receive the exact USDC amount they specified — settled wallet-to-wallet in under a second via Jupiter's ExactOut swap.
 
-Built with Next.js, Prisma, and the Jupiter Aggregator, Settlix provides a premium, "Web2-like" checkout experience powered by Web3 rails.
+Built for the [Colosseum Frontier 2026 Hackathon](https://colosseum.org) — Payments & Remittance track.
 
 ---
 
-## 🛑 The Problem
+## The Problem
 
-Traditional payment gateways (like Stripe or PayPal) and even some centralized crypto payment processors suffer from significant drawbacks:
+- Centralized gateways (Stripe, PayPal, Coinbase Commerce) charge 2–3% and can freeze accounts or delay payouts.
+- If a merchant wants USDC but the buyer only has BONK or SOL, the sale dies — the buyer has to leave, swap manually, and come back.
+- Coinbase Commerce shut down on March 31 2026, leaving international merchants with no replacement (their successor is US + Singapore only).
 
-1. **High Fees:** Taking 2-3% + fixed fees per transaction.
-2. **Custodial Risk & Holds:** Processors hold your funds and can freeze accounts or delay payouts.
-3. **Friction for Buyers:** If a merchant wants USDC, but the buyer only has SOL or BONK, the buyer typically has to leave the checkout, go to an exchange, swap tokens, and come back. This causes massive drop-off rates.
+## How Settlix Solves It
 
-## 💡 How Settlix Solves It
+1. **Non-custodial.** Funds go directly from the buyer's wallet to the merchant's wallet. Settlix never holds anything.
+2. **Any token in, exact USDC out.** Jupiter's ExactOut swap API atomically converts the buyer's token and delivers the precise amount the merchant requested.
+3. **Zero platform fee.** The only cost is the Solana network fee (~$0.00025).
+4. **Sub-second settlement.** Solana finalizes in under a second. No payout delays, no holds.
 
-Settlix completely reimagines the checkout flow by leveraging the speed of Solana and the liquidity of Jupiter:
+---
 
-1. **100% Non-Custodial:** Settlix never touches your funds. Payments go directly from the buyer's wallet to the merchant's wallet in a single on-chain transaction.
-2. **Instant Settlement:** Thanks to Solana, funds arrive in your wallet in less than a second. Zero payout delays.
-3. **Seamless Swaps via Jupiter:** A buyer can pay with _any_ token in their wallet. Settlix automatically routes the transaction through Jupiter under the hood, swapping the buyer's token for the merchant's requested token (e.g., USDC) in real-time. The merchant always gets exactly what they asked for.
+## Payment Flow
 
-### 🏗 Architecture & Payment Flow
+### Jupiter swap path (buyer pays a different token)
 
 ```mermaid
 sequenceDiagram
-    participant B as Buyer Wallet (e.g., SOL/BONK)
-    participant S as Settlix Checkout
-    participant J as Jupiter Aggregator
+    participant B as Buyer Wallet (any SPL token)
+    participant C as Settlix Checkout
+    participant J as Jupiter Swap v2
     participant M as Merchant Wallet (USDC)
 
-    B->>S: Opens Payment Link
-    S->>B: Requests Wallet Connection
-    B->>S: Connects Wallet
-    S->>J: Fetches Best Swap Route (Any Token -> USDC)
-    J-->>S: Returns Optimal Route Data
-    S->>B: Prompts Transaction Signature
-    B->>J: Executes Swap (Atomic Tx)
-    J->>M: Delivers USDC Directly
-    S-->>M: Updates Dashboard Stats (Paid status)
+    B->>C: Opens payment link / invoice
+    C->>J: GET /quote (ExactOut — target amount in USDC)
+    J-->>C: Best route + input amount estimate
+    C->>B: Prompts wallet signature
+    B->>J: Signs & submits atomic swap tx
+    J->>M: Delivers exact USDC directly
+    C->>C: POST /submit — verifies on-chain tx, records PaymentExecution
+    C-->>B: Confirmation + email receipt
+    C-->>M: Webhook delivery (HMAC-SHA256)
 ```
 
----
+### Direct settlement path (buyer pays USDC directly)
 
-## 🛠 Tech Stack
+```mermaid
+sequenceDiagram
+    participant B as Buyer Wallet (USDC)
+    participant C as Settlix Checkout
+    participant M as Merchant Wallet (USDC)
 
-- **Frontend:** Next.js (App Router), React, Tailwind CSS, Aceternity UI, Framer Motion
-- **Backend/DB:** Next.js API Routes, Prisma ORM, PostgreSQL (Aiven)
-- **Web3:** `@solana/web3.js`, Jupiter API v6, Wallet Adapter
-- **Design:** Modern Neumorphic-lite UI, responsive and dark-mode ready
+    B->>C: Opens payment link / invoice
+    C->>B: Builds SPL transferChecked tx (with on-chain memo)
+    B->>M: Signs & submits — USDC arrives directly
+    C->>C: POST /submit — verifies on-chain tx, records PaymentExecution
+    C-->>B: Confirmation + email receipt
+    C-->>M: Webhook delivery (HMAC-SHA256)
+```
 
-## 🚀 Getting Started
-
-1. **Clone the repository**
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-3. **Environment Setup:**
-   Create a `.env` file based on your configuration. You will need:
-   - A PostgreSQL Database URL
-   - Solana RPC URL (e.g., Helius)
-   - Jupiter API Key (if applicable)
-   - Auth Secret
-4. **Database Setup:**
-   ```bash
-   npx prisma generate
-   npx prisma db push
-   ```
-5. **Run the development server:**
-   ```bash
-   npm run dev
-   ```
+Both paths converge at `lib/services/payment-submit.service.ts`, which verifies the transaction on-chain, upserts a `PaymentExecution` record (idempotent on `clientExecutionId`), fires the merchant webhook, and sends email receipts.
 
 ---
 
-## 📄 License
+## Features
 
-MIT License
+| Feature                | Details                                                 |
+| ---------------------- | ------------------------------------------------------- |
+| Payment links          | Fixed-amount or open-amount, shareable URL              |
+| Invoices               | One-off requests with due dates and line items          |
+| Subscriptions          | Daily / weekly recurring billing via relayer keypair    |
+| Split payments         | Up to 10 recipients, basis-point allocation             |
+| Solana Pay QR          | Native QR code flow via Solana Pay spec                 |
+| Embeddable widget      | Drop-in `<script>` tag, iframe checkout (`/embed/[id]`) |
+| REST API               | Full programmatic access, bearer token auth             |
+| API keys               | SHA-256 hashed at rest, auto-works on all routes        |
+| HMAC webhooks          | `X-Settlix-Signature: sha256=…` on every payment event  |
+| Merchant personal page | `/pay/u/[merchantId]` — open-amount transfers           |
+| Dashboard              | Payment history, stats, revenue charts                  |
+| Email receipts         | Buyer + merchant notifications via Resend               |
 
-Copyright (c) 2024 Settlix
+---
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+## Tech Stack
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+| Layer           | Technology                                                   |
+| --------------- | ------------------------------------------------------------ |
+| Framework       | Next.js 16 (App Router), React 19                            |
+| Styling         | Tailwind CSS v4, shadcn/ui, Radix UI                         |
+| Animation       | Motion (Framer Motion v12)                                   |
+| Icons           | Phosphor Icons, Lucide                                       |
+| Charts          | Recharts                                                     |
+| ORM             | Prisma 7 (`@prisma/adapter-pg`)                              |
+| Database        | PostgreSQL (Aiven)                                           |
+| Auth            | Ed25519 wallet-signature → HS256 JWT (jose), httpOnly cookie |
+| Web3            | `@solana/web3.js`, `@solana/spl-token`, Wallet Adapter       |
+| Swaps           | Jupiter Swap v2 (`swapMode=ExactOut`)                        |
+| Email           | Resend                                                       |
+| Validation      | Zod                                                          |
+| Package manager | Bun                                                          |
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+---
+
+## Architecture
+
+### Route Groups
+
+- **`(pay)/`** — Public buyer-facing pages: landing, payment link checkout (`/pay/[id]`), invoice (`/invoice/[id]`), subscription signup (`/subscribe/[id]`), merchant personal page (`/pay/u/[merchantId]`), docs.
+- **`(site)/`** — Authenticated merchant dashboard (`/dashboard/*`) and wallet auth (`/auth`).
+- **`embed/[id]/`** — Stripped iframe for the embeddable checkout widget.
+- **`api/`** — All API routes. Auth handled per-route via `requireAuth` or `requireSession`.
+
+### Authentication
+
+Two layers share the same `requireAuth(req)` call:
+
+1. **Session cookie** — Client signs a nonce with their Solana wallet → server verifies Ed25519 signature → 24-hour HS256 JWT stored as `settlix_session` httpOnly cookie.
+2. **Bearer API key** — `Authorization: Bearer <key>`. SHA-256 hashed and looked up in the `ApiKey` table. Takes priority over session cookie.
+
+### Key Invariants
+
+- `PaymentExecution.clientExecutionId` is the idempotency key — submit endpoint is safe to retry.
+- `PaymentExecution` uses `onDelete: Restrict` on all parent relations — payment records are permanent proof and cannot be deleted.
+- `SplitRecipient.basisPoints` must sum to 10000 across all recipients.
+- Subscription renewals are daily or weekly (no monthly). The relayer keypair must be pre-authorized by the subscriber.
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- [Bun](https://bun.sh) ≥ 1.2
+- PostgreSQL database
+- Solana RPC endpoint (e.g. Helius)
+- Jupiter API key
+
+### Setup
+
+```bash
+# Install dependencies
+bun install
+
+# Copy and fill environment variables
+cp .env.example .env.local
+
+# Generate Prisma client
+bun run db:generate
+
+# Apply schema
+bun run db:push
+
+# (Optional) Seed demo data
+bun run db:seed
+
+# Start dev server
+bun dev
+```
+
+### Environment Variables
+
+| Variable                            | Purpose                                             |
+| ----------------------------------- | --------------------------------------------------- |
+| `DATABASE_URL`                      | PostgreSQL connection string                        |
+| `NEXT_PUBLIC_SOLANA_NETWORK`        | `mainnet-beta` or `devnet`                          |
+| `NEXT_PUBLIC_SOLANA_RPC_URL`        | Client-side RPC endpoint                            |
+| `SOLANA_RPC_URL`                    | Server-side RPC endpoint                            |
+| `JUPITER_API_KEY`                   | Jupiter Swap v2 API key                             |
+| `AUTH_SECRET`                       | JWT signing secret (`openssl rand -base64 32`)      |
+| `RESEND_API_KEY`                    | Transactional email                                 |
+| `SUBSCRIPTION_RELAYER_KEYPAIR_JSON` | Hot wallet keypair JSON for subscription renewals   |
+| `CRON_SECRET`                       | Shared secret for `POST /api/cron/process-renewals` |
+
+---
+
+## License
+
+MIT License — Copyright (c) 2026 Settlix

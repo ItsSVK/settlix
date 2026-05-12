@@ -41,7 +41,6 @@ export default function AuthPage() {
 
           <div className='flex flex-col gap-4'>
             <ConnectButton className='relative flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50' />
-
           </div>
         </motion.div>
       </div>

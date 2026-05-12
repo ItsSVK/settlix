@@ -120,7 +120,9 @@ export function FaqSection() {
                   <div
                     className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${isOpen ? 'border-primary/50 bg-primary/10 text-primary' : 'border-border bg-transparent text-muted-foreground'}`}
                   >
-                    <Plus className={`h-3.5 w-3.5 transition-transform duration-300 ${isOpen ? 'rotate-45' : 'rotate-0'}`} />
+                    <Plus
+                      className={`h-3.5 w-3.5 transition-transform duration-300 ${isOpen ? 'rotate-45' : 'rotate-0'}`}
+                    />
                   </div>
                 </button>
 

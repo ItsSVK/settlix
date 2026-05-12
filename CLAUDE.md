@@ -29,17 +29,17 @@ There are no tests. The package manager is **bun** — do not use npm or yarn.
 
 Copy `.env.example` to `.env.local`. Required keys:
 
-| Variable | Purpose |
-|---|---|
-| `DATABASE_URL` | PostgreSQL connection string (Aiven in production) |
-| `NEXT_PUBLIC_SOLANA_NETWORK` | `mainnet-beta` or `devnet` |
-| `NEXT_PUBLIC_SOLANA_RPC_URL` | Client-side RPC endpoint |
-| `SOLANA_RPC_URL` | Server-side RPC endpoint |
-| `JUPITER_API_KEY` | Jupiter Swap v2 API key |
-| `AUTH_SECRET` | JWT signing secret (`openssl rand -base64 32`) |
-| `RESEND_API_KEY` | Transactional email (Resend) |
+| Variable                            | Purpose                                                                           |
+| ----------------------------------- | --------------------------------------------------------------------------------- |
+| `DATABASE_URL`                      | PostgreSQL connection string (Aiven in production)                                |
+| `NEXT_PUBLIC_SOLANA_NETWORK`        | `mainnet-beta` or `devnet`                                                        |
+| `NEXT_PUBLIC_SOLANA_RPC_URL`        | Client-side RPC endpoint                                                          |
+| `SOLANA_RPC_URL`                    | Server-side RPC endpoint                                                          |
+| `JUPITER_API_KEY`                   | Jupiter Swap v2 API key                                                           |
+| `AUTH_SECRET`                       | JWT signing secret (`openssl rand -base64 32`)                                    |
+| `RESEND_API_KEY`                    | Transactional email (Resend)                                                      |
 | `SUBSCRIPTION_RELAYER_KEYPAIR_JSON` | Hot wallet keypair JSON array for subscription renewals — must be funded with SOL |
-| `CRON_SECRET` | Shared secret for `POST /api/cron/process-renewals` |
+| `CRON_SECRET`                       | Shared secret for `POST /api/cron/process-renewals`                               |
 
 ## Architecture
 
@@ -68,6 +68,7 @@ Use `requireSession` (cookie-only) for SSE streams and wallet-signing routes. Us
 Every payment goes through one of two on-chain paths:
 
 **Jupiter swap path** (buyer pays a different token than the settlement token):
+
 1. Client requests a quote: `GET /api/checkout/pay/quote` → `lib/services/jupiter-quote.service.ts` → `lib/solana/jupiter.ts::getExactOutQuote()`
 2. Client requests an assembled transaction: `GET /api/checkout/pay/order` → `getExactOutOrder()` — uses Jupiter Swap v2 `swapMode=ExactOut` so the merchant receives the exact amount specified.
 3. Client signs and submits the transaction through Jupiter: `POST /api/checkout/pay/execute`
@@ -99,6 +100,7 @@ Prisma 7 with the `@prisma/adapter-pg` driver (PostgreSQL). The generated client
 `lib/db.ts` exports a singleton `prisma` instance (dev: persisted on `globalThis` to survive HMR).
 
 **Key invariants enforced at the service layer, not the DB schema:**
+
 - `PaymentExecution`: exactly one of `linkId`, `invoiceId`, `renewalId`, or `merchantId` is non-null, matching `source`.
 - `PaymentExecution.onDelete: Restrict` on all parent relations — execution records are payment proof and must never be deleted. Parents use soft-delete (`archivedAt` / `cancelledAt`).
 - `clientExecutionId` (`@unique`) is the idempotency key — the submit endpoint is safe to retry.
