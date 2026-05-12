@@ -2,6 +2,7 @@
 
 **Project:** Settlix — Non-custodial payment infrastructure on Solana  
 **Builder:** Shouvik Mohanta  
+**Developer Platform email:** connectshouvik@gmail.com  
 **Integration:** Swap V2 (`/order` ExactOut + `/execute`)  
 **Stack:** Next.js 16, Prisma, `@solana/web3.js`, `@solana/spl-token`  
 **Repo:** [github.com/itssvk/settlix](https://github.com/itssvk/settlix)  
@@ -218,60 +219,59 @@ if (result.status === 'Success') {
 }
 ```
 
-This eliminates the class of bugs where a user's payment confirms on-chain but the merchant's dashboard never reflects it because the browser closed between signing and the confirmation callback.
+So if a browser tab closes after signing but before calling back — the payment is on-chain, the record is already written. Nothing lost.
 
 ---
 
 ## Onboarding
 
-**Time from landing on [developers.jup.ag](https://developers.jup.ag) to first successful API call: ~25 minutes.**
+**My entry point: Jupiter AI chat, not the docs.**
 
-That's fast compared to most payment APIs. API key is live immediately — no email verification loop, no approval wait, copy button works. The Swagger-style explorer at [developers.jup.ag/api](https://developers.jup.ag/api) let me test `/order` before writing a line of code, which is the right default.
+When I landed on [developers.jup.ag](https://developers.jup.ag), I opened the Jupiter AI chat immediately. I knew what I needed to build — a payment flow where the merchant receives exact USDC and the payer pays in any token — and I described the problem in plain language rather than hunting through parameter tables. That decision made the entire onboarding smooth.
 
-**What slowed me down:**
+The Jupiter AI chat understood the use case immediately. It wasn't a keyword search returning doc snippets — it was an actual dialogue. I'd describe the problem, get a concrete answer, and follow up. When I explained the merchant-receives-exact-amount requirement, it confirmed `swapMode=ExactOut` was the right primitive immediately, explained why ExactIn wouldn't work for a payment product, and pointed me to the current API endpoints. It also pointed me away from deprecated patterns before I had a chance to use them — told me directly what the current recommended routes were.
 
-### Wrong docs, strong SEO
+One specific example where the AI was decisive: `swapMode=ExactOut` is not supported across all liquidity routes. This is not obvious from reading the parameter table. Jupiter AI explained this constraint in context — certain routes only support ExactIn — which directly shaped how I handled token pair fallbacks in the implementation. I would have hit this at runtime without it.
 
-Googling "Jupiter swap API" in May 2026 still surfaces the old v6 docs ([station.jup.ag/docs/apis/swap-api](https://station.jup.ag/docs/apis/swap-api)) ahead of the new Developer Platform. The old API shape uses `/quote` + `/swap` — completely different from the new `/order` + `/execute` pattern. I spent ~15 minutes reading the old docs, writing code to that shape, then realising at runtime it was deprecated.
+API key flow is clean — live immediately, no email verification, no approval wait. The playground at [developers.jup.ag/docs/api-reference/swap/order?playground=open](https://developers.jup.ag/docs/api-reference/swap/order?playground=open) let me test `/order` in the browser before writing a line of code.
 
-There is no banner on the old docs page pointing to the new platform. There is no canonical redirect. The old pages are still fully accessible with no deprecation notice. This is the single biggest onboarding friction point.
+### The docs say `swapMode=ExactOut` isn't supported — but it is
 
-**Fix:** One `<meta name="robots" content="noindex">` tag on the old docs, or a sticky top banner saying "Swap V2 is the current API — [migrate here](https://developers.jup.ag/docs/swap-api)." Takes one engineer an hour.
+Worth calling this out clearly because it's not a minor doc gap.
 
-### `swapMode=ExactOut` is invisible
+The `/order` parameter table at [developers.jup.ag/docs/api-reference/swap/order](https://developers.jup.ag/docs/api-reference/swap/order) says, verbatim: _"Swap mode. Currently only `ExactIn` is supported."_
 
-The parameter that unlocks the payment processor use case — `swapMode=ExactOut` — appears once in the parameter table at [developers.jup.ag/docs/swap-api/v2](https://developers.jup.ag/docs/swap-api/v2) with a one-line description. No example. No sample request/response. No explanation of when you'd use it vs ExactIn.
+Settlix runs on ExactOut. It's live on mainnet, processing real payments. The Jupiter AI chat told me to use ExactOut — I described my use case, it told me that's the right mode, I built on it. That guidance was correct. But the written docs tell anyone who reads them that ExactOut doesn't exist.
 
-ExactOut is not a power-user feature. It's the feature anyone building for merchants needs. "I want the output to be exact, input can vary" is a natural requirement for any payment flow. It deserves its own section with a worked example, not a table row.
+If I hadn't opened the chat first, I'd have read that one line, assumed ExactOut wasn't an option, and built something completely different. Any builder coming in through the docs — not the AI — would do the same. The entire payment processor use case on Jupiter depends on ExactOut. It needs to be in the docs.
 
 ---
 
 ## API Pain Points
 
-### 1. `transaction: null` returns HTTP 200 — undocumented
+### 1. When `/order` fails to build a transaction, the response shape is unclear
 
-**Docs page:** [developers.jup.ag/docs/swap-api/v2#order](https://developers.jup.ag/docs/swap-api/v2#order)
+**Docs page:** [developers.jup.ag/docs/api-reference/swap/order](https://developers.jup.ag/docs/api-reference/swap/order)
 
-When `/order` can't route a swap (low liquidity pair, unsupported token), it returns HTTP 200 with `"transaction": null` in the body. This is not mentioned anywhere in the response schema documentation.
+The docs describe three states for the `transaction` field: null when no `taker` is provided, an empty string when the transaction build fails, and a base64 string on success. In practice — when I hit a low-liquidity meme token that couldn't be routed — the field came back falsy, and there was no `errorCode` to make it obvious what had failed.
 
-I hit this testing with a low-cap meme token. My code at the time:
+My code at the time assumed `transaction` was always a string:
 
 ```ts
 const response = await fetch('/order?...')
 const data = await response.json()
-// assumed data.transaction was always a string
-const txBytes = Buffer.from(data.transaction, 'base64') // TypeError: null
+const txBytes = Buffer.from(data.transaction, 'base64') // TypeError on empty/null
 ```
 
-The error surfaced as a cryptic `TypeError: The "string" argument must be of type string` — nothing pointing to Jupiter. Took ~25 minutes to trace to the null transaction.
+The error surfaced as a cryptic `TypeError: The "string" argument must be of type string` — nothing pointing to Jupiter. Took ~25 minutes to trace.
 
-**Required doc addition:** In the response schema for `/order`, add: _"`transaction`: Base64-encoded transaction string, or `null` if no route is available for this pair."_ And in the errors/edge cases section, add the explicit check pattern.
+The fix I landed on is a simple truthiness check before deserializing. What would help is a clearer doc example showing what the response looks like specifically when no route is available — right now the failure states are described but not shown.
 
-### 2. Error response shape has two keys with no documented precedence
+### 2. Two error fields, one of which is buried as "backwards compat"
 
-**Docs page:** [developers.jup.ag/docs/swap-api/v2](https://developers.jup.ag/docs/swap-api/v2)
+**Docs page:** [developers.jup.ag/docs/api-reference/swap/order](https://developers.jup.ag/docs/api-reference/swap/order)
 
-Error responses sometimes contain `error`, sometimes `errorMessage`, and sometimes both with different values. I never found documentation defining which field takes precedence or when each appears.
+The docs do say that `error` is a duplicate of `errorMessage` kept for backwards compatibility — so technically it's documented. But you have to read the schema closely to find that. In practice I hit responses with both fields present and different values, and didn't have the context to know which to trust.
 
 My production code ended up as:
 
@@ -279,23 +279,23 @@ My production code ended up as:
 errorMsg = parsed.error || parsed.errorMessage || rawText.slice(0, 500)
 ```
 
-This is defensive noise that every Jupiter integrator will independently write. Pick one field (`error`), document it, return only that. If there's a reason for both to exist (backward compat, internal routing), document that reason. Right now it's just surprising.
+If `error` is the legacy field and `errorMessage` is the canonical one, just say so prominently in the error handling section — not buried in a schema footnote. Most builders will write defensive code like the above and move on; a clear "use errorMessage, error is legacy" note would clean that up.
 
 ### 3. Same-mint swap silently fails with a routing error
 
-**Docs page:** [developers.jup.ag/docs/swap-api/v2#order](https://developers.jup.ag/docs/swap-api/v2#order)
+**Docs page:** [developers.jup.ag/docs/api-reference/swap/order](https://developers.jup.ag/docs/api-reference/swap/order)
 
 If `inputMint === outputMint` (USDC → USDC), Jupiter returns a routing error — not a validation error, not a clear message. "Paying with USDC" is the most common case for a USDC-priced payment product.
 
 The correct solution is to bypass Jupiter entirely and issue a direct SPL `transferChecked`. That's also the right solution from a gas perspective. But there is nothing in the docs that tells you to do this.
 
-I discovered the required workaround through a GitHub issue on the old v6 repo, not from Jupiter's own documentation. The fix took 20 minutes once I knew what to do; finding that it was the right fix took 2 hours.
+I discovered the required workaround through community research, not from Jupiter's own documentation. The fix took 20 minutes once I knew what to do; finding that it was the right fix took 2 hours.
 
-**Required doc addition:** A callout box on the `/order` docs: _"Same-mint pairs are not routed through Jupiter. If `inputMint === outputMint`, build a direct SPL transfer instead."_ Link to an example. This affects every merchant integration.
+A single callout on the `/order` docs would fix this: _"Same-mint pairs are not routed through Jupiter. If `inputMint === outputMint`, build a direct SPL transfer instead."_ This affects every merchant integration.
 
 ### 4. The `receiver` parameter is not explained in context
 
-**Docs page:** [developers.jup.ag/docs/swap-api/v2#order](https://developers.jup.ag/docs/swap-api/v2#order)
+**Docs page:** [developers.jup.ag/docs/api-reference/swap/order](https://developers.jup.ag/docs/api-reference/swap/order)
 
 The `receiver` query parameter — which routes the output token to a different wallet than the taker — is listed in the parameter table but has no usage example and no narrative explanation of when it applies.
 
@@ -306,27 +306,21 @@ taker    = payer's wallet (who signs and pays gas)
 receiver = merchant's wallet (who receives the settled USDC)
 ```
 
-This is the fundamental ExactOut pattern for third-party payments. It should be the primary example on the ExactOut section, not a row in a table. I found it by systematically reading every parameter; most builders won't.
+This is the core ExactOut pattern for any payment product. I found it by reading every parameter in the table — most people won't do that. It should be the worked example, not a table row.
 
-### 5. No documented TTL for assembled transactions
+### 5. `lastValidBlockHeight` is in the response but not explained
 
-**Docs page:** [developers.jup.ag/docs/swap-api/v2](https://developers.jup.ag/docs/swap-api/v2)
+**Docs page:** [developers.jup.ag/docs/api-reference/swap/order](https://developers.jup.ag/docs/api-reference/swap/order)
 
-The transaction returned by `/order` has a blockhash expiry. Quotes go stale. I know this because transactions were occasionally failing on-chain with "blockhash not found" errors during development.
+The `/order` response includes a `lastValidBlockHeight` field. The `/execute` endpoint also accepts it as an optional parameter. So the expiry information is technically there — but the docs don't explain what to do with it. If you're Solana-native you can infer it. If you're not, it's just a number in the response you don't know how to interpret.
 
-I set a 30-second client-side auto-refresh based on trial and error. I have no idea if 30 seconds is conservative, aggressive, or exactly right. The actual TTL is not documented anywhere.
-
-Without a documented TTL, every builder independently discovers this through on-chain failures and guesses at the refresh interval. Some will refresh too often (burning API quota), some not enough (serving failed transactions to users).
-
-**Fix:** One sentence: _"Assembled transactions use a recent blockhash and are valid for approximately X seconds. Refresh the quote if the user hasn't signed within that window."_
+I hit "blockhash not found" failures on-chain during development and ended up refreshing quotes every 10 seconds in production — arrived at by trial and error. A note like _"use lastValidBlockHeight from the /order response to determine when the transaction expires and pass it to /execute for nonce validation"_ would make this field actionable instead of opaque.
 
 ### 6. 429 responses have no `Retry-After` header
 
-**Docs page:** [developers.jup.ag/docs/swap-api/rate-limits](https://developers.jup.ag/docs/swap-api/rate-limits) _(if this page exists)_
+When I hit rate limits, the 429 response came back with no `Retry-After` header and no JSON body explaining when to retry. The rate limit thresholds aren't documented either. My current handling just throws an error and shows the user a message — there's no retry logic because I have no idea what the right backoff window is.
 
-During load testing, 429 responses contained no `Retry-After` header and no JSON body with retry timing. The rate limit thresholds are not documented. I implemented exponential backoff with a 1-second base by convention.
-
-This is a one-line fix server-side that removes all guesswork for integrators. `Retry-After: 2` in the response header is the entire solution.
+`Retry-After: 2` in the response header would fix this completely. One line.
 
 ---
 
@@ -336,98 +330,36 @@ This is a one-line fix server-side that removes all guesswork for integrators. `
 
 **Analytics dashboard** — I could see request counts and basic latency, which was useful for spotting the rate limit ceiling. What I couldn't see: per-endpoint breakdowns, error rate by endpoint, or a breakdown of ExactOut vs ExactIn traffic. For debugging production issues, I want to see "X% of `/order` calls returned `transaction: null` in the last hour." The current analytics are top-level only.
 
-**No API versioning signal in the dashboard** — the dashboard doesn't show which API version my key is calling or alert when a version is deprecated. Since v6 → Swap V2 is a breaking migration, having the dashboard surface "your usage shows v6 calls — migrate by [date]" would be a useful guardrail.
-
 ---
 
 ## AI Stack Feedback
 
-### Jupiter AI Chat — The Most Used Tool in This Integration
+The only AI tool I used was the **Jupiter AI chat on developers.jup.ag**. I'm writing about it specifically because it genuinely changed how I integrated — not as a nice-to-have, but as the thing I reached for instead of the docs.
 
-The single most valuable AI feature during this build was the **AI chat embedded in the Jupiter developer website**. I used it more than any other resource — more than the parameter tables, more than the Swagger explorer, more than any external tool.
+The docs tell you what a parameter does. The chat tells you whether it's actually the right thing to use for what you're building. Those are different questions, and the second one is the one that matters when you're mid-build.
 
-Here is why: the documentation tells you _what_ each parameter does. The AI chat tells you _why_ and _when_. Those are different questions, and for a first-time integration they matter more.
+The clearest example — and this one is worth flagging separately: the written docs for `/order` say *"Swap mode. Currently only ExactIn is supported."* ExactOut isn't listed as an option. I asked the chat about my use case — merchant receives exact USDC, payer pays in any token — and it told me directly: use ExactOut, it works, it's the right mode for this. ExactIn is for swap UIs where the user controls what they put in; ExactOut is for when the receiver's amount has to be exact.
 
-The clearest example was `swapMode=ExactOut`. I had read the parameter table and understood the mechanics — output is fixed, input varies. But I had a product question underneath it: _is this actually the right primitive for a payment processor, or am I reaching?_ I described my use case to the chat — merchant sets price in USDC, payer pays in any token, merchant must receive the exact amount — and got an immediate, confident answer: yes, ExactOut is precisely the mode for this. Use ExactIn for swap UIs where the user controls input amount; use ExactOut when the receiver's amount is what must be guaranteed.
+That guidance was correct. Settlix runs on ExactOut, live on mainnet. But any builder who reads the docs instead of asking the chat would conclude ExactOut doesn't exist and build something else. The chat knew something the docs didn't say.
 
-That one exchange settled a design question that could have taken hours of trial and error. I went from "I think this is right" to "I know this is right" in under two minutes.
+A few other places where it saved me real time:
 
-**Other moments where the AI chat was decisive:**
+I wasn't sure what `receiver` was for — whether it was meant for third-party flows where payer and recipient are different wallets, or only for self-custody. Described the taker/receiver split I needed, got confirmation immediately and an explanation of what happens without it (output routes to the taker). The docs list the parameter; the chat explained when you'd actually use it.
 
-- I wasn't sure whether the `receiver` parameter in `/order` was meant for third-party payment flows or only for self-custody scenarios. I described the taker/receiver split I needed (payer signs, merchant wallet gets the USDC) and got confirmation that this is exactly what `receiver` is for — with a clear explanation that without it, the output routes to the taker's wallet. The docs describe the parameter; the chat explained the mental model.
+I also asked directly what happens when `inputMint === outputMint`. The chat told me: same-mint pairs aren't routed through Jupiter, build a direct SPL transfer instead. I would have hit that at runtime otherwise and spent real time debugging.
 
-- I had a question about what happens when `inputMint === outputMint` — specifically whether Jupiter would just route through itself or return an error. The chat told me immediately: same-mint pairs are not routed, you should build a direct SPL transfer. That's the kind of edge case that would have cost me significant debugging time if I had discovered it only at runtime.
+The thing I'd change: the chat doesn't generate code. I'd describe a scenario, get a clear answer about what to do, and then write the implementation myself. If it offered a minimal working snippet alongside the explanation it would close the loop faster. Right now there's still a translation step from "I understand what to do" to "I have working code."
 
-- Early in the build I was deciding whether to poll for transaction confirmation on the client or rely on Jupiter's `/execute` response. I asked the chat directly. It explained the confirmation model clearly enough that I made the right architectural call the first time.
+Session memory would also help. On a multi-day integration I had to re-explain my use case from scratch each time I opened a new session. Not a dealbreaker, but it adds friction.
 
-**What the AI chat does well:**
-
-The chat is good at translating "I want to build X, does feature Y apply here?" questions. It understands the product context, not just the API surface. For an integration like ExactOut — which has a clear intended use case but minimal narrative documentation — having a conversational layer that fills in the "why" is genuinely transformative. You can express an idea in plain language and get back a clear answer about whether you're on the right track before writing a single line of code.
-
-**What could make it better:**
-
-The chat doesn't surface code examples proactively. I would describe a scenario, get a clear conceptual answer, and then have to translate that answer into code myself. If the chat offered to generate a minimal working snippet alongside the explanation — or linked directly to the relevant section of the Swagger explorer — the loop from "I understand the concept" to "I have code that works" would be even shorter.
-
-It also doesn't remember context across sessions. If I asked about ExactOut in one session and came back the next day with a follow-up, I had to re-explain my use case from scratch. Session memory would meaningfully reduce that friction for multi-day integrations.
-
----
-
-### Agent Skills (Coding Agent Context)
-
-I used Claude Code as my coding agent for writing the actual implementation. The Jupiter Agent Skills context file was useful for scaffolding — it gave the agent correct endpoint names and prevented hallucinating the old v6 shape. For writing the initial fetch wrapper and typing the response interfaces, it saved real time.
-
-**The gap:** The ExactOut section in the skills file is thin. It describes the parameter but doesn't include the `taker`/`receiver` split, the same-mint bypass requirement, or the `transaction: null` null-guard. The Jupiter AI chat answered these questions conversationally; the skills file didn't. A coding agent working from the skills file alone will call `/order` correctly but miss the non-obvious edge cases — which is exactly what happened before I corrected it manually.
-
-**What I'd add to the skills file to close that gap:**
-
-```
-# ExactOut payment processor pattern
-# Use this when: merchant receives exact amount, payer's input varies
-# Required params: inputMint, outputMint, amount (raw output), taker (payer), receiver (merchant)
-# Edge cases:
-#   - If inputMint === outputMint: skip Jupiter, build direct SPL transferChecked
-#   - response.transaction may be null (no route available) — guard before deserializing
-#   - Transaction has ~30s TTL — implement client-side refresh
-```
-
-That's ~8 lines. It would have eliminated every non-trivial debugging session in this integration. The Jupiter AI chat knew all of this; the skills file should too.
-
-### Docs MCP
-
-**Why I didn't use it for local development:** My coding environment can read project files directly, so the MCP added no capability I didn't already have. The Docs MCP becomes valuable in sandboxed or cloud IDE environments where filesystem access isn't available.
-
-**Discovery problem:** I found the Docs MCP from the bounty description, not from developers.jup.ag. If it's a priority investment, it needs to be in the nav — not buried in a bounty brief. Builders who never see the bounty will never find it.
-
-**What would make it useful even locally:** If the MCP returned live docs reflecting real-time API changes rather than a static index, there would be a reason to use it even when local file access is available. A static skills file can go stale; an always-current MCP can't. The Jupiter AI chat benefits from this framing already — if the MCP had the same live-data property, it would be a meaningfully different tool.
-
-### Jupiter CLI
-
-**Why I didn't use it:** The integration point for Settlix is a server-side Next.js API route, not a terminal session. A CLI tool doesn't fit that workflow. Its value is clearer for agent-native environments that want JSON-native execution without writing HTTP wrapper code.
-
-**What would make it useful for product integrations:**
-
-- A `--dry-run` flag that returns what the transaction _would_ do without broadcasting — useful for testing payment flows without spending real tokens
-- Consistent `--output json` across all subcommands so the output can be piped into build scripts
-- An `npx`-installable version for CI pipelines that can't maintain a global install
-
-### What the AI stack is missing overall
-
-A **testing harness skill** that tells a coding agent how to write integration tests for Jupiter calls without needing real token balances. Right now there is no documented mock or stub pattern, so agents either skip testing or produce tests that require mainnet state. The Jupiter AI chat could answer this question conversationally — but there is nothing in the skills file or docs that covers it systematically. A skills file on "how to test Jupiter integrations" would meaningfully improve code quality across the ecosystem.
 
 ---
 
 ## How I'd Rebuild developers.jup.ag
 
-**Current state:** Strong reference documentation. Clean API key flow. Useful Swagger explorer. Optimised for people who already know what they want to build. Doesn't move a builder from zero to first working integration efficiently enough.
+The docs are solid for someone who already knows what they want to build. The gap is the path from zero to first working integration — it's slower than it needs to be. Things I'd change, in order of impact:
 
-**Changes I'd make, ranked by impact:**
-
-### 1. Kill the SEO problem with the old docs — highest ROI change on this list
-
-Every builder who Googles "Jupiter swap API" lands on the deprecated v6 docs first. This is not a small issue — it means new builders start wrong, write code to the old shape, and then spend time debugging why their integration doesn't match the current platform.  
-**Action:** `noindex` the old docs, or a sticky banner: _"This is the old API. Swap V2 is at [developers.jup.ag]."_
-
-### 2. Reframe the landing page around use cases, not endpoints
+### 1. Reframe the landing page around use cases, not endpoints
 
 Current nav: list of API names. How builders think: "I want to build X." Add a use-case layer:
 
@@ -438,15 +370,17 @@ Current nav: list of API names. How builders think: "I want to build X." Add a u
 
 Each use case links to a minimal working example, not a parameter table.
 
-### 3. Code examples above the fold on every endpoint page
+### 2. Code examples above the fold on every endpoint page
 
 The first thing developers do is copy a request and modify it. Right now, examples are either at the bottom of the page or absent. Flip it: code example first, parameter reference second. A working `curl` command with real values (not `<YOUR_TOKEN>` placeholders) is worth more than three paragraphs of prose.
 
-### 4. Add an error code reference page
+### 3. `/order` errors need the same treatment as `/execute` errors
 
-Every error state I hit required me to log the raw response and interpret it from first principles. A table of error codes, their meaning, when they occur, and the correct recovery action would be used by every integrator and would permanently reduce support load.
+The `/execute` endpoint documents its error codes — -1 through -3, -1000 through -1004. That's useful. `/order` errors are not documented the same way. When a swap fails at the order stage, you get a response body to decode and no reference for what the error codes mean or when they appear.
 
-### 5. Publish latency SLAs
+The same treatment — a table of error states, what triggers them, and what to do — would help a lot for the order stage specifically.
+
+### 4. Publish latency SLAs
 
 P50/P99 latency figures for `/order` and `/execute` are not documented anywhere. For a payment product, this is a product decision: how long do I show a loading spinner? I measured it empirically in production (~400ms P50 for `/order`, ~2-3s for `/execute` to confirm). That's good! Publish it. Fast infrastructure is a selling point, and it should be on the page.
 
@@ -455,7 +389,7 @@ P50/P99 latency figures for `/order` and `/execute` are not documented anywhere.
 ## What I Wish Existed
 
 **A server-to-server webhook on `/execute` completion.**  
-Current flow: client signs → client calls `/execute` → client POSTs result back to my server. This means I'm trusting the client to report success. For a payment product, I want Jupiter to call my server directly when a transaction confirms. Standard webhook pattern — event type, payload, HMAC signature. Would eliminate the "trust the client" problem entirely.
+My flow is: client signs → client calls my `/execute` endpoint → my server calls Jupiter → records the payment. The weak link is the browser: if the tab closes between signing and calling my endpoint, the swap lands on-chain but my database never sees it. A webhook from Jupiter directly to my server when a transaction confirms would cut the browser out of the loop entirely. Standard pattern — event type, payload, HMAC signature. For anyone building a payment product this would be huge.
 
 **Combined ExactOut quote + USD pricing in a single call.**  
 I want to show the payer "you'll pay approximately 0.87 SOL ($120.60)" before they connect their wallet. Right now I need two calls: `/order` for the swap rate, then the Price API for the USD value of the input token. These are always requested together in a payment UI. An `includeUsdPricing=true` param on `/order` would save a round trip on every quote refresh.
@@ -463,15 +397,15 @@ I want to show the payer "you'll pay approximately 0.87 SOL ($120.60)" before th
 **Testnet/mock mode for CI.**  
 Integration testing a payment flow requires real token balances on mainnet or devnet. There's no deterministic mock that returns stable responses for known mint pairs. A `?mock=true` query param (or a sandbox base URL) that returns fixed responses would make automated testing tractable.
 
-**SDK for TypeScript.**  
-I wrote my own typed wrapper around the REST API. Every builder does this independently. A first-party `@jup-ag/sdk-v2` package with typed request/response interfaces, automatic retry, and built-in error normalization would accelerate every TypeScript integration. The wrapper I built is ~100 lines; a first-party version with test coverage and maintained types would save every TS builder from doing the same.
+**A first-party TypeScript package for Swap V2.**  
+I didn't find one — so I wrote my own typed wrapper around the REST API. It's around 100 lines: a fetch helper, typed interfaces for `/order` and `/execute` responses, and the error normalization logic. Every TypeScript builder is going to write essentially the same thing. A maintained `@jup-ag/swap-v2` with typed request/response shapes and built-in retry would save everyone that work.
 
 ---
 
 ## Summary
 
-Jupiter's Swap V2 ExactOut is the right primitive for non-custodial merchant payments. The integration surface is small, the execution quality is high, and the end result — a payer paying in any token while a merchant receives exact USDC — is genuinely elegant.
+ExactOut works. The API is fast, reliable, and the non-custodial settlement model is genuinely well-designed — the merchant receives exact USDC directly in their wallet without Settlix ever touching the funds. That's a hard thing to build cleanly and Jupiter's implementation handles it well.
 
-The friction was almost entirely documentation gaps around edge cases that are predictable and common: `transaction: null`, same-mint bypass, error shape inconsistency, undocumented TTL, missing `Retry-After`. None of these are hard engineering problems — they're documentation problems that an afternoon of writing would fix permanently.
+The pain points I hit were almost all documentation gaps, not API problems. The `transaction` failure states, the same-mint case, the `receiver` context, the `lastValidBlockHeight` field — these are all things a builder figures out through trial and error when they should just be in the docs. The biggest one is ExactOut itself: the docs say it's not supported, it actually is, and it's the entire reason a payment product like Settlix is possible on Jupiter.
 
-The platform is closer to done than most developer APIs I've worked with. The highest-leverage improvement is the SEO problem: fix the old docs ranking, and every new builder starts in the right place. Everything else is polish on a foundation that's already solid.
+The AI chat saved the integration. Genuinely. If I'd gone through the written docs alone I'd have given up on ExactOut in the first 20 minutes. That's a good problem for Jupiter to have — the chat is that good — but it also means builders who don't find the chat are starting with a broken map.
