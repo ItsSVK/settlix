@@ -3,8 +3,10 @@
 import React, { useRef } from 'react'
 import { ContainerScroll } from '@/components/ui/container-scroll-animation'
 import { SendCard } from '@/components/send/send-card'
-import { ArrowRight, CircleDollarSign, Coins, Route, ShieldCheck, Sparkles, Zap } from 'lucide-react'
+import { ArrowRight, Blocks, CircleDollarSign, Coins, Route, ShieldCheck, Sparkles, Zap } from 'lucide-react'
 import { motion, useScroll, useTransform } from 'motion/react'
+import { Button } from '@/components/ui/button'
+import { useRouter } from 'next/navigation'
 
 const payerTokens = [
   { symbol: 'SOL', amount: '2.41', tone: 'bg-primary/10 text-primary' },
@@ -59,9 +61,9 @@ export function SendShowcaseSection() {
               The Star Feature
             </div>
             <h2 className='mt-2 text-4xl font-bold leading-[1.05] tracking-tight text-foreground sm:text-5xl lg:text-6xl xl:text-7xl'>
-              Accept any token. <br />
+              See it live. <br />
               <span className='bg-linear-to-b from-foreground to-muted-foreground bg-clip-text text-transparent'>
-                Always receive USDC.
+                Try a real checkout.
               </span>
             </h2>
             <p className='mx-auto max-w-2xl text-base leading-7 text-muted-foreground md:text-lg'>
@@ -78,8 +80,9 @@ export function SendShowcaseSection() {
 }
 
 function SettlementSurface() {
+  const router = useRouter()
   return (
-    <div className='relative flex h-full w-full items-center justify-center overflow-hidden bg-background px-4 py-6 md:px-8'>
+    <div className='relative flex flex-col h-full w-full items-center justify-center overflow-hidden bg-background px-4 py-6 md:px-8'>
       <div className='absolute inset-0 bg-[radial-gradient(circle_at_50%_28%,var(--primary)_0,transparent_30%),radial-gradient(circle_at_78%_68%,rgb(16_185_129)_0,transparent_24%)] opacity-[0.08]' />
       <div className='absolute inset-0 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-size-[56px_56px] opacity-[0.08]' />
 
@@ -156,6 +159,18 @@ function SettlementSurface() {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className='relative z-10 mt-16 flex flex-col items-center gap-4'>
+        <p className='text-sm font-medium text-muted-foreground'>Explore everything we&apos;ve built</p>
+        <Button
+          onClick={() => router.push('/dashboard')}
+          className='group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-[0_0_20px_rgba(var(--primary),0.3)] transition-all hover:scale-105 active:scale-95'
+        >
+          <Blocks className='h-4 w-4' />
+          <span>Open the App</span>
+          <ArrowRight className='h-4 w-4 transition-transform group-hover:translate-x-1' />
+        </Button>
       </div>
 
       <div className='absolute bottom-4 left-4 right-4 grid grid-cols-3 gap-2 md:bottom-8 md:left-8 md:right-8 lg:hidden'>

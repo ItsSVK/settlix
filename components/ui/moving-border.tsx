@@ -38,7 +38,7 @@ export function MovingBorder({
   const transform = useMotionTemplate`translateX(${x}px) translateY(${y}px) translateX(-50%) translateY(-50%)`
 
   return (
-    <Component className={cn('relative overflow-hidden rounded-xl p-px', containerClassName)} {...otherProps}>
+    <Component className={cn('relative overflow-hidden rounded-md p-px', containerClassName)} {...otherProps}>
       <div className='absolute inset-0'>
         <svg className='absolute h-full w-full' xmlns='http://www.w3.org/2000/svg'>
           <rect ref={pathRef} fill='none' width='100%' height='100%' rx='12' ry='12' />

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { HeroSection } from '@/components/landing/hero-section'
 import { FlowSection } from '@/components/landing/flow-section'
+import { FeaturesSection } from '@/components/landing/features-section'
 import { SendShowcaseSection } from '@/components/landing/send-showcase-section'
 import { FaqSection } from '@/components/landing/faq-section'
 
@@ -43,8 +44,9 @@ export default function LandingPage() {
       <main className='flex flex-col'>
         <HeroSection />
         <FlowSection />
-        <SendShowcaseSection />
+        <FeaturesSection />
         <FaqSection />
+        <SendShowcaseSection />
       </main>
     </>
   )
