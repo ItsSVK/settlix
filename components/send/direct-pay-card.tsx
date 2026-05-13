@@ -9,10 +9,7 @@ import { SuccessOverlay } from '@/components/pay/success-overlay'
 import { JupiterCallout } from '@/components/pay/jupiter-callout'
 import { DirectPayButton } from './direct-pay-button'
 import { useDirectQuote } from '@/lib/hooks/use-direct-quote'
-
-function shorten(addr: string) {
-  return `${addr.slice(0, 6)}…${addr.slice(-4)}`
-}
+import { shorten } from '@/lib/utils'
 
 interface DirectPayCardProps {
   receiverWallet: string

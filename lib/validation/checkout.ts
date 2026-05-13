@@ -76,9 +76,7 @@ export const directPayExecuteBody = z.object({
 
 export const directPaySendBody = z.object({
   signedTransaction: z.string().min(1),
-  // When merchantId is provided the sender used the personal pay link.
-  // When receiverWallet is provided instead we look the merchant up by wallet.
-  merchantId: z.string().cuid().optional(),
+  // Merchant is always resolved server-side by receiverWallet to prevent client-supplied ID spoofing.
   receiverWallet: z.string().min(32).max(64).optional(),
   userWallet: z.string().min(32).max(64).optional(),
   inputMint: z.string().min(32).max(64).optional(),

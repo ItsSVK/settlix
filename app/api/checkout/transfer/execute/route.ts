@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto'
 
 import { VALIDATION } from '@/lib/api/constants'
 import { handleApi, readJsonBody } from '@/lib/api/errors'
+import { apiLogger } from '@/lib/api/logger'
 import { prisma } from '@/lib/db'
 import { executeSwap } from '@/lib/solana/jupiter'
 import { directPayExecuteBody } from '@/lib/validation'
@@ -46,7 +47,10 @@ export async function POST(req: Request) {
               metadata: { label: 'Direct Send' },
             },
           })
-          .catch(() => {})
+          .catch((err: unknown) => {
+            // Non-fatal: swap is confirmed on-chain; don't fail the response if DB write fails.
+            apiLogger.error('Failed to record direct transfer execution', { err, signature: result.signature })
+          })
       }
     }
 

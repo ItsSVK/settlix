@@ -14,3 +14,7 @@ export function rawToHumanAmount(raw: bigint, decimals: number): string {
   const scale = new Decimal(10).pow(decimals)
   return new Decimal(raw.toString()).div(scale).toFixed(decimals > 4 ? 4 : decimals)
 }
+
+export function toRawUsdc(amount: string): bigint {
+  return BigInt(Math.round(parseFloat(amount) * 1_000_000))
+}

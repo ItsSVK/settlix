@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto'
 
 import { VALIDATION } from '@/lib/api/constants'
 import { handleApi, readJsonBody } from '@/lib/api/errors'
+import { apiLogger } from '@/lib/api/logger'
 import { prisma } from '@/lib/db'
 import { createServerConnection } from '@/lib/solana/connection'
 import { RPC_COMMITMENT } from '@/lib/solana/constants'
@@ -20,8 +21,7 @@ export async function POST(req: Request) {
       )
     }
 
-    const { signedTransaction, merchantId, receiverWallet, userWallet, inputMint, inputAmount, outputAmount } =
-      parsed.data
+    const { signedTransaction, receiverWallet, userWallet, inputMint, inputAmount, outputAmount } = parsed.data
 
     const connection: Connection = createServerConnection()
     const txBytes = Buffer.from(signedTransaction, 'base64')
@@ -41,38 +41,33 @@ export async function POST(req: Request) {
       return NextResponse.json({ status: 'Failed', signature, error: JSON.stringify(value.err) }, { status: 200 })
     }
 
-    // Record for dashboard — resolve which merchant receives this payment.
-    if (userWallet && inputMint && inputAmount && outputAmount) {
-      let targetMerchantId = merchantId
-      let label = 'Personal Pay Link'
+    // Record for dashboard — always resolve merchant via the on-chain receiverWallet,
+    // never via a client-supplied ID (prevents dashboard poisoning).
+    if (userWallet && inputMint && inputAmount && outputAmount && receiverWallet) {
+      const merchant = await prisma.merchant.findUnique({
+        where: { wallet: receiverWallet },
+        select: { id: true },
+      })
 
-      if (!targetMerchantId && receiverWallet) {
-        const merchant = await prisma.merchant.findUnique({
-          where: { wallet: receiverWallet },
-          select: { id: true },
-        })
-        targetMerchantId = merchant?.id
-        label = 'Direct Send'
-      }
-
-      if (targetMerchantId) {
+      if (merchant) {
         await prisma.paymentExecution
           .create({
             data: {
               clientExecutionId: randomUUID(),
               source: 'direct_transfer',
-              merchantId: targetMerchantId,
+              merchantId: merchant.id,
               userWallet,
               inputToken: inputMint,
               inputAmount: BigInt(inputAmount),
               outputAmount: BigInt(outputAmount),
               txSignature: signature,
               status: 'paid',
-              metadata: { label },
+              metadata: { label: 'Direct Transfer' },
             },
           })
-          .catch(() => {
+          .catch((err: unknown) => {
             // Non-fatal: tx is confirmed on-chain; don't fail the response if DB write fails.
+            apiLogger.error('Failed to record direct transfer execution', { err, signature })
           })
       }
     }

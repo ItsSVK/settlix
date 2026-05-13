@@ -7,13 +7,10 @@ import { createServerConnection } from '@/lib/solana/connection'
 import { parseCluster, getDefaultUsdcMint } from '@/lib/solana/constants'
 import { getExactOutOrder } from '@/lib/solana/jupiter'
 import { buildDirectSettlementPaymentTx } from '@/lib/solana/txBuilder'
+import { toRawUsdc } from '@/lib/solana/amount'
 import { directPayOrderBody } from '@/lib/validation'
 
 const USDC_MINT = getDefaultUsdcMint(parseCluster(process.env.NEXT_PUBLIC_SOLANA_NETWORK))
-
-function toRawUsdc(amount: string): bigint {
-  return BigInt(Math.round(parseFloat(amount) * 1_000_000))
-}
 
 export async function POST(req: Request) {
   return handleApi(async () => {

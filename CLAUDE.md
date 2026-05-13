@@ -57,9 +57,11 @@ The app uses three Next.js route groups with separate layouts:
 Two auth layers share the same `requireAuth(req)` call in `lib/auth/require-auth.ts`:
 
 1. **Session cookie** — Wallet-signature flow: client requests a nonce from `/api/auth/nonce`, signs it with their Solana wallet, POSTs to `/api/auth/login`. Server verifies the Ed25519 signature (`lib/auth/verify-signature.ts`), issues a 24-hour `HS256` JWT (`jose`) stored as an httpOnly cookie (`settlix_session`).
-2. **Bearer API key** — `Authorization: Bearer <key>`. Key is SHA-256 hashed and looked up in `ApiKey` table. Takes priority over session cookie. All dashboard API routes get API key support automatically through `requireAuth`.
+2. **Bearer API key** — `Authorization: Bearer <key>`. Key is SHA-256 hashed and looked up in `ApiKey` table. Takes priority over session cookie.
 
-Use `requireSession` (cookie-only) for SSE streams and wallet-signing routes. Use `requireAuth` everywhere else.
+**Which to use:**
+- `requireSession` — cookie only. Use for all standard webapp/dashboard routes (browser-only access).
+- `requireAuth` — cookie **or** Bearer API key. Use only for routes that intentionally expose headless/programmatic access (e.g. a merchant integrating via API key).
 
 **Nonce store** (`lib/auth/nonce-store.ts`) is an in-memory `Map` with a 5-minute TTL. It does not survive process restarts and is not safe for multi-instance deployments — migrate to Redis if scaling horizontally.
 

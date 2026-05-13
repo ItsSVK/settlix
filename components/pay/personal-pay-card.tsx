@@ -111,7 +111,7 @@ export function PersonalPayCard({ merchantId, merchantWallet }: PersonalPayCardP
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               signedTransaction: signedBase64,
-              merchantId,
+              receiverWallet: merchantWallet,
               userWallet: publicKey!.toBase58(),
               inputMint: selectedToken.mint,
               inputAmount: quote.inAmount,

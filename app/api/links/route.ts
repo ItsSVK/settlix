@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
           paidCount,
           failedCount: executions.filter((e: PaymentExecution) => e.status === 'failed').length,
           pendingCount: executions.filter((e: PaymentExecution) => e.status === 'pending').length,
-          totalVolume: totalVolume,
+          totalVolume: totalVolume.toFixed(2),
           successRate: executions.length > 0 ? Math.round((paidCount / executions.length) * 100) : null,
         },
         recentExecutions: executions.slice(0, 5).map((e: PaymentExecution) => ({

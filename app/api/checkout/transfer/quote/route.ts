@@ -5,14 +5,10 @@ import { handleApi, readJsonBody } from '@/lib/api/errors'
 import { UpstreamError } from '@/lib/api/errors'
 import { getExactOutQuote } from '@/lib/solana/jupiter'
 import { parseCluster, getDefaultUsdcMint } from '@/lib/solana/constants'
+import { toRawUsdc } from '@/lib/solana/amount'
 import { directPayQuoteBody } from '@/lib/validation'
 
 const USDC_MINT = getDefaultUsdcMint(parseCluster(process.env.NEXT_PUBLIC_SOLANA_NETWORK))
-
-/** Convert a human-decimal USDC amount string to raw integer (6 decimals). */
-function toRawUsdc(amount: string): bigint {
-  return BigInt(Math.round(parseFloat(amount) * 1_000_000))
-}
 
 export async function POST(req: Request) {
   return handleApi(async () => {

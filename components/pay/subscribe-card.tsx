@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { SubscribeButton } from './subscribe-button'
 import type { SubscribeResult } from '@/lib/hooks/use-subscription-flow'
 import { SOLSCAN_CLUSTER } from '@/lib/solana/constants'
+import { shorten } from '@/lib/utils'
 
 const INTERVAL_LABELS: Record<string, string> = {
   daily: 'day',
@@ -26,10 +27,6 @@ export interface PlanData {
   tokenLogo: string | null
   interval: string
   active: boolean
-}
-
-function shorten(addr: string) {
-  return `${addr.slice(0, 6)}…${addr.slice(-4)}`
 }
 
 function SuccessState({

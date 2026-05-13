@@ -19,7 +19,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-context'
 import { useTheme } from 'next-themes'
-import { copyText } from '@/lib/utils'
+import { copyText, shorten } from '@/lib/utils'
 import {
   Sidebar,
   SidebarContent,
@@ -74,10 +74,6 @@ const navItems = [
     hoverAnim: 'group-hover/nav-item:scale-125 group-hover/nav-item:rotate-[15deg]',
   },
 ]
-
-function shorten(addr: string) {
-  return `${addr.slice(0, 4)}…${addr.slice(-4)}`
-}
 
 export function AppSidebar() {
   const pathname = usePathname()
@@ -167,7 +163,7 @@ export function AppSidebar() {
               >
                 <span className='h-2 w-2 shrink-0 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] group-data-[collapsible=icon]:m-0' />
                 <span className='flex-1 truncate tracking-wider group-data-[collapsible=icon]:hidden'>
-                  {shorten(wallet)}
+                  {shorten(wallet, 4, 4)}
                 </span>
                 {copied ? (
                   <Check className='ml-auto h-3.5 w-3.5 text-green-500 group-data-[collapsible=icon]:hidden' />
